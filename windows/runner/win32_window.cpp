@@ -1,5 +1,6 @@
 #include "win32_window.h"
 
+#include <algorithm>
 #include <dwmapi.h>
 #include <flutter_windows.h>
 
@@ -134,10 +135,33 @@ bool Win32Window::Create(const std::wstring& title,
   UINT dpi = FlutterDesktopGetDpiForMonitor(monitor);
   double scale_factor = dpi / 96.0;
 
+  // Keep a portrait client area, with only minimize and close available.
+  constexpr DWORD window_style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
+                                 WS_MINIMIZEBOX;
+  RECT frame = {0, 0, Scale(size.width, scale_factor),
+                     Scale(size.height, scale_factor)};
+  AdjustWindowRectExForDpi(&frame, window_style, FALSE, 0, dpi);
+  int width = frame.right - frame.left;
+  int height = frame.bottom - frame.top;
+  int left = Scale(origin.x, scale_factor);
+  int top = Scale(origin.y, scale_factor);
+  MONITORINFO monitor_info = {};
+  monitor_info.cbSize = sizeof(monitor_info);
+  if (GetMonitorInfo(monitor, &monitor_info)) {
+    const RECT& work = monitor_info.rcWork;
+    const int work_width = work.right - work.left;
+    const int work_height = work.bottom - work.top;
+    // Center before the first frame is shown. Fit small/high-DPI displays and
+    // leave the taskbar available by using the monitor's work area.
+    width = std::min(width, work_width);
+    height = std::min(height, work_height);
+    left = work.left + (work_width - width) / 2;
+    top = work.top + (work_height - height) / 2;
+  }
+
   HWND window = CreateWindow(
-      window_class, title.c_str(), WS_OVERLAPPEDWINDOW,
-      Scale(origin.x, scale_factor), Scale(origin.y, scale_factor),
-      Scale(size.width, scale_factor), Scale(size.height, scale_factor),
+      window_class, title.c_str(), window_style,
+      left, top, width, height,
       nullptr, nullptr, GetModuleHandle(nullptr), this);
 
   if (!window) {
@@ -179,6 +203,11 @@ Win32Window::MessageHandler(HWND hwnd,
                             WPARAM const wparam,
                             LPARAM const lparam) noexcept {
   switch (message) {
+    case WM_SYSCOMMAND:
+      if ((wparam & 0xFFF0) == SC_SIZE || (wparam & 0xFFF0) == SC_MAXIMIZE) {
+        return 0;
+      }
+      break;
     case WM_DESTROY:
       window_handle_ = nullptr;
       Destroy();

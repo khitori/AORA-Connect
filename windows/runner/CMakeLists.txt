@@ -20,6 +20,17 @@ add_executable(${BINARY_NAME} WIN32
 # that need different build settings.
 apply_standard_settings(${BINARY_NAME})
 
+add_executable(aoravpn_core_host "core_host.cpp")
+apply_standard_settings(aoravpn_core_host)
+add_dependencies(${BINARY_NAME} aoravpn_core_host)
+install(TARGETS aoravpn_core_host RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
+  COMPONENT Runtime)
+
+# Match the linker-generated UAC fragment to the application manifest.
+target_link_options(${BINARY_NAME} PRIVATE
+  "/MANIFESTUAC:level='requireAdministrator' uiAccess='false'"
+)
+
 # Add preprocessor definitions for the build version.
 target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION=\"${FLUTTER_VERSION}\"")
 target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION_MAJOR=${FLUTTER_VERSION_MAJOR}")
