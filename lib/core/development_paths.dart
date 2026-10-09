@@ -1,6 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+
+import '../storage/app_paths.dart';
+
+Directory findCoreRoot() => Platform.isWindows && kReleaseMode
+    ? AppPaths.windowsRoot
+    : findProjectDirectory();
+
 Directory findProjectDirectory() {
   for (final start in [
     Directory.current,

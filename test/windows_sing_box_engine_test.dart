@@ -4,9 +4,81 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aoravpn/core/tunnel_engine.dart';
-import 'package:aoravpn/core/windows_sing_box_engine.dart';
+import 'package:aoravpn/core/windows_core_engine.dart';
 
 void main() {
+  test('Xray proxy starts, accepts HTTP, and stops', () async {
+    final xray = File('cores/xray-v26.9.30-windows-64/xray.exe');
+    if (!Platform.isWindows || !xray.existsSync()) return;
+    final temp = await Directory.systemTemp.createTemp('aoravpn-xray-run-');
+    final reserved = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+    final port = reserved.port;
+    await reserved.close();
+    final config = File('${temp.path}/config.json');
+    await config.writeAsString(
+      jsonEncode({
+        'log': {'loglevel': 'warning'},
+        'inbounds': [
+          {'listen': '127.0.0.1', 'port': port, 'protocol': 'http'},
+        ],
+        'outbounds': [
+          {'protocol': 'freedom'},
+        ],
+      }),
+    );
+    final engine = WindowsXrayEngine(
+      executablePath: xray.absolute.path,
+      hostPath: 'missing-host.exe',
+    );
+    try {
+      await engine.start(config.path);
+      expect(engine.state, TunnelState.running);
+      final socket = await Socket.connect('127.0.0.1', port);
+      socket.destroy();
+      await engine.stop();
+      expect(engine.state, TunnelState.stopped);
+    } finally {
+      await engine.dispose();
+      await temp.delete(recursive: true);
+    }
+  });
+
+  test('Windows core host launches and gracefully stops Xray', () async {
+    final xray = File('cores/xray-v26.9.30-windows-64/xray.exe');
+    final host = File('build/windows/x64/runner/Debug/aoravpn_core_host.exe');
+    if (!Platform.isWindows || !xray.existsSync() || !host.existsSync()) return;
+    final temp = await Directory.systemTemp.createTemp('aoravpn-xray-host-');
+    final reserved = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+    final port = reserved.port;
+    await reserved.close();
+    final config = File('${temp.path}/config.json');
+    await config.writeAsString(
+      jsonEncode({
+        'log': {'loglevel': 'warning'},
+        'inbounds': [
+          {'listen': '127.0.0.1', 'port': port, 'protocol': 'http'},
+        ],
+        'outbounds': [
+          {'protocol': 'freedom'},
+        ],
+      }),
+    );
+    final engine = WindowsXrayEngine(
+      executablePath: xray.absolute.path,
+      hostPath: host.absolute.path,
+    );
+    try {
+      await engine.start(config.path);
+      expect(engine.state, TunnelState.running);
+      final socket = await Socket.connect('127.0.0.1', port);
+      socket.destroy();
+      await engine.stop();
+      expect(engine.state, TunnelState.stopped);
+    } finally {
+      await engine.dispose();
+      await temp.delete(recursive: true);
+    }
+  });
   final executable = File('cores/sing-box-1.14.2-windows-amd64/sing-box.exe')
       .absolute
       .path;

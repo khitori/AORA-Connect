@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aoravpn/profiles/hysteria_profile.dart';
+import 'package:aoravpn/profiles/subscription_loader.dart';
 import 'package:aoravpn/core/connection_mode.dart';
 
 void main() {

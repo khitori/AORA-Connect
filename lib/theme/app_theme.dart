@@ -6,6 +6,21 @@ import 'app_colors.dart';
 /// Global widget defaults. Individual components can override these styles.
 abstract final class AppTheme {
   static const controlRadius = 12.0;
+  static const controlHeight = 36.0;
+
+  static Color get selectedSurface => AppColors.ink.withValues(alpha: 0.06);
+
+  static WidgetStateProperty<Color?> get controlOverlayColor =>
+      WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.pressed)) {
+          return AppColors.ink.withValues(alpha: 0.12);
+        }
+        if (states.contains(WidgetState.hovered) ||
+            states.contains(WidgetState.focused)) {
+          return AppColors.ink.withValues(alpha: 0.06);
+        }
+        return null;
+      });
 
   static ThemeData get light {
     final accentSurface = Color.alphaBlend(
@@ -74,8 +89,7 @@ abstract final class AppTheme {
           foregroundColor: AppColors.ink,
           side: BorderSide(color: AppColors.lineStrong),
           shape: shape,
-          overlayColor: AppColors.accent,
-        ),
+        ).copyWith(overlayColor: controlOverlayColor),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
@@ -90,11 +104,15 @@ abstract final class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: AppColors.accent,
           shape: shape,
-        ),
+        ).copyWith(overlayColor: controlOverlayColor),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: ButtonStyle(overlayColor: controlOverlayColor),
       ),
       inputDecorationTheme: InputDecorationThemeData(
         filled: true,
         fillColor: AppColors.card,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
         labelStyle: TextStyle(color: AppColors.muted400),
         floatingLabelStyle: TextStyle(color: AppColors.accent),
         hintStyle: TextStyle(color: AppColors.muted300),

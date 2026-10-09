@@ -4,10 +4,10 @@
 #include <string>
 #include <thread>
 
-// A private console lets us deliver CTRL_BREAK to sing-box without signalling
+// A private console lets us deliver CTRL_BREAK to the core without signalling
 // Flutter or the developer's terminal. Core output remains on Dart's pipes.
 int wmain(int argc, wchar_t* argv[]) {
-  if (argc != 3) {
+  if (argc != 3 && argc != 4) {
     std::cerr << "Core host requires executable and config paths.\n";
     return 1;
   }
@@ -38,8 +38,10 @@ int wmain(int argc, wchar_t* argv[]) {
   startup.hStdError = error;
   PROCESS_INFORMATION child = {};
   // Windows file names cannot contain quotes; both supplied arguments are paths.
+  const bool xray = argc == 4 && std::wstring(argv[3]) == L"xray";
   std::wstring command = L"\"" + std::wstring(argv[1]) +
-      L"\" run -c \"" + std::wstring(argv[2]) + L"\" --disable-color";
+      L"\" run -c \"" + std::wstring(argv[2]) + L"\"" +
+      (xray ? L"" : L" --disable-color");
   if (!CreateProcessW(argv[1], command.data(), nullptr, nullptr, TRUE,
                       CREATE_NEW_PROCESS_GROUP, nullptr, nullptr, &startup, &child)) {
     std::cerr << "Unable to launch core (Windows error " << GetLastError() << ").\n";

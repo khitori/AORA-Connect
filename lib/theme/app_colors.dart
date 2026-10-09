@@ -33,5 +33,10 @@ abstract final class AppColors {
   static Color get divider => hsl(60, 4.7, 83.1);
   static Color get accent => hsl(2.7, 78.5, 49.2);
   static Color get accentDark => hsl(2.6, 80.4, 40);
+  static Color get protocolHysteria2 => hsl(268, 54, 43);
+  static Color get protocolVless => hsl(213, 69, 40);
+  static Color get protocolTrojan => hsl(27, 76, 39);
+  static Color get protocolShadowsocks => hsl(169, 65, 32);
+  static Color get protocolVmess => hsl(288, 49, 39);
   static Color get islandShadow => ink.withValues(alpha: 0.06);
 }

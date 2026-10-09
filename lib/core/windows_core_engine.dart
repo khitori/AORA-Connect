@@ -5,12 +5,18 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'tunnel_engine.dart';
+import 'core_kind.dart';
 
-class WindowsSingBoxEngine implements TunnelEngine {
-  WindowsSingBoxEngine({required this.executablePath, this.hostPath});
+class WindowsCoreEngine implements TunnelEngine {
+  WindowsCoreEngine({
+    required this.executablePath,
+    this.hostPath,
+    required this.coreKind,
+  });
 
   final String executablePath;
   final String? hostPath;
+  final CoreKind coreKind;
   bool _usingHost = false;
   final _logs = StreamController<String>.broadcast();
   final _states = StreamController<TunnelState>.broadcast();
@@ -47,12 +53,13 @@ class WindowsSingBoxEngine implements TunnelEngine {
     if (!await File(executablePath).exists()) {
       throw StateError('Core not found: $executablePath');
     }
-    final result = await Process.run(executablePath, [
-      'check',
-      '-c',
-      File(configPath).absolute.path,
-      '--disable-color',
-    ], workingDirectory: File(executablePath).absolute.parent.path);
+    final result = await Process.run(
+      executablePath,
+      coreKind == CoreKind.xray
+          ? ['run', '-test', '-c', File(configPath).absolute.path]
+          : ['check', '-c', File(configPath).absolute.path, '--disable-color'],
+      workingDirectory: File(executablePath).absolute.parent.path,
+    );
     final output = '${result.stdout}${result.stderr}'.trim();
     if (output.isNotEmpty) _logs.add(output);
     if (result.exitCode != 0) {
@@ -79,7 +86,7 @@ class WindowsSingBoxEngine implements TunnelEngine {
       _usingHost = await File(host).exists();
       final config = jsonDecode(await File(configPath).readAsString()) as Map;
       final isTun = (config['inbounds'] as List? ?? []).any(
-        (entry) => entry['type'] == 'tun',
+        (entry) => entry['type'] == 'tun' || entry['protocol'] == 'tun',
       );
       if (isTun && !_usingHost) {
         throw StateError(
@@ -92,8 +99,14 @@ class WindowsSingBoxEngine implements TunnelEngine {
             ? [
                 File(executablePath).absolute.path,
                 File(configPath).absolute.path,
+                if (coreKind == CoreKind.xray) 'xray',
               ]
-            : ['run', '-c', File(configPath).absolute.path, '--disable-color'],
+            : [
+                'run',
+                '-c',
+                File(configPath).absolute.path,
+                if (coreKind == CoreKind.singBox) '--disable-color',
+              ],
         workingDirectory: File(executablePath).absolute.parent.path,
       );
       _process = process;
@@ -101,7 +114,10 @@ class WindowsSingBoxEngine implements TunnelEngine {
       final subscriptions = <StreamSubscription<String>>[];
       void read(String line) {
         _logs.add(line);
-        if (line.contains('sing-box started') && !ready.isCompleted) {
+        if ((coreKind == CoreKind.singBox
+                ? line.contains('sing-box started')
+                : line.contains('Xray') && line.contains('started')) &&
+            !ready.isCompleted) {
           ready.complete();
         }
       }
@@ -182,4 +198,14 @@ class WindowsSingBoxEngine implements TunnelEngine {
     await _logs.close();
     await _states.close();
   }
+}
+
+class WindowsSingBoxEngine extends WindowsCoreEngine {
+  WindowsSingBoxEngine({required super.executablePath, super.hostPath})
+    : super(coreKind: CoreKind.singBox);
+}
+
+class WindowsXrayEngine extends WindowsCoreEngine {
+  WindowsXrayEngine({required super.executablePath, super.hostPath})
+    : super(coreKind: CoreKind.xray);
 }

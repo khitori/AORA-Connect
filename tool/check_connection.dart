@@ -4,8 +4,9 @@ import 'dart:io';
 
 import 'package:aoravpn/core/connection_probe.dart';
 import 'package:aoravpn/core/connection_mode.dart';
-import 'package:aoravpn/core/windows_sing_box_engine.dart';
-import 'package:aoravpn/profiles/hysteria_profile.dart';
+import 'package:aoravpn/core/windows_core_engine.dart';
+import 'package:aoravpn/profiles/subscription_loader.dart';
+import 'package:aoravpn/storage/app_paths.dart';
 
 // Read the secret URL from stdin instead of storing it in the repository.
 Future<void> main(List<String> arguments) async {
@@ -18,9 +19,7 @@ Future<void> main(List<String> arguments) async {
     exitCode = 1;
     return;
   }
-  final directory = await Directory.systemTemp.createTemp(
-    'aoravpn-connection-',
-  );
+  final directory = await AppPaths.createSession('connection-check-');
   final engine = WindowsSingBoxEngine(
     executablePath: File('cores/sing-box-1.14.2-windows-amd64/sing-box.exe')
         .absolute
@@ -57,7 +56,7 @@ Future<void> main(List<String> arguments) async {
       return;
     }
     await engine.start(config.path);
-    stdout.writeln('Core started; probing HTTPS through Hysteria2.');
+    stdout.writeln('Core started; probing HTTPS through ${profile.protocol}.');
     final elapsed = await probeConnection(
       port: mode == ConnectionMode.tun ? null : port,
     );

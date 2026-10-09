@@ -1,0 +1,438 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import '../profiles/server_profile.dart';
+import '../storage/app_paths.dart';
+import 'core_kind.dart';
+import 'development_paths.dart';
+import 'ping_type.dart';
+import 'server_ping.dart';
+import 'tunnel_engine.dart';
+import 'windows_core_engine.dart';
+
+class PingCancellation {
+  bool cancelled = false;
+  final _callbacks = <void Function()>[];
+  void cancel() {
+    if (cancelled) return;
+    cancelled = true;
+    for (final callback in List.of(_callbacks)) {
+      callback();
+    }
+    _callbacks.clear();
+  }
+
+  void add(void Function() callback) {
+    if (cancelled) {
+      callback();
+    } else {
+      _callbacks.add(callback);
+    }
+  }
+
+  void remove(void Function() callback) => _callbacks.remove(callback);
+  void check() {
+    if (cancelled) throw const ServerPingException('Cancelled');
+  }
+}
+
+typedef NodePingProbe = Future<Duration> Function(
+  ServerProfile profile,
+  PingType type,
+  PingCancellation cancellation,
+);
+typedef PingEngineFactory = TunnelEngine Function(
+  String executable,
+  CoreKind kind,
+);
+
+/// One temporary proxy session per core, with a dedicated loopback inbound
+/// routed to each node. No TUN or system proxy changes are made.
+class NodePingService {
+  NodePingService({
+    this.helperPath,
+    Uri? targetUrl,
+    PingEngineFactory? engineFactory,
+  }) : targetUrl = targetUrl ?? testUrl,
+       _engineFactory =
+           engineFactory ??
+           ((executable, kind) =>
+               WindowsCoreEngine(executablePath: executable, coreKind: kind));
+  static final testUrl = Uri.parse('https://www.gstatic.com/generate_204');
+  final String? helperPath;
+  final Uri targetUrl;
+  final PingEngineFactory _engineFactory;
+
+  static Future<String> _resolve(String server) async {
+    if (InternetAddress.tryParse(server) != null) return server;
+    final addresses = await InternetAddress.lookup(server)
+        .timeout(const Duration(seconds: 5));
+    if (addresses.isEmpty) {
+      throw const ServerPingException('DNS lookup failed.');
+    }
+    return addresses
+        .firstWhere(
+          (value) => value.type == InternetAddressType.IPv4,
+          orElse: () => addresses.first,
+        )
+        .address;
+  }
+
+  Future<Duration> check(
+    ServerProfile profile,
+    PingType type,
+    PingCancellation cancellation,
+  ) async {
+    cancellation.check();
+    if (type.viaProxy) {
+      final batch = await openBatch([profile], cancellation);
+      try {
+        return await batch.check(profile, type, cancellation);
+      } finally {
+        await batch.dispose();
+      }
+    }
+    if (type == PingType.tcp &&
+        {'hysteria', 'hysteria2', 'tuic'}.contains(profile.protocol)) {
+      throw const ServerPingException(
+        'TCP check unavailable for a UDP-only server.',
+      );
+    }
+    final address = await _resolve(profile.server);
+    cancellation.check();
+    final output = await runPingHelper(
+      address,
+      helperPath: helperPath,
+      options: type == PingType.tcp ? ['tcp', '${profile.port}'] : const [],
+    );
+    final milliseconds = int.tryParse(output);
+    if (milliseconds == null || milliseconds < 0) {
+      throw const ServerPingException('Invalid ping response.');
+    }
+    return Duration(milliseconds: milliseconds);
+  }
+
+  Future<NodePingBatch> openBatch(
+    List<ServerProfile> profiles,
+    PingCancellation cancellation,
+  ) async {
+    final batch = NodePingBatch._(targetUrl);
+    final reservations = <ServerSocket>[];
+    final prepared = <ServerProfile, _PreparedNode>{};
+    final addresses = <String, Future<String>>{};
+    final sources = <String, Future<String>>{};
+    try {
+      cancellation.check();
+      if (!Platform.isWindows) {
+        throw const ServerPingException(
+          'Server checks are currently available on Windows.',
+        );
+      }
+      var next = 0;
+      Future<void> prepare() async {
+        while (!cancellation.cancelled && next < profiles.length) {
+          final index = next++;
+          final profile = profiles[index];
+          try {
+            final address = await addresses.putIfAbsent(
+              profile.server,
+              () => _resolve(profile.server),
+            );
+            final source = await sources.putIfAbsent(
+              address,
+              () => runPingHelper(
+                address,
+                options: ['source'],
+                helperPath: helperPath,
+              ),
+            );
+            if (InternetAddress.tryParse(source) == null) {
+              throw const ServerPingException(
+                'Invalid physical network address.',
+              );
+            }
+            cancellation.check();
+            final reserved = await ServerSocket.bind(
+              InternetAddress.loopbackIPv4,
+              0,
+            );
+            reservations.add(reserved);
+            final outbound = profile.outbound(serverAddress: address);
+            outbound['tag'] = 'node-$index';
+            if (profile.coreKind == CoreKind.xray) {
+              outbound['sendThrough'] = source;
+            } else {
+              outbound[InternetAddress(source).type == InternetAddressType.IPv4
+                      ? 'inet4_bind_address'
+                      : 'inet6_bind_address'] =
+                  source;
+            }
+            prepared[profile] = _PreparedNode(
+              profile,
+              index,
+              reserved,
+              outbound,
+            );
+          } catch (error) {
+            batch._errors[profile] = error;
+          }
+        }
+      }
+
+      await Future.wait(
+        List.generate(
+          profiles.length < 24 ? profiles.length : 24,
+          (_) => prepare(),
+        ),
+      );
+      cancellation.check();
+      await Future.wait(
+        CoreKind.values.map((kind) async {
+          final nodes = [
+            for (final profile in profiles)
+              if (profile.coreKind == kind && prepared.containsKey(profile))
+                prepared[profile]!,
+          ];
+          if (nodes.isEmpty) return;
+          final root = findCoreRoot();
+          final executable = kind == CoreKind.xray
+              ? '${root.path}/cores/xray-v${kind.configuredVersion}-windows-64/xray.exe'
+              : '${root.path}/cores/sing-box-${kind.configuredVersion}-windows-amd64/sing-box.exe';
+          _PingSession? session;
+          try {
+            if (!await File(executable).exists()) {
+              throw ServerPingException(
+                '${kind.displayName} is not installed.',
+              );
+            }
+            cancellation.check();
+            final directory = await AppPaths.createSession('ping-');
+            session = _PingSession(_engineFactory(executable, kind), directory);
+            Map<String, Object?> configuration(List<_PreparedNode> members) => {
+              'log': kind == CoreKind.xray
+                  ? {'loglevel': 'warning'}
+                  : {'level': 'info'},
+              if (kind == CoreKind.singBox)
+                'dns': {
+                  'servers': [
+                    {'type': 'local', 'tag': 'local-dns'},
+                  ],
+                  'final': 'local-dns',
+                },
+              'inbounds': [
+                for (final node in members)
+                  kind == CoreKind.xray
+                      ? {
+                          'tag': node.inboundTag,
+                          'listen': '127.0.0.1',
+                          'port': node.port,
+                          'protocol': 'http',
+                        }
+                      : {
+                          'tag': node.inboundTag,
+                          'listen': '127.0.0.1',
+                          'listen_port': node.port,
+                          'type': 'mixed',
+                        },
+              ],
+              'outbounds': [for (final node in members) node.outbound],
+              if (kind == CoreKind.singBox)
+                'route': {
+                  'final': members.first.outbound['tag'],
+                  'auto_detect_interface': true,
+                  'default_domain_resolver': 'local-dns',
+                  'rules': [
+                    for (final node in members)
+                      {
+                        'inbound': [node.inboundTag],
+                        'action': 'route',
+                        'outbound': node.outbound['tag'],
+                      },
+                  ],
+                },
+              if (kind == CoreKind.xray)
+                'routing': {
+                  'domainStrategy': 'IPIfNonMatch',
+                  'rules': [
+                    for (final node in members)
+                      {
+                        'type': 'field',
+                        'inboundTag': [node.inboundTag],
+                        'outboundTag': node.outbound['tag'],
+                      },
+                  ],
+                },
+            };
+            final file = File('${directory.path}/config.json');
+            await file.writeAsString(jsonEncode(configuration(nodes)));
+            for (final node in nodes) {
+              await node.reservation.close();
+            }
+            cancellation.check();
+            final engine = session.engine;
+            try {
+              await engine.start(file.path);
+            } on StateError catch (error) {
+              if (!error.message.toString().contains(
+                'Configuration rejected',
+              )) {
+                rethrow;
+              }
+              // Quarantine malformed outbounds without discarding the whole
+              // core group. Bisect only after a configuration rejection.
+              Future<List<_PreparedNode>> accepted(
+                List<_PreparedNode> candidates,
+              ) async {
+                cancellation.check();
+                await file.writeAsString(jsonEncode(configuration(candidates)));
+                try {
+                  await engine.validate(file.path);
+                  return candidates;
+                } on StateError catch (error) {
+                  if (!error.message.toString().contains(
+                    'Configuration rejected',
+                  )) {
+                    rethrow;
+                  }
+                  if (candidates.length == 1) {
+                    batch._errors[candidates.single.profile] =
+                        const ServerPingException(
+                          'Core rejected this profile.',
+                        );
+                    return [];
+                  }
+                  final middle = candidates.length ~/ 2;
+                  final left = await accepted(candidates.sublist(0, middle));
+                  final right = await accepted(candidates.sublist(middle));
+                  return [...left, ...right];
+                }
+              }
+
+              final valid = List<_PreparedNode>.of(await accepted(nodes));
+              nodes
+                ..clear()
+                ..addAll(valid);
+              if (nodes.isEmpty) {
+                await session.dispose();
+                return;
+              }
+              await file.writeAsString(jsonEncode(configuration(nodes)));
+              cancellation.check();
+              await engine.start(file.path);
+            }
+            cancellation.check();
+            batch._sessions.add(session);
+            for (final node in nodes) {
+              batch._ports[node.profile] = node.port;
+            }
+          } catch (error) {
+            for (final node in nodes) {
+              batch._errors[node.profile] = error is ServerPingException
+                  ? error
+                  : ServerPingException(
+                      '${kind.label} could not start the server checks.',
+                    );
+            }
+            await session?.dispose();
+          }
+        }),
+      );
+      cancellation.check();
+      return batch;
+    } catch (_) {
+      await batch.dispose();
+      rethrow;
+    } finally {
+      for (final reserved in reservations) {
+        await reserved.close();
+      }
+    }
+  }
+}
+
+class _PreparedNode {
+  _PreparedNode(this.profile, this.index, this.reservation, this.outbound)
+    : port = reservation.port;
+  final ServerProfile profile;
+  final int index;
+  final int port;
+  final ServerSocket reservation;
+  final Map<String, Object?> outbound;
+  String get inboundTag => 'check-$index';
+}
+
+class _PingSession {
+  _PingSession(this.engine, this.directory);
+  final TunnelEngine engine;
+  final Directory directory;
+  Future<void>? _disposal;
+  Future<void> dispose() => _disposal ??= _dispose();
+  Future<void> _dispose() async {
+    try {
+      await engine.dispose();
+    } finally {
+      await directory.delete(recursive: true);
+    }
+  }
+}
+
+class NodePingBatch {
+  NodePingBatch._(this.targetUrl);
+  final Uri targetUrl;
+  final _ports = <ServerProfile, int>{};
+  final _errors = <ServerProfile, Object>{};
+  final _sessions = <_PingSession>[];
+  Future<void>? _disposal;
+
+  Future<Duration> check(
+    ServerProfile profile,
+    PingType type,
+    PingCancellation cancellation,
+  ) async {
+    cancellation.check();
+    final error = _errors[profile];
+    if (error != null) throw error;
+    final port = _ports[profile];
+    if (port == null || _disposal != null) {
+      throw const ServerPingException('Proxy check session is unavailable.');
+    }
+    final client = HttpClient()
+      ..findProxy = ((_) => 'PROXY 127.0.0.1:$port')
+      ..connectionTimeout = const Duration(seconds: 8);
+    void abort() => client.close(force: true);
+    cancellation.add(abort);
+    try {
+      // Startup is excluded. Each request uses its node's inbound/outbound
+      // mapping; the HTTP client has no direct fallback.
+      final watch = Stopwatch()..start();
+      final request = await client
+          .openUrl(type == PingType.proxyHead ? 'HEAD' : 'GET', targetUrl)
+          .timeout(const Duration(seconds: 8));
+      request.followRedirects = false;
+      final response = await request.close().timeout(
+        const Duration(seconds: 8),
+      );
+      watch.stop();
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw ServerPingException(
+          'Test resource returned HTTP ${response.statusCode}.',
+        );
+      }
+      cancellation.check();
+      return watch.elapsed;
+    } on TimeoutException {
+      throw const ServerPingException('Timeout');
+    } on IOException {
+      throw const ServerPingException('Proxy request failed.');
+    } finally {
+      cancellation.remove(abort);
+      client.close(force: true);
+    }
+  }
+
+  Future<void> dispose() =>
+      _disposal ??= Future.wait(_sessions.map((session) => session.dispose()))
+          .then((_) {});
+}

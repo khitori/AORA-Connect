@@ -26,19 +26,12 @@ class SubscriptionInput extends StatelessWidget {
             enableSuggestions: false,
             enabled: enabled,
             decoration: const InputDecoration(
-              contentPadding: EdgeInsets.only(left: 12, right: 12),
-              labelText: 'Subscription Link...',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(12)),
-              ),
+              labelText: 'Subscription or server link...',
             ),
           ),
         ),
         const SizedBox(width: 8),
-        OutlinedButton(
-            onPressed: onLoad,
-            child: const Text('Load')
-        ),
+        OutlinedButton(onPressed: onLoad, child: const Text('Add')),
       ],
     ),
   );

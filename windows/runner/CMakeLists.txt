@@ -26,6 +26,20 @@ add_dependencies(${BINARY_NAME} aoravpn_core_host)
 install(TARGETS aoravpn_core_host RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
   COMPONENT Runtime)
 
+add_executable(aoravpn_kill_switch "kill_switch.cpp")
+apply_standard_settings(aoravpn_kill_switch)
+target_link_libraries(aoravpn_kill_switch PRIVATE fwpuclnt iphlpapi ws2_32)
+add_dependencies(${BINARY_NAME} aoravpn_kill_switch)
+install(TARGETS aoravpn_kill_switch RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
+  COMPONENT Runtime)
+
+add_executable(aoravpn_server_ping "server_ping.cpp")
+apply_standard_settings(aoravpn_server_ping)
+target_link_libraries(aoravpn_server_ping PRIVATE iphlpapi ws2_32)
+add_dependencies(${BINARY_NAME} aoravpn_server_ping)
+install(TARGETS aoravpn_server_ping RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
+  COMPONENT Runtime)
+
 # Match the linker-generated UAC fragment to the application manifest.
 target_link_options(${BINARY_NAME} PRIVATE
   "/MANIFESTUAC:level='requireAdministrator' uiAccess='false'"
