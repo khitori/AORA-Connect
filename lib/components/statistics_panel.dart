@@ -7,6 +7,7 @@ import '../controllers/statistics_controller.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'app_expansion_card.dart';
+import 'app_toggle.dart';
 
 class StatisticsPanel extends StatelessWidget {
   const StatisticsPanel({super.key, required this.statistics});
@@ -37,9 +38,9 @@ class StatisticsPanel extends StatelessWidget {
       final samples = statistics.samples;
       return AppExpansionCard(
         title: 'Statistics',
-        titleAction: Switch.adaptive(
+        titleAction: AppToggle(
           key: const ValueKey('statistics-toggle'),
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          semanticLabel: 'Statistics',
           value: statistics.connection.statisticsEnabled,
           onChanged: statistics.connection.busy
               ? null

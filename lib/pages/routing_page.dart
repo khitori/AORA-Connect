@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../components/app_expansion_card.dart';
 import '../components/app_select.dart';
+import '../components/app_toggle.dart';
 import '../components/compact_outline_icon_button.dart';
 import '../components/routing_rule_editor.dart';
 import '../controllers/connection_controller.dart';
@@ -64,8 +65,8 @@ class RoutingPage extends StatelessWidget {
                       : 'Off',
                   icon: Icons.alt_route_rounded,
                   initiallyExpanded: true,
-                  titleAction: Switch.adaptive(
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  titleAction: AppToggle(
+                    semanticLabel: 'Routing',
                     value: policy.enabled,
                     onChanged: connection.canEdit
                         ? (enabled) => connection.setRoutingPolicy(
@@ -190,9 +191,8 @@ class RoutingPage extends StatelessWidget {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Switch.adaptive(
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
+                          AppToggle(
+                            semanticLabel: 'Enable ${rule.target}',
                             value: rule.enabled,
                             onChanged: connection.canEdit
                                 ? (enabled) {

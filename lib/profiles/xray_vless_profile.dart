@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import '../core/connection_mode.dart';
 import '../core/core_kind.dart';
+import '../core/dns_provider.dart';
 import 'server_profile.dart';
 
 /// VLESS links requiring Xray's full-certificate SHA-256 pinning.
@@ -59,6 +60,7 @@ class XrayVlessProfile extends ServerProfile {
     ConnectionMode mode = ConnectionMode.tun,
     String? serverAddress,
     bool leakProtection = true,
+    DnsProvider dnsProvider = DnsProvider.cloudflare,
   }) => {
     'log': {'loglevel': 'warning'},
     'inbounds': [
@@ -78,7 +80,7 @@ class XrayVlessProfile extends ServerProfile {
             'desc': 'AORA VPN',
             'mtu': 1500,
             'gateway': ['172.29.0.1/30', 'fdfe:dcba:9876::1/126'],
-            'dns': ['1.1.1.1'],
+            'dns': [dnsProvider.address],
             'autoSystemRoutingTable': ['0.0.0.0/0', '::/0'],
             'autoOutboundsInterface': 'auto',
             if (leakProtection)

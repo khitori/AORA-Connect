@@ -10,6 +10,7 @@ import 'package:aoravpn/controllers/connection_controller.dart';
 import 'package:aoravpn/controllers/node_ping_controller.dart';
 import 'package:aoravpn/core/connection_mode.dart';
 import 'package:aoravpn/core/core_kind.dart';
+import 'package:aoravpn/core/dns_provider.dart';
 import 'package:aoravpn/core/node_ping.dart';
 import 'package:aoravpn/core/ping_type.dart';
 import 'package:aoravpn/core/server_ping.dart';
@@ -83,6 +84,7 @@ class _LocalProfile extends ServerProfile {
     ConnectionMode mode = ConnectionMode.tun,
     String? serverAddress,
     bool leakProtection = true,
+    DnsProvider dnsProvider = DnsProvider.cloudflare,
   }) => {
     'log': kind == CoreKind.xray ? {'loglevel': 'warning'} : {'level': 'info'},
     'inbounds': [

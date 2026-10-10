@@ -24,6 +24,7 @@ The application and portable Windows package can be built from source. Clean-mac
 - HTTPS subscriptions containing plain-text or base64-encoded URI lists.
 - VPN (TUN) mode by default, plus an optional local proxy mode.
 - Manual core selection, with each server showing its required core.
+- Saved TUN DNS provider selection: Cloudflare (default), Google, or Quad9.
 - Application, domain, exact-domain, and IP/CIDR routing rules.
 - A searchable running-application picker and manual executable-name/path entry.
 - One-time server checks using ICMP, TCP, Via Proxy GET, or Via Proxy HEAD.
@@ -55,6 +56,18 @@ Close the running application before opening a different package. Replace the do
 - **Local proxy:** listens on `127.0.0.1:17890`. Only applications explicitly configured to use that proxy send traffic through it; this mode does not configure a system proxy for you.
 
 Disconnect before changing the core, connection mode, or routing rules.
+
+### DNS
+
+Choose **Settings → DNS** while disconnected. Cloudflare is the default;
+Google and Quad9 are also available. The choice is saved with your settings.
+In TUN mode, sing-box uses the selected provider's DNS-over-HTTPS endpoint,
+including its direct/VPN split-routing resolvers. Xray assigns that provider's
+DNS address to the TUN interface; DNS traffic follows Xray's routing policy.
+Local-proxy mode does not configure system-wide DNS. This selection does not
+change Windows' physical-interface DNS settings or the initial system lookup
+of the VPN server. It is not a fix
+for all Xray split-routing DNS privacy limitations.
 
 ### Routing
 

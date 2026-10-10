@@ -2,6 +2,7 @@
 import 'dart:io';
 
 import '../core/core_kind.dart';
+import '../core/dns_provider.dart';
 
 enum RoutingAction {
   vpn('Through tunnel'),
@@ -127,8 +128,9 @@ class RoutingPolicy {
 Map<String, Object?> applyRouting(
   Map<String, Object?> config,
   CoreKind core,
-  RoutingPolicy policy,
-) {
+  RoutingPolicy policy, {
+  DnsProvider dnsProvider = DnsProvider.cloudflare,
+}) {
   if (!policy.enabled ||
       policy.rules.every((rule) => !rule.enabled) &&
           policy.defaultAction == RoutingAction.vpn) {
@@ -155,13 +157,7 @@ Map<String, Object?> applyRouting(
     for (final tag in ['direct', 'proxy']) {
       final dnsTag = tag == 'proxy' ? 'vpn-dns' : 'direct-dns';
       if (!servers.any((server) => server['tag'] == dnsTag)) {
-        servers.add({
-          'type': 'https',
-          'tag': dnsTag,
-          'server': '1.1.1.1',
-          'path': '/dns-query',
-          'detour': tag,
-        });
+        servers.add(dnsProvider.singBoxServer(tag: dnsTag, detour: tag));
       }
     }
     dns['final'] = policy.defaultAction == RoutingAction.direct

@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 
 import '../core/connection_mode.dart';
 import '../core/core_kind.dart';
+import '../core/dns_provider.dart';
 import '../core/connection_probe.dart';
 import '../core/development_paths.dart';
 import '../core/kill_switch.dart';
@@ -87,6 +88,7 @@ class ConnectionController extends ChangeNotifier {
   TunnelState _state = TunnelState.stopped;
   ConnectionMode _mode = ConnectionMode.tun;
   CoreKind _core = CoreKind.singBox;
+  DnsProvider _dnsProvider = DnsProvider.cloudflare;
   PingType _pingType = PingType.proxyGet;
   bool _killSwitchEnabled = true;
   bool _statisticsEnabled = false;
@@ -105,6 +107,7 @@ class ConnectionController extends ChangeNotifier {
   TunnelState get state => _state;
   ConnectionMode get mode => _mode;
   CoreKind get core => _core;
+  DnsProvider get dnsProvider => _dnsProvider;
   PingType get pingType => _pingType;
   bool get killSwitchEnabled => _killSwitchEnabled;
   bool get statisticsEnabled => _statisticsEnabled;
@@ -237,6 +240,7 @@ class ConnectionController extends ChangeNotifier {
         activeSubscriptionUrl: _activeSubscriptionUrl,
         mode: _mode,
         core: _core,
+        dnsProvider: _dnsProvider,
         killSwitchEnabled: _killSwitchEnabled,
         statisticsEnabled: _statisticsEnabled,
         routingPolicy: _routingPolicy,
@@ -256,6 +260,7 @@ class ConnectionController extends ChangeNotifier {
       _activeSubscriptionUrl = saved.activeSubscriptionUrl;
       _mode = saved.mode;
       _core = saved.core;
+      _dnsProvider = saved.dnsProvider;
       _pingType = saved.pingType;
       _killSwitchEnabled = saved.killSwitchEnabled;
       _statisticsEnabled = saved.statisticsEnabled;
@@ -390,6 +395,21 @@ class ConnectionController extends ChangeNotifier {
     await _persist();
   }, errorScope: ConnectionErrorScope.settings);
 
+  Future<void> setDnsProvider(DnsProvider provider) {
+    if (!canEdit || provider == _dnsProvider) return Future.value();
+    return _perform(() async {
+      final previous = _dnsProvider;
+      _dnsProvider = provider;
+      try {
+        if (_selected != null) await _selectProfile(_selected!);
+      } catch (_) {
+        _dnsProvider = previous;
+        rethrow;
+      }
+      await _persist();
+    }, errorScope: ConnectionErrorScope.settings);
+  }
+
   Future<void> setStatisticsEnabled(bool enabled) => _perform(() async {
     _statisticsEnabled = enabled;
     await _persist();
@@ -455,9 +475,11 @@ class ConnectionController extends ChangeNotifier {
               mode: nextMode,
               serverAddress: address.address,
               leakProtection: _killSwitchEnabled,
+              dnsProvider: _dnsProvider,
             ),
             profile.coreKind,
             _routingPolicy,
+            dnsProvider: _dnsProvider,
           ),
         ),
       );

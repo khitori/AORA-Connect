@@ -6,6 +6,7 @@ import 'app_paths.dart';
 
 import '../core/connection_mode.dart';
 import '../core/core_kind.dart';
+import '../core/dns_provider.dart';
 import '../core/ping_type.dart';
 import '../profiles/subscription_loader.dart';
 import '../routing/routing_policy.dart';
@@ -37,6 +38,7 @@ class AppSettingsData {
     this.activeSubscriptionUrl,
     this.mode = ConnectionMode.tun,
     this.core = CoreKind.singBox,
+    this.dnsProvider = DnsProvider.cloudflare,
     this.killSwitchEnabled = true,
     this.statisticsEnabled = false,
     this.pingType = PingType.proxyGet,
@@ -47,6 +49,7 @@ class AppSettingsData {
   final String? activeSubscriptionUrl;
   final ConnectionMode mode;
   final CoreKind core;
+  final DnsProvider dnsProvider;
   final bool killSwitchEnabled;
   final bool statisticsEnabled;
   final PingType pingType;
@@ -95,6 +98,10 @@ class AppSettingsData {
           : null,
       mode: mode.isEmpty ? ConnectionMode.tun : mode.first,
       core: core.isEmpty ? CoreKind.singBox : core.first,
+      dnsProvider: DnsProvider.values.firstWhere(
+        (value) => value.name == json['dnsProvider'],
+        orElse: () => DnsProvider.cloudflare,
+      ),
       pingType: PingType.values.firstWhere(
         (value) => value.name == json['pingType'],
         orElse: () => PingType.proxyGet,
@@ -121,6 +128,7 @@ class AppSettingsData {
     'activeSubscriptionUrl': activeSubscriptionUrl,
     'mode': mode.name,
     'core': core.name,
+    'dnsProvider': dnsProvider.name,
     'connectionLeakProtectionEnabled': killSwitchEnabled,
     'statisticsEnabled': statisticsEnabled,
     'pingType': pingType.name,

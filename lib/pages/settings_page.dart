@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../components/app_select.dart';
+import '../components/app_toggle.dart';
 import '../components/app_expansion_card.dart';
 import '../components/connection_controls.dart';
 import '../components/core_logs.dart';
@@ -11,6 +12,7 @@ import '../controllers/connection_controller.dart';
 import '../controllers/statistics_controller.dart';
 import '../core/connection_mode.dart';
 import '../core/core_kind.dart';
+import '../core/dns_provider.dart';
 import '../core/ping_type.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
@@ -32,7 +34,6 @@ class SettingsPage extends StatelessWidget {
         title: 'Core',
         subtitle: connection.core.displayName,
         icon: Icons.memory_rounded,
-        initiallyExpanded: true,
         children: [
           Text(
             'Networking core',
@@ -72,7 +73,6 @@ class SettingsPage extends StatelessWidget {
             ? 'VPN (TUN)'
             : 'Local proxy',
         icon: Icons.lan_outlined,
-        initiallyExpanded: true,
         children: [
           Text(
             'Connection mode',
@@ -106,7 +106,7 @@ class SettingsPage extends StatelessWidget {
             color: Colors.transparent,
             borderRadius: BorderRadius.circular(AppTheme.controlRadius),
             clipBehavior: Clip.antiAlias,
-            child: SwitchListTile.adaptive(
+            child: ListTile(
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 8,
@@ -121,11 +121,45 @@ class SettingsPage extends StatelessWidget {
                     ? 'Protects DNS and TUN routing while connected. Normal internet access resumes when disconnected.'
                     : 'Available in VPN (TUN) mode.',
               ),
-              value: connection.killSwitchEnabled,
-              onChanged: connection.canEdit && connection.killSwitchAvailable
-                  ? (enabled) => connection.setKillSwitchEnabled(enabled)
+              onTap: connection.canEdit && connection.killSwitchAvailable
+                  ? () => connection.setKillSwitchEnabled(
+                      !connection.killSwitchEnabled,
+                    )
                   : null,
+              trailing: AppToggle(
+                semanticLabel: 'Kill Switch',
+                value: connection.killSwitchEnabled,
+                onChanged: connection.canEdit && connection.killSwitchAvailable
+                    ? connection.setKillSwitchEnabled
+                    : null,
+              ),
             ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 12),
+      AppExpansionCard(
+        title: 'DNS',
+        subtitle: connection.dnsProvider.label,
+        icon: Icons.dns_outlined,
+        children: [
+          Text('DNS server', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          AppSelect<DnsProvider>(
+            value: connection.dnsProvider,
+            items: [
+              for (final provider in DnsProvider.values)
+                DropdownMenuItem(value: provider, child: Text(provider.label)),
+            ],
+            onChanged: connection.canEdit
+                ? (provider) {
+                    if (provider != null) connection.setDnsProvider(provider);
+                  }
+                : null,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'DNS provider for VPN (TUN). System-wide DNS is not configured in local proxy mode.',
           ),
         ],
       ),
@@ -161,7 +195,7 @@ class SettingsPage extends StatelessWidget {
       if (!connection.canEdit)
         const Padding(
           padding: EdgeInsets.only(top: 12),
-          child: Text('Stop the connection before changing core or mode.'),
+          child: Text('Stop the connection before changing core, mode or DNS.'),
         ),
       if (connection.errorFor(ConnectionErrorScope.settings) != null)
         Padding(

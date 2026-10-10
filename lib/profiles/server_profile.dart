@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import '../core/connection_mode.dart';
 import '../core/core_kind.dart';
+import '../core/dns_provider.dart';
 
 abstract class ServerProfile {
   const ServerProfile({
@@ -24,19 +25,14 @@ abstract class ServerProfile {
     ConnectionMode mode = ConnectionMode.tun,
     String? serverAddress,
     bool leakProtection = true,
+    DnsProvider dnsProvider = DnsProvider.cloudflare,
   }) => {
     'log': {'level': 'info', 'timestamp': true},
     'dns': {
       'servers': [
         {'type': 'local', 'tag': 'local-dns'},
         if (mode == ConnectionMode.tun)
-          {
-            'type': 'https',
-            'tag': 'vpn-dns',
-            'server': '1.1.1.1',
-            'path': '/dns-query',
-            'detour': 'proxy',
-          },
+          dnsProvider.singBoxServer(tag: 'vpn-dns', detour: 'proxy'),
       ],
       'final': mode == ConnectionMode.tun ? 'vpn-dns' : 'local-dns',
     },

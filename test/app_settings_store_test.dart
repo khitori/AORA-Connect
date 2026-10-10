@@ -4,10 +4,29 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aoravpn/core/connection_mode.dart';
 import 'package:aoravpn/core/core_kind.dart';
+import 'package:aoravpn/core/dns_provider.dart';
 import 'package:aoravpn/core/ping_type.dart';
 import 'package:aoravpn/storage/app_settings_store.dart';
 
 void main() {
+  test('DNS defaults safely for old or unknown settings and round-trips', () {
+    expect(const AppSettingsData().dnsProvider, DnsProvider.cloudflare);
+    for (final value in [null, 'unknown', 123]) {
+      expect(
+        AppSettingsData.fromJson({'version': 1, 'dnsProvider': value})
+            .dnsProvider,
+        DnsProvider.cloudflare,
+      );
+    }
+    for (final provider in DnsProvider.values) {
+      expect(
+        AppSettingsData.fromJson(
+          AppSettingsData(dnsProvider: provider).toJson(),
+        ).dnsProvider,
+        provider,
+      );
+    }
+  });
   test(
     'Migrates legacy state without overwriting existing new settings',
     () async {
@@ -62,6 +81,7 @@ void main() {
         activeSubscriptionUrl: url,
         mode: ConnectionMode.proxy,
         core: CoreKind.xray,
+        dnsProvider: DnsProvider.quad9,
         pingType: PingType.proxyHead,
       ),
     );
@@ -72,6 +92,7 @@ void main() {
     expect(restored.activeSubscriptionUrl, url);
     expect(restored.mode, ConnectionMode.proxy);
     expect(restored.core, CoreKind.xray);
+    expect(restored.dnsProvider, DnsProvider.quad9);
     expect(restored.pingType, PingType.proxyHead);
     expect(restored.killSwitchEnabled, isTrue);
   });

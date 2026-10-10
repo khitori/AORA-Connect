@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:aoravpn/controllers/node_ping_controller.dart';
 import 'package:aoravpn/app.dart';
 import 'package:aoravpn/components/app_select.dart';
+import 'package:aoravpn/components/app_toggle.dart';
 import 'package:aoravpn/core/tunnel_engine.dart';
 import 'package:aoravpn/core/connection_mode.dart';
 import 'package:aoravpn/core/core_kind.dart';
@@ -67,7 +68,10 @@ void main() {
       find.text('Route listed applications and addresses'),
       findsOneWidget,
     );
-    expect(tester.widget<Switch>(find.byType(Switch).first).value, isTrue);
+    expect(
+      tester.widget<AppToggle>(find.byType(AppToggle).first).value,
+      isTrue,
+    );
     await tester.tap(find.byType(AppSelect<RoutingAction>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Through tunnel'));

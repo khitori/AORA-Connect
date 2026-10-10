@@ -4,6 +4,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
+import 'package:aoravpn/components/app_select.dart';
+import 'package:aoravpn/controllers/statistics_controller.dart';
+import 'package:aoravpn/pages/settings_page.dart';
+import 'package:aoravpn/theme/app_theme.dart';
 import 'package:aoravpn/controllers/connection_controller.dart';
 import 'package:aoravpn/core/tunnel_engine.dart';
 import 'package:aoravpn/core/connection_mode.dart';
@@ -11,6 +16,7 @@ import 'package:aoravpn/profiles/hysteria_profile.dart';
 import 'package:aoravpn/profiles/subscription_loader.dart';
 import 'package:aoravpn/profiles/xray_vless_profile.dart';
 import 'package:aoravpn/core/core_kind.dart';
+import 'package:aoravpn/core/dns_provider.dart';
 import 'package:aoravpn/core/kill_switch.dart';
 import 'package:aoravpn/storage/app_settings_store.dart';
 import 'package:aoravpn/routing/routing_policy.dart';
@@ -91,6 +97,109 @@ class MemoryKillSwitch implements KillSwitch {
 }
 
 void main() {
+  testWidgets(
+    'Settings DNS selector saves a choice and is disabled while connected',
+    (tester) async {
+      tester.view.physicalSize = const Size(420, 1100);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final engine = ControlledEngine();
+      final store = MemorySettingsStore();
+      final controller = ConnectionController(
+        engine: engine,
+        settingsStore: store,
+      );
+      final statistics = StatisticsController(controller);
+      addTearDown(() async {
+        statistics.dispose();
+        await controller.shutdown();
+        controller.dispose();
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light,
+          home: Scaffold(
+            body: AnimatedBuilder(
+              animation: controller,
+              builder: (_, _) =>
+                  SettingsPage(connection: controller, statistics: statistics),
+            ),
+          ),
+        ),
+      );
+      expect(find.byType(AppSelect<CoreKind>), findsNothing);
+      expect(find.byType(AppSelect<ConnectionMode>), findsNothing);
+      await tester.tap(find.text('Core'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AppSelect<CoreKind>), findsOneWidget);
+      await tester.tap(find.text('Core'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.text('DNS'), 200);
+      await tester.tap(find.text('DNS'));
+      await tester.pumpAndSettle();
+      final selector = find.byType(AppSelect<DnsProvider>);
+      await tester.ensureVisible(selector);
+      await tester.tap(selector);
+      await tester.pumpAndSettle();
+      expect(find.text('Google'), findsOneWidget);
+      expect(find.text('Quad9'), findsOneWidget);
+      await tester.tap(find.text('Google'));
+      await tester.pumpAndSettle();
+      expect(controller.dnsProvider, DnsProvider.google);
+      expect(store.data.dnsProvider, DnsProvider.google);
+      engine.changes.add(TunnelState.running);
+      await tester.pumpAndSettle();
+      expect(tester.widget<AppSelect<DnsProvider>>(selector).onChanged, isNull);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+  test(
+    'DNS edits rebuild the config, roll back rejection and lock while running',
+    () async {
+      final engine = ControlledEngine();
+      final store = MemorySettingsStore();
+      final controller = ConnectionController(
+        engine: engine,
+        settingsStore: store,
+        subscriptionLoader: (_) async => SubscriptionLoadResult(
+          profiles: [
+            HysteriaProfile(
+              name: 'Server',
+              server: '127.0.0.1',
+              port: 443,
+              password: 'secret',
+              serverName: 'example.com',
+            ),
+          ],
+        ),
+      );
+      addTearDown(() async {
+        await controller.shutdown();
+        controller.dispose();
+      });
+      await controller.addSubscription('https://example.com/sub');
+      await controller.setDnsProvider(DnsProvider.google);
+      expect(controller.error, isNull);
+      expect(store.data.dnsProvider, DnsProvider.google);
+      final path = engine.lastValidatedPath!;
+      final config = jsonDecode(await File(path).readAsString()) as Map;
+      expect(config['dns']['servers'].last['server'], '8.8.8.8');
+      engine.rejectValidation = true;
+      await controller.setDnsProvider(DnsProvider.quad9);
+      expect(controller.errorFor(ConnectionErrorScope.settings), isNotNull);
+      expect(controller.dnsProvider, DnsProvider.google);
+      expect(store.data.dnsProvider, DnsProvider.google);
+      expect(await File(path).exists(), isTrue);
+      engine.changes.add(TunnelState.running);
+      await Future<void>.delayed(Duration.zero);
+      final calls = engine.validationCalls;
+      await controller.setDnsProvider(DnsProvider.cloudflare);
+      expect(controller.dnsProvider, DnsProvider.google);
+      expect(engine.validationCalls, calls);
+    },
+  );
   test(
     'Routing edits update the selected config and rejected edits roll back',
     () async {
@@ -275,6 +384,7 @@ void main() {
     await first.addSubscription(germany);
     expect(first.skippedCountFor(germany), 2);
     await first.setMode(ConnectionMode.proxy);
+    await first.setDnsProvider(DnsProvider.google);
     await first.setCore(CoreKind.xray);
     await first.activateSubscription(sweden);
     expect(first.error, isNull);
@@ -293,6 +403,7 @@ void main() {
     expect(restored.activeSubscriptionUrl, sweden);
     expect(restored.selected?.name, 'Sweden 2');
     expect(restored.mode, ConnectionMode.proxy);
+    expect(restored.dnsProvider, DnsProvider.google);
     expect(restored.core, CoreKind.xray);
     await restored.removeSubscription(sweden);
     expect(restored.subscriptions, hasLength(1));
