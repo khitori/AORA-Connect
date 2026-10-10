@@ -57,6 +57,11 @@ add_subdirectory("runner")
 # them to the application.
 include(flutter/generated_plugins.cmake)
 
+option(AORA_BUILD_RUNNER_SMOKE "Build the hidden, non-elevated Rust runner smoke test" OFF)
+if(AORA_BUILD_RUNNER_SMOKE)
+  add_subdirectory("runner_tests")
+endif()
+
 
 # === Installation ===
 # Support files are copied into place next to the executable, so that it can

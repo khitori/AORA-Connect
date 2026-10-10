@@ -2,6 +2,8 @@
 #![cfg(windows)]
 
 pub mod network;
+#[cfg(feature = "runner")]
+pub mod runner;
 
 use std::ffi::OsStr;
 use std::io;

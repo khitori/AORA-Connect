@@ -41,6 +41,7 @@ try {
   }
 } finally { Pop-Location }
 Copy-Item -LiteralPath (Join-Path $rustProject 'Cargo.lock') -Destination (Join-Path $app 'licenses/rust/Cargo.lock')
+Copy-Item -LiteralPath (Join-Path $rustProject 'LICENSE-FlutterWindowsRunner.txt') -Destination (Join-Path $app 'licenses/LICENSE-FlutterWindowsRunner.txt')
 foreach ($helper in @('aoravpn_core_host','aoravpn_core_console','aoravpn_server_ping','aoravpn_kill_switch')) {
   Copy-Item -LiteralPath (Join-Path $helperBuild "x86_64-pc-windows-msvc/release/$helper.exe") -Destination $app -Force
 }

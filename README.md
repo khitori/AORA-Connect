@@ -8,8 +8,8 @@ AORA Connect is being developed as a universal client for subscriptions from dif
 
 **Early beta — Windows x64 is the current working target.**
 
-Custom Windows helpers and the portable launcher are implemented in Rust.
-Rust unit/lint checks, loopback core lifecycle/ping tests, and unpack-only package
+The application-owned Windows runner, helpers, and portable launcher are Rust.
+Debug/Release runner smoke tests, Rust unit/lint checks, loopback core lifecycle/ping tests, and unpack-only package
 checks have passed; real-provider TUN and clean-machine checks remain separate.
 See [native/windows/README.md](native/windows/README.md).
 
@@ -113,7 +113,7 @@ Network activity includes subscription requests to your provider, DNS resolution
 - Flutter with Dart satisfying the constraint in [pubspec.yaml](pubspec.yaml).
 - Visual Studio or Build Tools with the C++ desktop toolchain, Windows SDK, CMake, and x64 Visual C++ redistributable files.
 - PowerShell.
-- Rust with Cargo and the MSVC toolchain for the custom Windows helpers.
+- Rust with Cargo and the MSVC toolchain for the Windows runner, helpers, and launcher.
 - The core archives matching the versions configured in [lib/core/core_kind.dart](lib/core/core_kind.dart).
 
 Check your environment:
@@ -192,18 +192,26 @@ lib/
 ├── storage/        App paths, settings, and migration
 └── theme/          Global palette and widget styles
 
-windows/runner/     Flutter's C++ Windows runner and Cargo build integration
-native/windows/    Rust core-host, ping, legacy recovery, and portable launcher
+windows/runner/     Window resources, administrator manifest, and Cargo integration
+native/windows/    Rust window runner, core-host, ping, recovery, and launcher
 tool/               Development and packaging tools
 test/               Automated tests
 ```
 
 For visual changes, start with [lib/theme/app_colors.dart](lib/theme/app_colors.dart) and [lib/theme/app_theme.dart](lib/theme/app_theme.dart).
 
-Our custom native helper sources are Rust; Flutter's Windows runner remains C++.
+Our application-owned Windows native sources, including the window runner, are Rust.
+Flutter's generated files, engine, and upstream Windows plugins may still use C++;
+the Windows C++ build tools remain required for those dependencies.
 See [native/windows/README.md](native/windows/README.md) for the migration status,
 Cargo prerequisites, and verification steps. Rebuild older packages to use the
 Rust helpers; replacing source files alone does not update an existing EXE.
+
+The runner generates its engine-properties layout and plugin registrations from
+the installed Flutter SDK and plugin registrant during the Cargo build. Its
+hidden, isolated first-frame check is available through
+`powershell -ExecutionPolicy Bypass -File tool/test_windows_runner.ps1` after a
+Release build. This test does not copy networking helpers or real app data.
 
 The core host uses a windowless launcher and a private console worker created
 hidden from startup. That console is used for graceful core shutdown, not as a

@@ -1,13 +1,16 @@
 # Windows native helpers
 
-This Cargo package replaces the application's custom C++ Windows helpers. The
-Flutter window runner remains in `windows/runner/`; application UI and state
-remain in Dart. The networking cores remain separate Go executables.
+This Cargo package contains all application-owned Windows native code: the
+window runner, helpers, and portable launcher. UI and application state remain
+in Dart. The networking cores remain separate Go executables. Upstream Flutter
+and plugin C++ code is not rewritten; their toolchain dependencies remain.
 
 ## Migration status
 
-The Rust helpers and portable launcher have been compiled. Unit tests and Clippy
-with warnings treated as errors pass. Loopback tests cover both core lifecycles,
+The Rust runner builds in Debug and Release. Hidden first-frame smoke tests pass
+in both configurations, including plugin registration and fixed-size window
+checks. The Rust helpers and portable launcher have also been compiled. Unit
+tests and Clippy with warnings treated as errors pass. Loopback tests cover both core lifecycles,
 including ten rapid Xray start/stop cycles, TCP success/failure, and IPv4/IPv6
 ICMP. Unpack-only checks cover package extraction, reuse, and settings preservation.
 Real-provider TUN and second-PC validation remain manual checks.
@@ -16,6 +19,7 @@ Real-provider TUN and second-PC validation remain manual checks.
 
 | Binary | Purpose |
 | --- | --- |
+| `aoravpn.exe` | Resource-only Windows target linked to the Rust runner static library |
 | `aoravpn_core_host.exe` | Windowless entry point that starts a hidden private console worker |
 | `aoravpn_core_console.exe` | Starts the selected core, forwards logs, and sends CTRL_BREAK on stop/closed stdin |
 | `aoravpn_server_ping.exe` | ICMP, physical-source lookup, and TCP checks for IPv4/IPv6 |
@@ -72,6 +76,39 @@ The portable package is built by `tool/build_portable.ps1`, which supplies
 `AORA_PAYLOAD_ZIP` and `AORA_PACKAGE_ID` only while compiling the launcher. The
 `portable` feature is intentionally not enabled for ordinary helper builds or
 tests, because those do not have a payload to embed.
+
+## Rust Flutter window runner
+
+`src/runner/` replaces the former `windows/runner/*.cpp` sources. CMake links the
+Rust static library to Flutter's C API and the existing plugin import libraries,
+using the existing resource file and administrator/DPI manifest. No maintained
+C++ bridge is used. Generated C++ registration files are build inputs only;
+`build.rs` generates the Rust registration calls from them and fails on unknown
+formats instead of silently omitting a plugin.
+
+The engine-properties structure is generated from the installed SDK header.
+Centered portrait sizing, monitor-work-area fitting, DPI updates, minimize/close
+controls, first-frame display, font/theme changes, message delegation, command-
+line forwarding, and kill-on-exit child-process handling are retained.
+
+The `runner` Cargo feature must be built through CMake, which supplies
+`AORA_FLUTTER_HEADER` and `AORA_PLUGIN_REGISTRANT`. The normal standalone Cargo
+helper tests do not enable it.
+
+After building Flutter Debug or Release, run from the project root:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tool/test_windows_runner.ps1 -Configuration Release
+powershell -ExecutionPolicy Bypass -File tool/test_windows_runner.ps1 -Configuration Debug
+```
+
+The optional smoke target is outside the distributable bundle, uses an asInvoker
+manifest, isolated LOCALAPPDATA/APPDATA, and no network helpers. It renders the
+first Flutter frame hidden, registers plugins, checks hidden/fixed-size window
+invariants, and exits. It does not test opening a browser or a real VPN tunnel.
+Test folders remain under ignored `build/` for inspection. The driver enables
+`AORA_BUILD_RUNNER_SMOKE` in the local CMake cache; set it OFF to omit that target
+from normal builds.
 
 ## Verification after installing Rust
 
