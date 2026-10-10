@@ -8,6 +8,11 @@ AORA Connect is being developed as a universal client for subscriptions from dif
 
 **Early beta — Windows x64 is the current working target.**
 
+Custom Windows helpers and the portable launcher are implemented in Rust.
+Rust unit/lint checks, loopback core lifecycle/ping tests, and unpack-only package
+checks have passed; real-provider TUN and clean-machine checks remain separate.
+See [native/windows/README.md](native/windows/README.md).
+
 Linux and Android are planned targets, but their networking engines are not implemented yet. Platform folders in this repository do not mean those platforms are ready to use.
 
 The application and portable Windows package can be built from source. Clean-machine and real-provider testing are still required before treating a build as production-ready. This project does not claim an independent security audit or guaranteed protection against every traffic leak.
@@ -108,6 +113,7 @@ Network activity includes subscription requests to your provider, DNS resolution
 - Flutter with Dart satisfying the constraint in [pubspec.yaml](pubspec.yaml).
 - Visual Studio or Build Tools with the C++ desktop toolchain, Windows SDK, CMake, and x64 Visual C++ redistributable files.
 - PowerShell.
+- Rust with Cargo and the MSVC toolchain for the custom Windows helpers.
 - The core archives matching the versions configured in [lib/core/core_kind.dart](lib/core/core_kind.dart).
 
 Check your environment:
@@ -186,12 +192,22 @@ lib/
 ├── storage/        App paths, settings, and migration
 └── theme/          Global palette and widget styles
 
-windows/runner/     Windows runner and native helpers
+windows/runner/     Flutter's C++ Windows runner and Cargo build integration
+native/windows/    Rust core-host, ping, legacy recovery, and portable launcher
 tool/               Development and packaging tools
 test/               Automated tests
 ```
 
 For visual changes, start with [lib/theme/app_colors.dart](lib/theme/app_colors.dart) and [lib/theme/app_theme.dart](lib/theme/app_theme.dart).
+
+Our custom native helper sources are Rust; Flutter's Windows runner remains C++.
+See [native/windows/README.md](native/windows/README.md) for the migration status,
+Cargo prerequisites, and verification steps. Rebuild older packages to use the
+Rust helpers; replacing source files alone does not update an existing EXE.
+
+The core host uses a windowless launcher and a private console worker created
+hidden from startup. That console is used for graceful core shutdown, not as a
+user-facing terminal. Both helper executables are included in the portable build.
 
 ## Contributing and reporting issues
 

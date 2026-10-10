@@ -2,6 +2,12 @@
 param([switch]$SkipFlutterBuild)
 $ErrorActionPreference = 'Stop'
 $project = Split-Path $PSScriptRoot -Parent
+$cargo = Get-Command cargo -ErrorAction SilentlyContinue
+if (!$cargo) {
+  $cargoFile = Join-Path $env:USERPROFILE '.cargo/bin/cargo.exe'
+  if (!(Test-Path -LiteralPath $cargoFile)) { throw 'Rust/Cargo is required. Install the Rust MSVC toolchain first.' }
+  $cargoPath = $cargoFile
+} else { $cargoPath = $cargo.Source }
 if (!$SkipFlutterBuild) {
   Push-Location $project
   try { & flutter build windows --release; if ($LASTEXITCODE -ne 0) { throw 'Flutter build failed' } }
@@ -16,6 +22,28 @@ $cores = Join-Path $stage 'cores'
 New-Item -ItemType Directory -Force -Path $app,$cores | Out-Null
 if (!(Test-Path -LiteralPath (Join-Path $release 'aoravpn.exe'))) { throw 'Release application missing' }
 Get-ChildItem -LiteralPath $release | Copy-Item -Destination $app -Recurse -Force
+# Rebuild native helpers even when reusing the Flutter release bundle, so a
+# source-only migration cannot accidentally package old C++ helper binaries.
+$rustProject = Join-Path $project 'native/windows'
+$helperBuild = Join-Path $project 'build/windows/x64/rust'
+Push-Location $rustProject
+try {
+  & $cargoPath build --locked --release --target x86_64-pc-windows-msvc --target-dir $helperBuild --bins
+  if ($LASTEXITCODE -ne 0) { throw 'Rust helper build failed' }
+  $metadataJson = & $cargoPath metadata --locked --format-version 1 --filter-platform x86_64-pc-windows-msvc
+  if ($LASTEXITCODE -ne 0) { throw 'Rust dependency metadata failed' }
+  $metadata = $metadataJson | ConvertFrom-Json
+  foreach ($dependency in $metadata.packages | Where-Object { $_.source }) {
+    $noticeDirectory = Join-Path $app ("licenses/rust/" + $dependency.name + '-' + $dependency.version)
+    New-Item -ItemType Directory -Force -Path $noticeDirectory | Out-Null
+    Get-ChildItem -LiteralPath (Split-Path $dependency.manifest_path -Parent) -File -Filter '*license*' |
+      Copy-Item -Destination $noticeDirectory
+  }
+} finally { Pop-Location }
+Copy-Item -LiteralPath (Join-Path $rustProject 'Cargo.lock') -Destination (Join-Path $app 'licenses/rust/Cargo.lock')
+foreach ($helper in @('aoravpn_core_host','aoravpn_core_console','aoravpn_server_ping','aoravpn_kill_switch')) {
+  Copy-Item -LiteralPath (Join-Path $helperBuild "x86_64-pc-windows-msvc/release/$helper.exe") -Destination $app -Force
+}
 foreach ($folder in @('sing-box-1.14.2-windows-amd64','xray-v26.9.30-windows-64')) {
   $source = Join-Path $project "cores/$folder"
   if (!(Test-Path -LiteralPath $source)) { throw "Missing core: $folder" }
@@ -23,9 +51,7 @@ foreach ($folder in @('sing-box-1.14.2-windows-amd64','xray-v26.9.30-windows-64'
 }
 Copy-Item -LiteralPath (Join-Path $project 'LICENSE') -Destination (Join-Path $app 'LICENSE-AORAConnect')
 $cache = Get-Content -LiteralPath (Join-Path $project 'build/windows/x64/CMakeCache.txt')
-$cmake = ($cache | Where-Object { $_ -like 'CMAKE_COMMAND:INTERNAL=*' }) -replace '^.*?=', ''
 $vs = ($cache | Where-Object { $_ -like 'CMAKE_GENERATOR_INSTANCE:INTERNAL=*' }) -replace '^.*?=', ''
-$generator = ($cache | Where-Object { $_ -like 'CMAKE_GENERATOR:INTERNAL=*' }) -replace '^.*?=', ''
 # App-local C++ runtime avoids requiring a separate redistributable installer.
 $crt = Get-ChildItem -LiteralPath (Join-Path $vs 'VC/Redist/MSVC') -Recurse -Directory |
   Where-Object { $_.Name -like 'Microsoft.VC*.CRT' -and $_.FullName -match '[\\/]x64[\\/]' } |
@@ -35,12 +61,21 @@ Get-ChildItem -LiteralPath $crt.FullName -Filter '*.dll' | Copy-Item -Destinatio
 $archive = Join-Path $output 'payload.zip'
 Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $archive -Force
 $packageId = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-$nativeBuild = Join-Path $output 'launcher-build'
-& $cmake -S (Join-Path $PSScriptRoot 'portable') -B $nativeBuild -G $generator -A x64 "-DPAYLOAD_ZIP=$archive" "-DPACKAGE_ID=$packageId"
-if ($LASTEXITCODE -ne 0) { throw 'Launcher configuration failed' }
-& $cmake --build $nativeBuild --config Release
-if ($LASTEXITCODE -ne 0) { throw 'Launcher build failed' }
+$nativeBuild = Join-Path $output 'rust-launcher'
+$oldPayload = $env:AORA_PAYLOAD_ZIP
+$oldPackageId = $env:AORA_PACKAGE_ID
+$env:AORA_PAYLOAD_ZIP = $archive
+$env:AORA_PACKAGE_ID = $packageId
+Push-Location $rustProject
+try {
+  & $cargoPath build --locked --release --target x86_64-pc-windows-msvc --target-dir $nativeBuild --features portable --bin AORAConnect
+  if ($LASTEXITCODE -ne 0) { throw 'Rust launcher build failed' }
+} finally {
+  Pop-Location
+  $env:AORA_PAYLOAD_ZIP = $oldPayload
+  $env:AORA_PACKAGE_ID = $oldPackageId
+}
 $executable = Join-Path $output 'AORAConnect-windows-x64.exe'
-Copy-Item -LiteralPath (Join-Path $nativeBuild 'Release/AORAConnect.exe') -Destination $executable -Force
+Copy-Item -LiteralPath (Join-Path $nativeBuild 'x86_64-pc-windows-msvc/release/AORAConnect.exe') -Destination $executable -Force
 Get-FileHash -LiteralPath $executable -Algorithm SHA256
 Write-Output "Portable package: $executable"

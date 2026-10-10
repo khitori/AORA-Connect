@@ -68,12 +68,21 @@ void main() {
       hostPath: host.absolute.path,
     );
     try {
-      await engine.start(config.path);
-      expect(engine.state, TunnelState.running);
-      final socket = await Socket.connect('127.0.0.1', port);
-      socket.destroy();
-      await engine.stop();
-      expect(engine.state, TunnelState.stopped);
+      for (var attempt = 0; attempt < 10; attempt++) {
+        await engine.start(config.path);
+        expect(engine.state, TunnelState.running);
+        final socket = await Socket.connect('127.0.0.1', port);
+        socket.destroy();
+        final shutdown = engine.logs.firstWhere(
+          (line) => line.startsWith('Core stopped (exit'),
+        );
+        await engine.stop();
+        expect(engine.state, TunnelState.stopped);
+        expect(
+          await shutdown.timeout(const Duration(seconds: 2)),
+          'Core stopped (exit 0).',
+        );
+      }
     } finally {
       await engine.dispose();
       await temp.delete(recursive: true);

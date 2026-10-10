@@ -20,25 +20,36 @@ add_executable(${BINARY_NAME} WIN32
 # that need different build settings.
 apply_standard_settings(${BINARY_NAME})
 
-add_executable(aoravpn_core_host "core_host.cpp")
-apply_standard_settings(aoravpn_core_host)
-add_dependencies(${BINARY_NAME} aoravpn_core_host)
-install(TARGETS aoravpn_core_host RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
-  COMPONENT Runtime)
-
-add_executable(aoravpn_kill_switch "kill_switch.cpp")
-apply_standard_settings(aoravpn_kill_switch)
-target_link_libraries(aoravpn_kill_switch PRIVATE fwpuclnt iphlpapi ws2_32)
-add_dependencies(${BINARY_NAME} aoravpn_kill_switch)
-install(TARGETS aoravpn_kill_switch RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
-  COMPONENT Runtime)
-
-add_executable(aoravpn_server_ping "server_ping.cpp")
-apply_standard_settings(aoravpn_server_ping)
-target_link_libraries(aoravpn_server_ping PRIVATE iphlpapi ws2_32)
-add_dependencies(${BINARY_NAME} aoravpn_server_ping)
-install(TARGETS aoravpn_server_ping RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
-  COMPONENT Runtime)
+# Only the Flutter runner is C++; custom Windows helpers are built with Cargo.
+find_program(CARGO_EXECUTABLE NAMES cargo HINTS "$ENV{USERPROFILE}/.cargo/bin")
+if(NOT CARGO_EXECUTABLE)
+  message(FATAL_ERROR "Rust/Cargo is required for the Windows helpers. Install the Rust MSVC toolchain, then rebuild.")
+endif()
+set(RUST_HELPERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../native/windows")
+set(RUST_TARGET_DIR "${CMAKE_BINARY_DIR}/rust")
+set(RUST_PROFILE "$<IF:$<CONFIG:Debug>,dev,release>")
+set(RUST_OUTPUT_PROFILE "$<IF:$<CONFIG:Debug>,debug,release>")
+set(RUST_RUNNER_DIR "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
+add_custom_target(aoravpn_windows_helpers ALL
+  COMMAND "${CARGO_EXECUTABLE}" build --locked --manifest-path "${RUST_HELPERS_DIR}/Cargo.toml"
+    --target x86_64-pc-windows-msvc --target-dir "${RUST_TARGET_DIR}"
+    --profile "${RUST_PROFILE}" --bins
+  COMMAND "${CMAKE_COMMAND}" -E make_directory "${RUST_RUNNER_DIR}"
+  WORKING_DIRECTORY "${RUST_HELPERS_DIR}"
+  COMMENT "Building Rust Windows helpers"
+  VERBATIM
+)
+foreach(HELPER aoravpn_core_host aoravpn_core_console aoravpn_server_ping aoravpn_kill_switch)
+  add_custom_command(TARGET aoravpn_windows_helpers POST_BUILD
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+      "${RUST_TARGET_DIR}/x86_64-pc-windows-msvc/${RUST_OUTPUT_PROFILE}/${HELPER}.exe"
+      "${RUST_RUNNER_DIR}/${HELPER}.exe"
+    VERBATIM
+  )
+  install(FILES "${RUST_RUNNER_DIR}/${HELPER}.exe"
+    DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT Runtime)
+endforeach()
+add_dependencies(${BINARY_NAME} aoravpn_windows_helpers)
 
 # Match the linker-generated UAC fragment to the application manifest.
 target_link_options(${BINARY_NAME} PRIVATE
