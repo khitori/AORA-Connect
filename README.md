@@ -1,223 +1,210 @@
-# AORA VPN
+# AORA Connect
 
-An open-source, universal VPN client built with Flutter.
+An open-source VPN client built with Flutter, with sing-box and Xray networking cores.
 
-The current development targets are Windows, Linux, and Android. The project
-uses sing-box and Xray as separate networking cores. The Windows client imports
-plain or base64 URI-list subscriptions with supported Hysteria2, VLESS, Trojan,
-Shadowsocks, and VMess links. Pinned VLESS TLS/gRPC links are assigned to Xray;
-the other currently supported links use sing-box. VPN (TUN) is the default
-connection mode; local proxy mode is available as an explicit alternative.
+AORA Connect is being developed as a universal client for subscriptions from different providers. It does not provide a VPN service: you need your own supported subscription or server link.
 
-## Development
+## Project status
 
-The Flutter source is organized by responsibility:
+**Early beta — Windows x64 is the current working target.**
 
-- `lib/main.dart`: application entry point.
-- `lib/app.dart`: app theme, navigation shell, and lifecycle.
-- `lib/pages/`: complete Connection and Settings screens.
-- `lib/components/`: subscription input, server selection, connection controls,
-  logs, and the animated menu.
-- `lib/controllers/`: connection state and actions, subscription loading, and
-  session cleanup.
-- `lib/core/`: platform/core integration and configuration modes.
-- `lib/profiles/`: subscription parsing and profile configuration.
-- `lib/theme/app_colors.dart`: named website colours in CSS-style HSL values.
-- `lib/theme/app_theme.dart`: global colour mapping and widget defaults.
+Linux and Android are planned targets, but their networking engines are not implemented yet. Platform folders in this repository do not mean those platforms are ready to use.
 
-To change colours, edit the named values in `AppColors`. For example,
-`hsl(2.7, 78.5, 49.2)` is the same colour as CSS `hsl(2.7 78.5% 49.2%)`.
-The theme applies these colours to backgrounds, menus, text, buttons, input
-borders, and feedback. The fonts are unchanged.
+The application and portable Windows package can be built from source. Clean-machine and real-provider testing are still required before treating a build as production-ready. This project does not claim an independent security audit or guaranteed protection against every traffic leak.
 
-To customise one widget, import `theme/app_colors.dart` (using the relative path
-from that file) and use `AppColors.card`, `AppColors.ink`, or another named
-colour in its style. To change defaults for all widgets of a type, edit their
-theme in `AppTheme.light`. Existing explicit component styles take precedence.
+## Features
 
-Check the local Flutter toolchain:
+- Multiple saved subscriptions, provider metadata, and server selection.
+- Import of supported Hysteria2, VLESS, Trojan, Shadowsocks, and VMess links.
+- HTTPS subscriptions containing plain-text or base64-encoded URI lists.
+- VPN (TUN) mode by default, plus an optional local proxy mode.
+- Manual core selection, with each server showing its required core.
+- Application, domain, exact-domain, and IP/CIDR routing rules.
+- A searchable running-application picker and manual executable-name/path entry.
+- One-time server checks using ICMP, TCP, Via Proxy GET, or Via Proxy HEAD.
+- Optional live ICMP statistics in Settings: one sample slot per second, up to 30 samples.
+- Diagnostics for configuration validation, connection checks, and core logs.
+- Persistent settings and a single Windows storage root.
 
-```sh
-flutter doctor
+Support depends on the link's options and the implemented profile adapters, not only its protocol name. Unsupported entries in a multi-node subscription are skipped and counted; an entirely unsupported subscription fails to import. Arbitrary Clash YAML and full sing-box/Xray configuration imports are not currently supported.
+
+## Getting started on Windows
+
+For a published build, use the repository's Releases page and download `AORAConnect-windows-x64.exe`. If no package has been published, follow the build instructions below.
+
+1. Open the downloaded executable. It contains the application, both cores, native helpers, assets, and companion DLLs.
+2. On first launch, the package extracts into `%LOCALAPPDATA%\AORAConnect`. Later launches reuse the extracted files unless the package changes or essential files are missing.
+3. Approve the Windows administrator prompt. The current application requires elevation at startup for TUN mode.
+4. Open **Subscriptions**, add your subscription URL or supported server link, then choose a server on **Connection**.
+5. If that server requires a different core, select it in **Settings → Core**, then connect.
+
+No separate Flutter installation or manual core download is needed to use the packaged executable. Opening the app does not automatically start a VPN connection.
+
+Current locally built packages are unsigned. Do not disable Windows security protections to run an unfamiliar executable; use only a build whose source and origin you trust.
+
+Close the running application before opening a different package. Replace the downloaded launcher to update; settings remain separate from the application files. There is no automatic update system.
+
+### Connection modes
+
+- **VPN (TUN):** routes system traffic through a virtual network interface, subject to your routing rules.
+- **Local proxy:** listens on `127.0.0.1:17890`. Only applications explicitly configured to use that proxy send traffic through it; this mode does not configure a system proxy for you.
+
+Disconnect before changing the core, connection mode, or routing rules.
+
+### Routing
+
+One selector controls the entire list:
+
+| Mode | Listed applications and addresses | Everything else |
+| --- | --- | --- |
+| Through tunnel | VPN | Normal connection |
+| Bypassing tunnel | Normal connection | VPN |
+
+Routing is enabled by default with **Bypassing tunnel** selected. An empty list therefore keeps traffic through the VPN. Turning routing off also restores ordinary VPN routing.
+
+There is no Block routing action. Use TUN mode for system-wide application routing; local proxy rules only affect traffic sent to that proxy.
+
+### Kill Switch
+
+The setting named **Kill Switch** enables the selected core's connection-scoped DNS/TUN leak-protection options. It is enabled by default and applies in TUN mode.
+
+It is not a persistent internet lockout while disconnected. Its intended behavior is to protect the active tunnel session and allow normal internet access after disconnecting. Routing exceptions deliberately sent through the normal connection remain part of your routing policy. Verify the behavior with your network and both cores before relying on it.
+
+### Server checks and statistics
+
+The header's ping button checks the selected server when the server dropdown is closed, or all servers in the active subscription when it is open.
+
+Choose the global check method in **Settings → Server checks**. Proxy GET/HEAD checks measure an HTTP request through the selected node, not ICMP round-trip time. TCP checks cannot assess UDP-only nodes.
+
+Statistics is separate from that setting: it uses live ICMP while connected and is disabled by default. A server can reject ICMP even when its VPN service is available.
+
+## Storage and privacy
+
+The packaged Windows client uses one app-managed root:
+
+```text
+%LOCALAPPDATA%\AORAConnect\
+├── app\         Application, DLLs, assets, native helpers, license notices
+├── cores\       Bundled networking cores and their companion files
+├── settings\    app-state.json: settings, subscription links, routing rules
+└── runtime\     Generated connection, ping, and unpacking session files
 ```
 
-Run the desktop client on Windows from an ordinary terminal. This launcher
-requests UAC first and starts Flutter in the elevated terminal:
+The downloaded launcher stays wherever you save it.
 
-```sh
+Subscription links and settings are stored as **unencrypted JSON**. Generated core configurations can contain server credentials. Do not publish these files or include them in public issue reports.
+
+Runtime session folders are removed during normal cleanup. A crash or forced termination can leave files behind. Diagnostic logs and ping history are held in memory rather than a dedicated log archive.
+
+Older settings in `%APPDATA%\AORAVPN\app-state.json` migrate when the new settings file does not already exist. The old file is removed only after verifying its replacement; unrelated files and the old folder are left untouched.
+
+Network activity includes subscription requests to your provider, DNS resolution, and VPN traffic. Connection tests request `https://example.com/`; proxy server checks request `https://www.gstatic.com/generate_204`. These checks contact third-party services. Live ICMP statistics target the selected server.
+
+## Build from source
+
+### Prerequisites
+
+- Windows x64 for the current networking implementation and portable build.
+- Flutter with Dart satisfying the constraint in [pubspec.yaml](pubspec.yaml).
+- Visual Studio or Build Tools with the C++ desktop toolchain, Windows SDK, CMake, and x64 Visual C++ redistributable files.
+- PowerShell.
+- The core archives matching the versions configured in [lib/core/core_kind.dart](lib/core/core_kind.dart).
+
+Check your environment:
+
+```powershell
+flutter doctor
+flutter pub get
+```
+
+### Prepare the development cores
+
+The current configured versions are:
+
+| Core | Upstream release | Expected development folder |
+| --- | --- | --- |
+| sing-box | [1.14.2](https://github.com/SagerNet/sing-box/releases/tag/v1.14.2) | `cores/sing-box-1.14.2-windows-amd64/` |
+| Xray | [26.9.30](https://github.com/XTLS/Xray-core/releases/tag/v26.9.30) | `cores/xray-v26.9.30-windows-64/` |
+
+Download the Windows amd64/x64 archives from the linked upstream releases and extract their contents into those folders. Keep companion DLLs, data files, and license notices beside each executable. Xray 26.9.30 is marked as an upstream prerelease; review upstream release and security information before publishing packages.
+
+The `cores/` and `build/` directories are ignored by Git. Do not commit downloaded core binaries, real subscription URLs, credentials, or runtime configurations.
+
+### Run for development
+
+Run this command from the project directory:
+
+```powershell
 powershell -ExecutionPolicy Bypass -File .\tool\run_windows.ps1
 ```
 
-The Windows application requires administrator privileges from startup. Opening
-the executable normally lets Windows show its UAC prompt before the window
-appears. For Flutter debugging, run the terminal or IDE elevated before using
-`flutter run -d windows`; Flutter's direct process launch cannot display UAC.
-Administrator approval is controlled by Windows and is not a permanent grant
-for subsequent launches.
+The script requests elevation and runs Flutter. Alternatively, run `flutter run -d windows` from an elevated terminal or IDE.
 
-For development, extract the official sing-box 1.14.2 Windows amd64 archive into
-`cores/sing-box-1.14.2-windows-amd64/`, keeping its DLL and license beside the
-executable. For Xray, extract the official v26.9.30 Windows 64-bit archive into
-`cores/xray-v26.9.30-windows-64/`, keeping `wintun.dll`, `LICENSE`, and
-`LICENSE-Wintun` beside `xray.exe`. The `cores/` directory is ignored by Git.
-The Xray archive for this development checkout was verified against GitHub's
-SHA-256 digest `b17a619343c11b89d8faf36278298856749b15c52277d875d32051b33dcda617`.
-This Xray release is tagged as a prerelease; it was chosen because the latest
-non-prerelease is affected by the upstream certificate-pinning advisory. Recheck
-upstream security status before any release.
+Development builds resolve core binaries from the project directory. Windows release builds use the unified app storage root instead.
 
-Open the compact Add subscription row, paste an HTTPS subscription URL, press
-Add, select a server, and press Connect. The Subscriptions page lists each
-imported node and its required core. Select sing-box or Xray manually in
-Settings; this choice is saved. If
-the selected node needs another core, Connect stays unavailable until the
-matching core is selected. VPN (TUN) creates the Windows tunnel with IPv4/IPv6 automatic
-routing and tunneled DNS. The server address is resolved before TUN starts to
-avoid DNS bootstrap loops; TLS still uses the original server name.
+### Build the single executable
 
-Local proxy mode listens on `127.0.0.1:17890` and leaves system routing unchanged.
-Mode and server selection are disabled while connected. Connect checks
-`https://example.com/` using the selected mode and stops the core if the check
-fails. Test connection repeats that check. Validate checks the configuration.
-The Connection page also has Statistics: while connected it sends ICMP echo
-requests to the selected server every five seconds, showing the last 30 results
-and missed replies as gaps. One-time checks are beside the main server selector:
-the button checks all nodes in the active subscription, showing each node's
-required core and result in the dropdown and on the Subscriptions page. Checks
-can be cancelled and results update progressively. Dropdown rows build lazily.
-Settings saves a global server ping method: ICMP, TCP, Via Proxy GET (default),
-or Via Proxy HEAD. Statistics remains an independent live ICMP graph.
-Proxy checks share one isolated local proxy session per required core,
-bound to the physical network, and request `https://www.gstatic.com/generate_204`.
-The measured time runs from request initiation to response headers, excluding
-local core startup. Each node has its own loopback inbound routed to its own
-outbound. A scan starts at most two core sessions (one sing-box and one Xray)
-and runs up to 32 requests or direct probes concurrently. DNS and physical-source
-lookups are shared for nodes on the same host. Malformed configurations are
-isolated if the core rejects the group. Changing subscriptions or ping method cancels stale checks and clears
-their results. TCP checks are unavailable for UDP-only Hysteria/TUIC nodes.
-The Windows build includes `aoravpn_server_ping.exe` for IPv4/IPv6 ICMP round-trip
-measurements. A server may block ICMP while its VPN service works normally;
-missing replies are not proof of a failed VPN connection.
-Ping requests are bound to the source address of the physical internet adapter
-so the TUN stack cannot substitute a local echo response for server latency.
-Statistics shows the resolved target IP. `tool/verify_ping_route.ps1 -ConfigPath
-<existing-runtime-config>` compares default-route and physical-source ping in a
-controlled elevated sing-box TUN session and closes its core afterward.
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tool\build_portable.ps1
+```
 
-Leak protection is enabled by default in VPN (TUN) mode and belongs to the active
-core session. sing-box uses `strict_route`; Xray uses `autoSystemWfpBlockLeak`
-with `dns` and `misconfigtun`. These options protect the cores' documented DNS
-and TUN routing cases; they do not install a persistent disconnected lockout.
-The setting is saved as `connectionLeakProtectionEnabled`, independently of the
-old Kill Switch setting. The Windows build retains `aoravpn_kill_switch.exe`
-only to remove persistent rules left by older builds before loading subscriptions
-or starting a connection. The old helper's `arm` command remains disabled.
+Output:
 
-The Routing bottom tab stores applications and addresses shared by both cores.
-One mode applies to the whole list: Through tunnel sends listed items through
-the selected VPN server and everything else directly; Bypassing tunnel sends
-listed items directly and everything else through the selected VPN server.
-Routing has no blocking action. Older saved per-rule actions, including Block,
-are discarded when loaded; their applications/addresses are retained. Routing
-starts ON with Bypassing tunnel selected for new settings, so an empty list
-keeps all traffic through the VPN; turning it OFF restores ordinary VPN routing.
-The application rule editor includes a searchable running-process picker on
-desktop, as well as manual process-name or executable-path entry.
-Disconnect before editing rules; changes regenerate and validate the selected
-profile's configuration. Use TUN mode to capture system traffic. Routing in
-proxy mode only applies to traffic sent to the local proxy. Application paths
-are normalized for the selected core, and Xray enables routing-only sniffing
-for domain matching. sing-box DNS rules follow the list mode for domain and
-application matches, with the opposite DNS route as the fallback.
-Core configuration checks do not replace live tests of
-process identification and domain detection on the user's system.
-If the UI cannot open, run `aoravpn_kill_switch.exe disarm` from an elevated
-terminal in the built application's directory to remove its rules.
+```text
+build/portable/AORAConnect-windows-x64.exe
+```
 
-The importer supports plain or base64 URI lists. It routes VLESS TLS/gRPC
-links with a `pcs` full-certificate SHA-256 pin to Xray without disabling TLS
-verification. Unsupported URI parameters and subscription formats are rejected
-explicitly. Xray support does not yet cover every Xray protocol or every
-subscription encoding; additional profile adapters can be added separately.
+To package an existing release build, add `-SkipFlutterBuild`. The script prints the executable's SHA-256 hash.
 
-URLs are entered at runtime and are not saved in the repository. Generated
-credential-bearing configs are stored in a private runtime session directory and
-removed on normal session cleanup. Abrupt termination can leave temporary files.
-The current proxy mode does not change system routing. The Windows application
-requires administrator rights at startup for default TUN mode.
+Distribute the packaged executable, **not** the raw `aoravpn.exe` from the Flutter build folder. The portable package includes the Flutter bundle, both cores, native helpers, and app-local C++ runtime DLLs.
 
-For a command-line connection check, run `dart run tool/check_connection.dart`
-from the project directory and enter the subscription URL on stdin. The tool
-stops the core and deletes its temporary configuration when it finishes.
-Use `--tun` from an administrator terminal for the system-wide test, or
-`--tun --validate-only` to check the generated config without changing routing.
+To check extraction without launching the app or starting a VPN:
 
-The Windows runner places its process and children in a kill-on-close Job
-Object, so exiting the application also terminates the core. The bundled
-`aoravpn_core_host.exe` launches the selected core in a private console and forwards its
-logs. Stop sends CTRL_BREAK to the core and waits for it to close its tunnel,
-routes, and DNS resources. The host uses forced termination only if graceful
-shutdown exceeds eight seconds. TUN cannot start without this helper.
+```powershell
+.\build\portable\AORAConnect-windows-x64.exe --extract-only
+```
 
-Windows writable storage has one root: `%LOCALAPPDATA%/AORAConnect`.
-Settings and subscriptions are in `settings/app-state.json`; generated connection
-and proxy-ping configs are in `runtime/profile-*` and `runtime/ping-*` respectively.
-Existing `%APPDATA%/AORAVPN/app-state.json` is validated and migrated on first read
-when no new settings file exists. Only the old settings file is removed after
-the replacement is verified; unrelated files and the old folder are retained.
-Session folders are removed during normal cleanup; abrupt exit can leave them.
-Linux uses `${XDG_CONFIG_HOME:-$HOME/.config}/AORAConnect`, and Android uses its
-private files directory, with the same settings/runtime separation.
-Windows release builds resolve core paths under `AORAConnect/cores`, while
-development builds still use the project directory. The launcher places
-the app, DLLs, assets and helpers under `AORAConnect/app`. The portable
-Windows launcher now implements this packaging. Linux/Android engine implementations remain
-future work. The
-current Xray integration has been checked with Xray's `run -test` for TUN and
-proxy configuration, and a local proxy process lifecycle test. A real elevated
-TUN connection to a provider still needs end-to-end testing.
+### Checks
 
-Run static analysis and tests:
-
-```sh
+```powershell
 flutter analyze
 flutter test
 ```
 
-## Windows portable build
+Some core integration tests require the development binaries to be present. Automated configuration validation and proxy tests do not replace real TUN, DNS/IPv6, split-routing, disconnect, crash-recovery, and clean-machine tests.
 
-Run `powershell -ExecutionPolicy Bypass -File tool/build_portable.ps1` from the
-project directory with Flutter on PATH and the two development cores present.
-Use `-SkipFlutterBuild` to package an existing release build. The result is
-`build/portable/AORAConnect-windows-x64.exe`; distribute this file, not the raw
-Flutter runner executable. The package includes both cores, their companion
-DLLs and notices, Flutter assets, native helpers and app-local Visual C++ runtime
-DLLs. Review the included dependency licenses before public distribution.
+## Source layout
 
-The launcher unpacks into `%LOCALAPPDATA%/AORAConnect/app` and `cores`, keeping
-`settings` untouched. It uses a temporary `runtime/package-*` staging folder
-under the same root and removes that folder after extraction. A package hash
-marker avoids repeating extraction on subsequent runs; a different package or
-missing essential files triggers extraction again. Close the running app before
-opening a different package. Launching the application requests Windows UAC
-approval for TUN; it does not automatically connect to a VPN.
+```text
+lib/
+├── components/     Shared controls and dialogs
+├── controllers/    Connection, server checks, and statistics state
+├── core/           Core processes, network checks, and connection modes
+├── pages/          Connection, Subscriptions, Routing, and Settings
+├── profiles/       Link parsing and core configuration generation
+├── routing/        Shared routing policy and core adapters
+├── storage/        App paths, settings, and migration
+└── theme/          Global palette and widget styles
 
-`AORAConnect-windows-x64.exe --extract-only` tests unpacking without starting the
-app, requesting elevation, or changing network routing. The current package is
-unsigned; clean-machine launch and live connection checks remain manual tests.
+windows/runner/     Windows runner and native helpers
+tool/               Development and packaging tools
+test/               Automated tests
+```
 
-## License
+For visual changes, start with [lib/theme/app_colors.dart](lib/theme/app_colors.dart) and [lib/theme/app_theme.dart](lib/theme/app_theme.dart).
 
-AORA VPN is licensed under the GNU General Public License, version 3 or any
-later version. See [LICENSE](LICENSE).
+## Contributing and reporting issues
 
-sing-box is a separate upstream project distributed under its own
-GPL-3.0-or-later terms and copyright notices. This project is not affiliated
-with or endorsed by SagerNet or the sing-box project.
+Bug reports and focused contributions are welcome. Include the app/core versions, Windows version, connection mode, steps to reproduce, and sanitized diagnostic output.
 
-Xray-core is a separate upstream project under MPL-2.0. The prebuilt
-`wintun.dll` in its Windows release has a separate, restrictive binary license;
-do not treat that DLL as part of this project's open-source code or redistribute
-it without reviewing its included `LICENSE-Wintun` terms. All development core
-binaries remain ignored by Git.
+Remove subscription tokens, server credentials, personal paths, and other private information before posting. Do not submit live credentials as reproduction examples. Report potential security issues privately to the maintainer rather than disclosing credentials or exploit details in a public issue.
+
+## License and third-party components
+
+AORA Connect's source is licensed under **GPL-3.0-or-later**. See [LICENSE](LICENSE).
+
+Bundled cores, DLLs, assets, and runtime components retain their own licenses and notices; the application's license does not replace them. In particular, the Xray archive includes a separate `LICENSE-Wintun` for its prebuilt `wintun.dll`.
+
+Review all dependency terms and applicable source-distribution requirements before publishing binary packages. Include the relevant notices with redistributed components.
+
+AORA Connect is an independent client and is not affiliated with or endorsed by the upstream core projects.
