@@ -19,7 +19,8 @@ The application and portable Windows package can be built from source. Clean-mac
 
 ## Features
 
-- Multiple saved subscriptions, provider metadata, and server selection.
+- Multiple saved subscriptions with provider descriptions, Website/Support links, and server selection.
+- Subscription cards showing the last successful update, expiry date, and days remaining when supplied by the provider.
 - Import of supported Hysteria2, VLESS, Trojan, Shadowsocks, and VMess links.
 - HTTPS subscriptions containing plain-text or base64-encoded URI lists.
 - VPN (TUN) mode by default, plus an optional local proxy mode.
@@ -31,6 +32,7 @@ The application and portable Windows package can be built from source. Clean-mac
 - Optional live ICMP statistics in Settings: one sample slot per second, up to 30 samples.
 - Diagnostics for configuration validation, connection checks, and core logs.
 - Persistent settings and a single Windows storage root.
+- Custom Windows header, circular app icon, and tray controls.
 
 Support depends on the link's options and the implemented profile adapters, not only its protocol name. Unsupported entries in a multi-node subscription are skipped and counted; an entirely unsupported subscription fails to import. Arbitrary Clash YAML and full sing-box/Xray configuration imports are not currently supported.
 
@@ -52,8 +54,9 @@ Current locally built packages are unsigned. Do not disable Windows security pro
 
 Windows uses an app-designed header instead of the native title bar. Drag the
 logo/title area to move the fixed-size window. The header buttons are ordered
-Settings, Hide to tray, and Close app. The reusable morphing-menu component
-remains in the source tree but is not shown in the app header.
+Settings, Hide to tray, and Close app. The app logo appears beside the title on
+every page. The bottom navigation opens Connection, Subscriptions, and Routing;
+Settings opens from the header.
 **Hide to tray** keeps the app
 and its connection running; click the tray icon to reopen it. Right-click the
 icon for **Show AORA Connect**, **Disconnect**, or **Exit**. Disconnect is enabled
@@ -62,6 +65,26 @@ ping/core cleanup before closing the window. The app stays visible if adding
 the tray icon fails, and attempts to restore it after Explorer restarts.
 
 Close the running application before opening a different package. Replace the downloaded launcher to update; settings remain separate from the application files. There is no automatic update system.
+
+### Subscriptions
+
+Use the saved-subscription selector to switch providers. Each subscription has
+its own server selection, last update time, and expiry information. The two
+cards above the provider description show **Last updated** and **Expires**.
+Dates use `DD.MM.YYYY` in your local time; the expiry card also shows days left
+or **Expired**. If the provider does not supply a usable expiry date, it shows
+**Not provided**.
+
+Expiry is read from the provider's `subscription-userinfo` metadata (`expire`
+in Unix seconds), either in the HTTP response headers or URI-list comments.
+The last update records a successful subscription fetch; switching to an
+already loaded subscription does not reset it. Failed refreshes keep the
+previous dates, and both dates are saved with the subscription.
+
+Refresh the active subscription from Connection or Subscriptions. If the VPN
+is connected, clicking Refresh shows a dismissible notification asking you to
+disconnect first. Provider descriptions and Website/Support buttons appear
+below the timing cards; links are enabled when the provider supplies them.
 
 ### Connection modes
 
@@ -117,7 +140,7 @@ The packaged Windows client uses one app-managed root:
 %LOCALAPPDATA%\AORAConnect\
 ├── app\         Application, DLLs, assets, native helpers, license notices
 ├── cores\       Bundled networking cores and their companion files
-├── settings\    app-state.json: settings, subscription links, routing rules
+├── settings\    app-state.json: settings, subscription links/dates, routing rules
 └── runtime\     Generated connection, ping, and unpacking session files
 ```
 
@@ -204,6 +227,11 @@ flutter test
 ```
 
 Some core integration tests require the development binaries to be present. Automated configuration validation and proxy tests do not replace real TUN, DNS/IPv6, split-routing, disconnect, crash-recovery, and clean-machine tests.
+
+Routing checks include actual local-proxy startup of both bundled cores with
+application, domain, and IP rules in both routing directions. These checks do
+not change system routes or start a system-wide VPN. Startup failures include
+the core's diagnostic output so an exit code alone does not hide the cause.
 
 ## Source layout
 
