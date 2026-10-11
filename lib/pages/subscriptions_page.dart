@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../components/app_select.dart';
 import '../components/compact_outline_icon_button.dart';
 import '../components/subscription_refresh_button.dart';
+import '../components/subscription_timing.dart';
 import '../components/subscription_input.dart';
 import '../components/server_node_details.dart';
 import '../controllers/node_ping_controller.dart';
@@ -106,7 +107,7 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
                   'Saved subscriptions',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 if (subscriptions.isEmpty)
                   const Text(
                     'No subscriptions yet. Add a link above to get started.',
@@ -253,7 +254,7 @@ class _SavedSubscriptionSelector extends StatelessWidget {
                 }
               : null,
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
@@ -279,9 +280,17 @@ class _SavedSubscriptionSelector extends StatelessWidget {
             ),
           ],
         ),
-        if (details?.description != null)
+        if (active != null)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
+            child: SubscriptionTiming(
+              updatedAt: active.updatedAt,
+              expiresAt: active.expiresAt,
+            ),
+          ),
+        if (details?.description != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(

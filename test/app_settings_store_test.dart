@@ -75,9 +75,18 @@ void main() {
     addTearDown(() => directory.delete(recursive: true));
     final store = FileAppSettingsStore(directory: directory);
     const url = 'https://provider.example/sub/private-token';
+    final updated = DateTime.utc(2026, 10, 11, 12, 30);
+    final expiry = DateTime.utc(2027, 5, 7);
     await store.write(
-      const AppSettingsData(
-        subscriptions: [SavedSubscription(url, selectedServerKey: 'server-2')],
+      AppSettingsData(
+        subscriptions: [
+          SavedSubscription(
+            url,
+            selectedServerKey: 'server-2',
+            updatedAt: updated,
+            expiresAt: expiry,
+          ),
+        ],
         activeSubscriptionUrl: url,
         mode: ConnectionMode.proxy,
         core: CoreKind.xray,
@@ -89,6 +98,8 @@ void main() {
     final restored = await store.read();
     expect(restored.subscriptions.single.url, url);
     expect(restored.subscriptions.single.selectedServerKey, 'server-2');
+    expect(restored.subscriptions.single.updatedAt, updated);
+    expect(restored.subscriptions.single.expiresAt, expiry);
     expect(restored.activeSubscriptionUrl, url);
     expect(restored.mode, ConnectionMode.proxy);
     expect(restored.core, CoreKind.xray);

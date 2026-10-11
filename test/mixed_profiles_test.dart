@@ -51,11 +51,13 @@ void main() {
 
   test('Reads subscription announcements and links from body metadata', () {
     final message = base64.encode(utf8.encode('Your subscription is active'));
+    final expiry = DateTime.utc(2027, 5, 7);
     final body = [
       '#profile-title: Example VPN',
       '#announce: base64:$message',
       '#support-url: https://example.com/support',
       '#profile-web-page-url: https://example.com/account',
+      '#subscription-userinfo: upload=0; download=100; total=1000; expire=${expiry.millisecondsSinceEpoch ~/ 1000}',
       links.first,
     ].join('\n');
     for (final source in [body, base64.encode(utf8.encode(body))]) {
@@ -66,7 +68,25 @@ void main() {
       expect(result.description, 'Your subscription is active');
       expect(result.supportUrl, 'https://example.com/support');
       expect(result.webPageUrl, 'https://example.com/account');
+      expect(result.expiresAt, expiry);
     }
+  });
+
+  test('Missing or invalid subscription expiry stays unknown', () {
+    for (final value in [
+      null,
+      '',
+      'expire=0',
+      'expire=-1',
+      'expire=invalid',
+      'expire=999999999999999999999',
+    ]) {
+      expect(subscriptionExpiry(value), isNull);
+    }
+    expect(
+      subscriptionExpiry(' upload=10; EXPIRE = 1809648000 ; total=20'),
+      DateTime.utc(2027, 5, 7),
+    );
   });
 
   test('Connection leak protection follows the TUN setting for both cores', () {

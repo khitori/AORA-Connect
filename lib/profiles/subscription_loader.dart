@@ -14,6 +14,7 @@ class SubscriptionLoadResult {
     this.description,
     this.webPageUrl,
     this.supportUrl,
+    this.expiresAt,
   });
 
   final List<ServerProfile> profiles;
@@ -22,6 +23,20 @@ class SubscriptionLoadResult {
   final String? description;
   final String? webPageUrl;
   final String? supportUrl;
+  final DateTime? expiresAt;
+}
+
+/// Providers commonly publish expiry as Unix seconds in subscription-userinfo.
+/// Missing, zero, or malformed values do not establish an expiry date.
+DateTime? subscriptionExpiry(String? userInfo) {
+  if (userInfo == null) return null;
+  final match = RegExp(
+    r'(?:^|;)\s*expire\s*=\s*(\d+)\s*(?:;|$)',
+    caseSensitive: false,
+  ).firstMatch(userInfo);
+  final seconds = int.tryParse(match?.group(1) ?? '');
+  if (seconds == null || seconds <= 0 || seconds > 253402300799) return null;
+  return DateTime.fromMillisecondsSinceEpoch(seconds * 1000, isUtc: true);
 }
 
 SubscriptionLoadResult parseSubscriptionDetailed(String body) {
@@ -85,6 +100,7 @@ SubscriptionLoadResult parseSubscriptionDetailed(String body) {
     supportUrl: subscriptionPageUrl(
       metadata['support-url'] ?? metadata['profile-support-url'],
     ),
+    expiresAt: subscriptionExpiry(metadata['subscription-userinfo']),
   );
 }
 
@@ -145,6 +161,9 @@ Future<SubscriptionLoadResult> loadSubscriptionDetailed(String url) async {
                 response.headers.value('support-url'),
           ) ??
           parsed.supportUrl,
+      expiresAt:
+          subscriptionExpiry(response.headers.value('subscription-userinfo')) ??
+          parsed.expiresAt,
     );
   } on IOException {
     throw StateError(

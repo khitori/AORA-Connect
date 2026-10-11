@@ -12,10 +12,17 @@ import '../profiles/subscription_loader.dart';
 import '../routing/routing_policy.dart';
 
 class SavedSubscription {
-  const SavedSubscription(this.url, {this.selectedServerKey});
+  const SavedSubscription(
+    this.url, {
+    this.selectedServerKey,
+    this.updatedAt,
+    this.expiresAt,
+  });
 
   final String url;
   final String? selectedServerKey;
+  final DateTime? updatedAt;
+  final DateTime? expiresAt;
 
   String get label {
     return url.startsWith('https://')
@@ -23,12 +30,28 @@ class SavedSubscription {
         : parseSubscription(url).first.name;
   }
 
-  SavedSubscription withSelectedServer(String? key) =>
-      SavedSubscription(url, selectedServerKey: key);
+  SavedSubscription withSelectedServer(String? key) => SavedSubscription(
+    url,
+    selectedServerKey: key,
+    updatedAt: updatedAt,
+    expiresAt: expiresAt,
+  );
+
+  SavedSubscription withRefresh({
+    required DateTime updatedAt,
+    DateTime? expiresAt,
+  }) => SavedSubscription(
+    url,
+    selectedServerKey: selectedServerKey,
+    updatedAt: updatedAt,
+    expiresAt: expiresAt,
+  );
 
   Map<String, Object?> toJson() => {
     'url': url,
     'selectedServerKey': selectedServerKey,
+    'updatedAt': updatedAt?.toUtc().toIso8601String(),
+    'expiresAt': expiresAt?.toUtc().toIso8601String(),
   };
 }
 
@@ -82,6 +105,12 @@ class AppSettingsData {
           url,
           selectedServerKey: item['selectedServerKey'] is String
               ? item['selectedServerKey'] as String
+              : null,
+          updatedAt: item['updatedAt'] is String
+              ? DateTime.tryParse(item['updatedAt'] as String)
+              : null,
+          expiresAt: item['expiresAt'] is String
+              ? DateTime.tryParse(item['expiresAt'] as String)
               : null,
         ),
       );

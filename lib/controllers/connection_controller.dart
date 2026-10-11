@@ -268,6 +268,7 @@ class ConnectionController extends ChangeNotifier {
       _changed();
       if (_activeSubscriptionUrl != null) {
         await _activate(_activeSubscriptionUrl!, refresh: true);
+        await _persist();
       }
     }, errorScope: ConnectionErrorScope.subscriptions);
   }
@@ -277,6 +278,7 @@ class ConnectionController extends ChangeNotifier {
   Future<void> addSubscription(String url) => _perform(() async {
     final normalized = url.trim();
     final result = await _subscriptionLoader(normalized);
+    final updatedAt = DateTime.now();
     final profiles = result.profiles;
     final existing = _subscriptions.where((entry) => entry.url == normalized);
     final entry = existing.isEmpty
@@ -288,7 +290,9 @@ class ConnectionController extends ChangeNotifier {
     _subscriptions = [
       for (final current in _subscriptions)
         if (current.url == normalized)
-          current.withSelectedServer(_serverKey(chosen))
+          current
+              .withRefresh(updatedAt: updatedAt, expiresAt: result.expiresAt)
+              .withSelectedServer(_serverKey(chosen))
         else
           current,
     ];
@@ -300,9 +304,9 @@ class ConnectionController extends ChangeNotifier {
 
   Future<void> _activate(String url, {bool refresh = false}) async {
     final entry = _subscriptions.firstWhere((value) => value.url == url);
-    final result = refresh || !_profileCache.containsKey(url)
-        ? await _subscriptionLoader(url)
-        : _profileCache[url]!;
+    final fetch = refresh || !_profileCache.containsKey(url);
+    final result = fetch ? await _subscriptionLoader(url) : _profileCache[url]!;
+    final updatedAt = DateTime.now();
     final profiles = result.profiles;
     final chosen = _preferredProfile(entry, profiles);
     await _selectProfile(chosen);
@@ -312,7 +316,13 @@ class ConnectionController extends ChangeNotifier {
     _subscriptions = [
       for (final current in _subscriptions)
         if (current.url == url)
-          current.withSelectedServer(_serverKey(chosen))
+          (fetch
+                  ? current.withRefresh(
+                      updatedAt: updatedAt,
+                      expiresAt: result.expiresAt,
+                    )
+                  : current)
+              .withSelectedServer(_serverKey(chosen))
         else
           current,
     ];
@@ -333,6 +343,17 @@ class ConnectionController extends ChangeNotifier {
     } else {
       if (!_subscriptions.any((entry) => entry.url == url)) return;
       _profileCache[url] = await _subscriptionLoader(url);
+      _subscriptions = [
+        for (final current in _subscriptions)
+          if (current.url == url)
+            current.withRefresh(
+              updatedAt: DateTime.now(),
+              expiresAt: _profileCache[url]!.expiresAt,
+            )
+          else
+            current,
+      ];
+      await _persist();
     }
   }, errorScope: errorScope);
 

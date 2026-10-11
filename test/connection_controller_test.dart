@@ -97,6 +97,55 @@ class MemoryKillSwitch implements KillSwitch {
 }
 
 void main() {
+  test(
+    'Subscription timing changes only after a successful fetch and is saved',
+    () async {
+      final engine = ControlledEngine();
+      final store = MemorySettingsStore();
+      var rejectFetch = false;
+      var expiry = DateTime.utc(2027, 5, 7);
+      final controller = ConnectionController(
+        engine: engine,
+        settingsStore: store,
+        subscriptionLoader: (_) async {
+          if (rejectFetch) throw StateError('Offline');
+          return SubscriptionLoadResult(
+            profiles: [
+              HysteriaProfile(
+                name: 'Server',
+                server: '127.0.0.1',
+                port: 443,
+                password: 'secret',
+                serverName: 'example.com',
+              ),
+            ],
+            expiresAt: expiry,
+          );
+        },
+      );
+      addTearDown(() async {
+        await controller.shutdown();
+        controller.dispose();
+      });
+      const url = 'https://example.com/sub';
+      await controller.addSubscription(url);
+      final first = controller.subscriptions.single;
+      expect(first.updatedAt, isNotNull);
+      expect(first.expiresAt, expiry);
+      expect(store.data.subscriptions.single.updatedAt, first.updatedAt);
+      await controller.activateSubscription(url);
+      expect(controller.subscriptions.single.updatedAt, first.updatedAt);
+      rejectFetch = true;
+      await controller.refreshSubscription(url);
+      expect(controller.subscriptions.single.updatedAt, first.updatedAt);
+      expect(controller.subscriptions.single.expiresAt, expiry);
+      rejectFetch = false;
+      expiry = DateTime.utc(2028, 1, 1);
+      await controller.refreshSubscription(url);
+      expect(controller.subscriptions.single.expiresAt, expiry);
+      expect(store.data.subscriptions.single.expiresAt, expiry);
+    },
+  );
   testWidgets(
     'Settings DNS selector saves a choice and is disabled while connected',
     (tester) async {
