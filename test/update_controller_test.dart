@@ -32,14 +32,14 @@ void main() {
     final source = await File('${root.path}/download.exe')
         .writeAsString('test fixture');
     var verified = true;
-    var nextVersion = '1.0.0+2';
+      var nextVersion = '1.0.4+2';
     var verifications = 0;
     final controller = UpdateController(
       helperPath: helper.path,
       preferencesDirectory: Directory('${root.path}/settings'),
       sessionCreator: () => root.createTemp('update-'),
       verifier: (command, path) async {
-        if (command == 'info') return {'version': '1.0.0+1'};
+          if (command == 'info') return {'version': '1.0.4+1'};
         verifications++;
         if (!verified) throw StateError('Invalid signature');
         return {
@@ -52,9 +52,10 @@ void main() {
       },
     );
     await controller.initialize(checkAutomatically: false);
+      expect(controller.displayVersion, '1.0.4');
     await controller.importFile(source.path);
     expect(controller.package, isNotNull);
-    expect(controller.release!.version, '1.0.0+2');
+      expect(controller.release!.version, '1.0.4+2');
     var launched = false;
     await controller.install(
       canInstall: () => false,
@@ -74,10 +75,10 @@ void main() {
     expect(launched, isFalse);
     expect(controller.error, contains('Invalid signature'));
     verified = true;
-    nextVersion = '1.0.0+1';
+      nextVersion = '1.0.4+1';
     await controller.importFile(source.path);
     expect(controller.error, contains('newer'));
-    nextVersion = '1.0.0+2';
+      nextVersion = '1.0.4+2';
     await controller.importFile(source.path);
     await controller.install(
       canInstall: () => true,

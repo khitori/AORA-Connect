@@ -5,6 +5,9 @@
 #ifndef AppVersion
   #error AppVersion is required
 #endif
+#ifndef BuildVersion
+  #define BuildVersion AppVersion
+#endif
 #ifndef OutputPath
   #define OutputPath "..\build\installer"
 #endif
@@ -13,6 +16,7 @@
 AppId={{C9DE0FA9-DB41-4D08-B236-D7747D54C844}
 AppName=AORA Connect
 AppVersion={#AppVersion}
+VersionInfoVersion={#BuildVersion}
 AppPublisher=AORA Connect
 AppPublisherURL=https://github.com/khitori/AORA-Connect
 DefaultDirName={localappdata}\AORAConnect
@@ -76,7 +80,7 @@ begin
     Result := 'AORA Connect uses its existing local application folder. A custom installation folder is not supported.';
 #endif
   if LoadStringFromFile(ExpandConstant('{app}\installed-version.txt'), Existing) then
-    if StrToVersion(Trim(Existing), OldVersion) and StrToVersion('{#AppVersion}', NewVersion) then
+    if StrToVersion(Trim(Existing), OldVersion) and StrToVersion('{#BuildVersion}', NewVersion) then
       if ComparePackedVersion(OldVersion, NewVersion) > 0 then
         Result := 'A newer version is already installed. Downgrading would risk compatibility with your saved settings.';
 end;
@@ -84,7 +88,7 @@ end;
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
-    SaveStringToFile(ExpandConstant('{app}\installed-version.txt'), '{#AppVersion}', False);
+    SaveStringToFile(ExpandConstant('{app}\installed-version.txt'), '{#BuildVersion}', False);
 end;
 
 function InitializeUninstall(): Boolean;

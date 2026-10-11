@@ -13,6 +13,7 @@ class AppExpansionCard extends StatelessWidget {
     required this.children,
     this.titleAction,
     this.initiallyExpanded = false,
+    this.contentTopPadding = AppTheme.sectionContentTopPadding,
   });
 
   final String title;
@@ -21,6 +22,7 @@ class AppExpansionCard extends StatelessWidget {
   final List<Widget> children;
   final Widget? titleAction;
   final bool initiallyExpanded;
+  final double contentTopPadding;
 
   @override
   Widget build(BuildContext context) => Material(
@@ -75,7 +77,7 @@ class AppExpansionCard extends StatelessWidget {
         ),
         children: [
           Divider(height: 1, color: AppColors.line),
-          const SizedBox(height: 12),
+          SizedBox(height: contentTopPadding),
           ...children,
         ],
       ),

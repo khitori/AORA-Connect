@@ -18,18 +18,19 @@ try {
   $version = ((Get-Content pubspec.yaml | Where-Object { $_ -match '^version:' }) -replace '^version:\s*', '').Trim()
   if ($version -notmatch '^\d+\.\d+\.\d+\+\d+$') { throw 'Set version to major.minor.patch+build in pubspec.yaml.' }
   $installerVersion = $version -replace '\+', '.'
+  $releaseVersion = $version.Split('+')[0]
   $output = Join-Path $project 'build/installer'
-  & $compilerPath "/DStageDir=$stage" "/DAppVersion=$installerVersion" "/DOutputPath=$output" 'installer/aora.iss'
+  & $compilerPath "/DStageDir=$stage" "/DAppVersion=$releaseVersion" "/DBuildVersion=$installerVersion" "/DOutputPath=$output" 'installer/aora.iss'
   if ($LASTEXITCODE -ne 0) { throw 'Installer compilation failed.' }
   $oldNotes = $env:AORA_RELEASE_NOTES
   $env:AORA_RELEASE_NOTES = $ReleaseNotes
   try {
-    $url = 'https://github.com/khitori/AORA-Connect/releases/download/v' + $version + '/AORAConnect-Setup.exe'
+    $url = 'https://github.com/khitori/AORA-Connect/releases/download/v' + $releaseVersion + '/AORAConnect-Setup.exe'
     & dart run tool/sign_release.dart sign $SigningKey (Join-Path $output 'AORAConnect-Setup.exe') $version $url
     if ($LASTEXITCODE -ne 0) { throw 'Installer signing failed.' }
   } finally { $env:AORA_RELEASE_NOTES = $oldNotes }
   $verification = Start-Process -FilePath (Join-Path $stage 'app/aoravpn_update.exe') -ArgumentList 'verify-package',('"' + (Join-Path $output 'AORAConnect-Setup.exe') + '"') -NoNewWindow -Wait -PassThru -RedirectStandardOutput (Join-Path $output 'verification.json') -RedirectStandardError (Join-Path $output 'verification-errors.txt')
   if ($verification.ExitCode -ne 0) { throw 'Signed installer verification failed; inspect verification-errors.txt.' }
   Get-FileHash -LiteralPath (Join-Path $output 'AORAConnect-Setup.exe') -Algorithm SHA256
-  Write-Output "Publish AORAConnect-Setup.exe and aora-update.json to GitHub release v$version."
+  Write-Output "Publish AORAConnect-Setup.exe and aora-update.json to GitHub release v$releaseVersion."
 } finally { Pop-Location }

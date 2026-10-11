@@ -5,16 +5,20 @@ import '../theme/app_colors.dart';
 
 /// Shared borderless toggle with an equally sized thumb in both states.
 class AppToggle extends StatefulWidget {
+  static const compactVerticalPadding = 5.0;
+
   const AppToggle({
     super.key,
     required this.value,
     required this.onChanged,
     this.semanticLabel,
+    this.compact = false,
   });
 
   final bool value;
   final ValueChanged<bool>? onChanged;
   final String? semanticLabel;
+  final bool compact;
 
   @override
   State<AppToggle> createState() => _AppToggleState();
@@ -54,8 +58,13 @@ class _AppToggleState extends State<AppToggle> {
             onFocusChange: (value) => setState(() => _focused = value),
             onHighlightChanged: (value) => setState(() => _pressed = value),
             child: Padding(
-              // A compact visible track inside a 48x48 touch/focus target.
-              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 11),
+              // Keep the visible track unchanged in compact desktop rows.
+              padding: EdgeInsets.symmetric(
+                horizontal: 2,
+                vertical: widget.compact
+                    ? AppToggle.compactVerticalPadding
+                    : 11,
+              ),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 curve: Curves.easeOutCubic,

@@ -66,15 +66,18 @@ Use `-SigningKey C:/Private/AORA/release-private.json` for a custom key location
 `-SkipBuild` reuses the most recent complete portable staging bundle. Rebuild
 after changing source or the version; the script verifies the finished package.
 
-4. Create a GitHub release with tag **`v<version+build>`**, for example
-   `v1.0.1+2`, and attach both files from `build/installer/`:
+4. Create a GitHub release with tag **`v<major.minor.patch>`**, for example
+   `v1.0.4`, and attach both files from `build/installer/`:
 
    - `AORAConnect-Setup.exe`
    - `aora-update.json`
 
 The build script generates and signs the JSON automatically, including the
 version, installer URL, SHA-256, byte length, and release notes. No JSON editing
-is needed. GitHub's `releases/latest/download/aora-update.json` endpoint serves
+is needed. The public version is `1.0.4`; `+1` in `pubspec.yaml` is an internal
+build number used for update ordering. The installer and app display the public
+version, while Windows file-version resources retain a numeric build component.
+GitHub's `releases/latest/download/aora-update.json` endpoint serves
 the stable channel; prereleases are not part of that endpoint. Do not publish
 unfinished builds to the stable channel.
 

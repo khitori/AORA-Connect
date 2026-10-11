@@ -7,6 +7,7 @@ import 'app_colors.dart';
 abstract final class AppTheme {
   static const controlRadius = 12.0;
   static const controlHeight = 36.0;
+  static const sectionContentTopPadding = 12.0;
 
   static Color get selectedSurface => AppColors.ink.withValues(alpha: 0.06);
 

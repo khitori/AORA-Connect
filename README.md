@@ -240,7 +240,12 @@ Distribute the packaged executable, **not** the raw `aoravpn.exe` from the Flutt
 ### Build the installer and update metadata
 
 Install Inno Setup 6 and configure the private release key as described in
-[docs/updates.md](docs/updates.md), then run:
+[docs/updates.md](docs/updates.md). Before a new release, increase the version in
+`pubspec.yaml` (for example, `version: 1.0.5+1`).
+
+Run the following command from the project directory containing `pubspec.yaml`.
+Flutter and Rust must be on PATH. If Windows Developer Mode is disabled, open
+PowerShell **as administrator** for the build:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tool\build_installer.ps1 -ReleaseNotes "Describe this release"
@@ -248,8 +253,20 @@ powershell -ExecutionPolicy Bypass -File .\tool\build_installer.ps1 -ReleaseNote
 
 The script builds the portable bundle, compiles the installer, and generates a
 signed `build/installer/AORAConnect-Setup.exe` and `aora-update.json`. Publish both
-as assets of the GitHub release matching `v<version+build>` from `pubspec.yaml`.
+as assets of the GitHub release matching `v<major.minor.patch>` from `pubspec.yaml`
+(for example, `v1.0.5` for `1.0.5+1`). The portable executable is also generated
+at `build/portable/AORAConnect-windows-x64.exe`.
 Release metadata is generated automatically; the private key is never bundled.
+
+Verify the generated installer without running it:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tool\test_update_package.ps1
+```
+
+Rebuild after changing source or the version; do not reuse an older installer or
+manually edit the signed JSON. Test installation and upgrade on a second PC
+before publishing.
 
 To check extraction without launching the app or starting a VPN:
 

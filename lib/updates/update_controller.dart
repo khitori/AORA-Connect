@@ -69,7 +69,9 @@ class UpdateController extends ChangeNotifier {
   final Directory? preferencesDirectory;
   final Future<Directory> Function()? sessionCreator;
   final String helperPath;
-  String currentVersion = '1.0.0+1';
+  String currentVersion = '';
+  String get displayVersion =>
+      currentVersion.isEmpty ? 'Loading…' : currentVersion.split('+').first;
   bool automaticChecks = true, busy = false, installing = false;
   List<String> additionalSources = [];
   AppRelease? release;
@@ -228,7 +230,7 @@ class UpdateController extends ChangeNotifier {
         package = null;
         status = release == null
             ? 'No newer update found'
-            : 'Update ${release!.version} available';
+            : 'Update ${release!.version.split('+').first} available';
         return;
       } catch (e) {
         failure = e;
@@ -311,7 +313,8 @@ class UpdateController extends ChangeNotifier {
     await _stageHelper(directory);
     release = candidate;
     package = file;
-    status = 'Update ${candidate.version} verified and ready to install';
+    status =
+        'Update ${candidate.version.split('+').first} verified and ready to install';
   });
   Future<void> _stageHelper(Directory directory) async {
     await File(helperPath).copy('${directory.path}/aoravpn_update.exe');

@@ -11,7 +11,13 @@ try {
   $env:AORA_BUILD_NOTES = $ReleaseNotes
   $errors = Join-Path $project 'build/installer/build-errors.log'
   $shell = (Get-Process -Id $PID).Path
-  $child = Start-Process -FilePath $shell -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-File',('"' + "$PSScriptRoot/build_installer.ps1" + '"') -NoNewWindow -PassThru -Wait -RedirectStandardOutput $log -RedirectStandardError $errors
+  $child = Start-Process -FilePath $shell -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-File',('"' + "$PSScriptRoot/build_installer.ps1" + '"') -NoNewWindow -PassThru -RedirectStandardOutput $log -RedirectStandardError $errors
+  # Retain the process handle so Windows PowerShell can read its exit code.
+  $null = $child.Handle
+  # Compiler helper processes can outlive the build. Wait for the build shell,
+  # rather than Start-Process -Wait's entire descendant process tree.
+  $child.WaitForExit()
+  $child.Refresh()
   if ($child.ExitCode -ne 0) { throw 'Installer build failed; inspect build.log and build-errors.log.' }
   [IO.File]::WriteAllText($result, 'success')
 } catch {

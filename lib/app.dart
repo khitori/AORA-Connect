@@ -121,7 +121,7 @@ class _AppShellState extends State<_AppShell> {
       _announcedUpdate = version;
       AppNotification.show(
         _scaffoldKey.currentContext!,
-        'Update $version is available in Settings → Updates.',
+        'Update ${version.split('+').first} is available in Settings → Updates.',
       );
     }
   }
