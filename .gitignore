@@ -48,3 +48,6 @@ app.*.map.json
 .widget_preview/
 /cores/
 /native/windows/target/
+/.release-keys/
+*.release-private.json
+release-private.json

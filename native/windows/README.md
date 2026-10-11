@@ -48,7 +48,7 @@ old persistent Kill Switch. The application currently calls only `disarm`.
 
 ## Build prerequisites
 
-Install the Rust MSVC toolchain with Cargo and the existing Visual Studio C++
+Install the Rust MSVC toolchain (Rust 1.85 or newer) with Cargo and the existing Visual Studio C++
 build tools/Windows SDK. The current target is `x86_64-pc-windows-msvc`.
 Rust's standard library is linked with a static CRT for these helpers; Flutter's
 runner and plugins still require their own runtime DLLs.
@@ -67,7 +67,7 @@ reproducible. Review and commit lockfile updates when updating dependencies.
 The Windows API dependency is pinned to `windows-sys` 0.59.0; it is not a claim
 that this is the newest upstream release.
 
-Flutter's Windows CMake build calls Cargo and places the four helpers beside the
+Flutter's Windows CMake build calls Cargo and places the five helpers beside the
 runner. Debug Flutter builds use Cargo's `dev` profile; Profile/Release builds
 use its `release` profile. Cargo outputs go under Flutter's ignored `build/`
 directory when built through CMake.

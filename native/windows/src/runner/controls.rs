@@ -119,7 +119,7 @@ unsafe extern "C" fn command(
 ) {
     let state = data.cast::<Window>();
     let message = &*message;
-    let bytes = if message.message.is_null() || message.message_size > 64 {
+    let bytes = if message.message.is_null() || message.message_size > 16384 {
         &[][..]
     } else {
         std::slice::from_raw_parts(message.message, message.message_size)
@@ -163,6 +163,38 @@ unsafe extern "C" fn command(
         b"destroy" => {
             PostMessageW(hwnd, DESTROY_MESSAGE, 0, 0);
             b"ok"
+        }
+        _ if bytes.starts_with(b"install-update:") => {
+            use std::os::windows::process::CommandExt;
+            let result = (|| -> std::io::Result<()> {
+                let path = std::str::from_utf8(&bytes[15..])
+                    .map_err(|_| std::io::Error::other("Invalid update path"))?;
+                let package = std::path::Path::new(path).canonicalize()?;
+                let root = std::path::PathBuf::from(
+                    std::env::var_os("LOCALAPPDATA")
+                        .ok_or_else(|| std::io::Error::other("Missing application storage"))?,
+                )
+                .join("AORAConnect/runtime")
+                .canonicalize()?;
+                if !package.starts_with(root) {
+                    return Err(std::io::Error::other(
+                        "Update is outside application storage",
+                    ));
+                }
+                let helper = package.parent().unwrap().join("aoravpn_update.exe");
+                std::process::Command::new(helper)
+                    .arg("install")
+                    .arg(package)
+                    .arg(std::process::id().to_string())
+                    .creation_flags(CREATE_BREAKAWAY_FROM_JOB | CREATE_NO_WINDOW)
+                    .spawn()?;
+                Ok(())
+            })();
+            if result.is_ok() {
+                b"ok"
+            } else {
+                b"Could not start update installer"
+            }
         }
         _ => b"Unsupported window command",
     };

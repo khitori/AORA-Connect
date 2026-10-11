@@ -2,6 +2,23 @@
 use std::{env, fs, path::PathBuf};
 
 fn main() {
+    println!("cargo:rerun-if-changed=../../release/update-public-key.txt");
+    println!("cargo:rerun-if-changed=../../pubspec.yaml");
+    let update_key = fs::read_to_string("../../release/update-public-key.txt")
+        .expect("Missing public release key; run tool/sign_release.dart init first");
+    let update_key = update_key.trim();
+    assert!(
+        update_key.len() == 64 && update_key.chars().all(|c| c.is_ascii_hexdigit()),
+        "Invalid release public key"
+    );
+    println!("cargo:rustc-env=AORA_UPDATE_PUBLIC_KEY={update_key}");
+    let pubspec = fs::read_to_string("../../pubspec.yaml").unwrap();
+    let version = pubspec
+        .lines()
+        .find_map(|line| line.strip_prefix("version:"))
+        .unwrap()
+        .trim();
+    println!("cargo:rustc-env=AORA_APP_VERSION={version}");
     println!("cargo:rerun-if-env-changed=AORA_FLUTTER_HEADER");
     println!("cargo:rerun-if-env-changed=AORA_PLUGIN_REGISTRANT");
     println!("cargo:rerun-if-env-changed=AORA_RESOURCE_COMPILER");

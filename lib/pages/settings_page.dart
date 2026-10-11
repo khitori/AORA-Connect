@@ -7,6 +7,8 @@ import '../components/app_expansion_card.dart';
 import '../components/connection_controls.dart';
 import '../components/core_logs.dart';
 import '../components/statistics_panel.dart';
+import '../components/updates_panel.dart';
+import '../updates/update_controller.dart';
 
 import '../controllers/connection_controller.dart';
 import '../controllers/statistics_controller.dart';
@@ -22,9 +24,13 @@ class SettingsPage extends StatelessWidget {
     super.key,
     required this.connection,
     required this.statistics,
+    this.updates,
+    this.onInstallUpdate,
   });
   final ConnectionController connection;
   final StatisticsController statistics;
+  final UpdateController? updates;
+  final Future<void> Function()? onInstallUpdate;
 
   @override
   Widget build(BuildContext context) => ListView(
@@ -230,6 +236,14 @@ class SettingsPage extends StatelessWidget {
         ],
       ),
       const SizedBox(height: 12),
+      if (updates != null && onInstallUpdate != null) ...[
+        UpdatesPanel(
+          updates: updates!,
+          connection: connection,
+          onInstall: onInstallUpdate!,
+        ),
+        const SizedBox(height: 12),
+      ],
       AppExpansionCard(
         title: 'About',
         subtitle: 'AORA Connect',

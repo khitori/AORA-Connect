@@ -4,6 +4,7 @@
 pub mod network;
 #[cfg(feature = "runner")]
 pub mod runner;
+pub mod updates;
 
 use std::ffi::OsStr;
 use std::io;
@@ -34,11 +35,11 @@ pub fn quote(value: &OsStr) -> Vec<u16> {
         } else {
             slashes
         };
-        result.extend(std::iter::repeat(b'\\' as u16).take(count));
+        result.extend(std::iter::repeat_n(b'\\' as u16, count));
         result.push(unit);
         slashes = 0;
     }
-    result.extend(std::iter::repeat(b'\\' as u16).take(slashes * 2));
+    result.extend(std::iter::repeat_n(b'\\' as u16, slashes * 2));
     result.push(b'"' as u16);
     result
 }

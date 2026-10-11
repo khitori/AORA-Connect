@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 
 import 'components/floating_bottom_navigation.dart';
 import 'components/compact_outline_icon_button.dart';
+import 'components/app_notification.dart';
+import 'updates/update_controller.dart';
 import 'controllers/connection_controller.dart';
 import 'controllers/statistics_controller.dart';
 import 'controllers/node_ping_controller.dart';
@@ -54,6 +56,8 @@ class _AppShellState extends State<_AppShell> {
   late final NodePingController _pings;
   late final AppLifecycleListener _lifecycle;
   final _window = DesktopWindow();
+  UpdateController? _updates;
+  String? _announcedUpdate;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   Future<void>? _exitCleanup;
   final _subscriptionUrl = TextEditingController();
@@ -71,6 +75,10 @@ class _AppShellState extends State<_AppShell> {
     );
     _statistics = StatisticsController(_connection);
     _pings = NodePingController(_connection);
+    if (widget.engine == null && _window.supported) {
+      _updates = UpdateController()..addListener(_updateChanged);
+      unawaited(_updates!.initialize());
+    }
     unawaited(_connection.restore());
     _connection.addListener(_syncTray);
     unawaited(
@@ -103,6 +111,39 @@ class _AppShellState extends State<_AppShell> {
     await _pings.shutdown();
     await _connection.shutdown();
   })();
+
+  void _updateChanged() {
+    if (!mounted) return;
+    final version = _updates?.release?.version;
+    if (version != null &&
+        version != _announcedUpdate &&
+        _scaffoldKey.currentContext != null) {
+      _announcedUpdate = version;
+      AppNotification.show(
+        _scaffoldKey.currentContext!,
+        'Update $version is available in Settings → Updates.',
+      );
+    }
+  }
+
+  Future<void> _installUpdate() async {
+    await _updates!.install(
+      canInstall: () => _connection.canEdit && !_pings.busy,
+      launch: (path) async {
+        if (!_connection.beginMaintenance()) {
+          throw StateError('Disconnect before installing an update.');
+        }
+        try {
+          await _window.command('install-update:$path');
+          await _cleanupForExit();
+          await _window.command('destroy');
+        } catch (_) {
+          _connection.cancelMaintenance();
+          rethrow;
+        }
+      },
+    );
+  }
 
   void _showWindowError(Object error) {
     final context = _scaffoldKey.currentContext;
@@ -138,6 +179,8 @@ class _AppShellState extends State<_AppShell> {
   @override
   void dispose() {
     _connection.removeListener(_syncTray);
+    _updates?.removeListener(_updateChanged);
+    _updates?.dispose();
     _window.dispose();
     _lifecycle.dispose();
     _subscriptionUrl.dispose();
@@ -225,6 +268,8 @@ class _AppShellState extends State<_AppShell> {
               _AppPage.settings => SettingsPage(
                 connection: _connection,
                 statistics: _statistics,
+                updates: _updates,
+                onInstallUpdate: _updates == null ? null : _installUpdate,
               ),
               _AppPage.routing => RoutingPage(connection: _connection),
             },

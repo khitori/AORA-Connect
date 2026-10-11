@@ -42,7 +42,7 @@ try {
 } finally { Pop-Location }
 Copy-Item -LiteralPath (Join-Path $rustProject 'Cargo.lock') -Destination (Join-Path $app 'licenses/rust/Cargo.lock')
 Copy-Item -LiteralPath (Join-Path $rustProject 'LICENSE-FlutterWindowsRunner.txt') -Destination (Join-Path $app 'licenses/LICENSE-FlutterWindowsRunner.txt')
-foreach ($helper in @('aoravpn_core_host','aoravpn_core_console','aoravpn_server_ping','aoravpn_kill_switch')) {
+foreach ($helper in @('aoravpn_core_host','aoravpn_core_console','aoravpn_server_ping','aoravpn_kill_switch','aoravpn_update')) {
   Copy-Item -LiteralPath (Join-Path $helperBuild "x86_64-pc-windows-msvc/release/$helper.exe") -Destination $app -Force
 }
 foreach ($folder in @('sing-box-1.14.2-windows-amd64','xray-v26.9.30-windows-64')) {
@@ -60,7 +60,16 @@ $crt = Get-ChildItem -LiteralPath (Join-Path $vs 'VC/Redist/MSVC') -Recurse -Dir
 if (!$crt) { throw 'Visual C++ x64 redistributable DLLs not found' }
 Get-ChildItem -LiteralPath $crt.FullName -Filter '*.dll' | Copy-Item -Destination $app
 $archive = Join-Path $output 'payload.zip'
+# Some crate archives preserve pre-1980 license timestamps; ZIP cannot store
+# those dates. Normalize only generated staging files, never the source files.
+$zipMinimum = [DateTime]::new(1980, 1, 1)
+$zipMaximum = [DateTime]::new(2107, 12, 31)
+Get-ChildItem -LiteralPath $stage -Recurse -File | ForEach-Object {
+  if ($_.LastWriteTime -lt $zipMinimum) { $_.LastWriteTime = $zipMinimum }
+  elseif ($_.LastWriteTime -gt $zipMaximum) { $_.LastWriteTime = $zipMaximum }
+}
 Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $archive -Force
+Set-Content -LiteralPath (Join-Path $output 'stage-path.txt') -Value $stage
 $packageId = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
 $nativeBuild = Join-Path $output 'rust-launcher'
 $oldPayload = $env:AORA_PAYLOAD_ZIP

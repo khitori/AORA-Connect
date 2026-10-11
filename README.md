@@ -33,12 +33,15 @@ The application and portable Windows package can be built from source. Clean-mac
 - Diagnostics for configuration validation, connection checks, and core logs.
 - Persistent settings and a single Windows storage root.
 - Custom Windows header, circular app icon, and tray controls.
+- Windows installer/uninstaller, signed in-app updates from GitHub, optional mirrors, and offline update imports.
 
 Support depends on the link's options and the implemented profile adapters, not only its protocol name. Unsupported entries in a multi-node subscription are skipped and counted; an entirely unsupported subscription fails to import. Arbitrary Clash YAML and full sing-box/Xray configuration imports are not currently supported.
 
 ## Getting started on Windows
 
-For a published build, use the repository's Releases page and download `AORAConnect-windows-x64.exe`. If no package has been published, follow the build instructions below.
+For a published build, download `AORAConnect-Setup.exe` from [GitHub Releases](https://github.com/khitori/AORA-Connect/releases). It installs the app and both cores, creates shortcuts, and registers AORA Connect in Windows Installed Apps. A newer Setup EXE upgrades the installation while retaining settings and subscriptions. Close the app (including its tray instance) before installing or uninstalling.
+
+The existing `AORAConnect-windows-x64.exe` is still available as a portable alternative. If no package has been published, follow the build instructions below. The following extraction steps apply to the portable package:
 
 1. Open the downloaded executable. It contains the application, both cores, native helpers, assets, and companion DLLs.
 2. On first launch, the package extracts into `%LOCALAPPDATA%\AORAConnect`. Later launches reuse the extracted files unless the package changes or essential files are missing.
@@ -64,7 +67,24 @@ when the connection can be stopped. **Close app**, tray **Exit**, and Alt+F4 awa
 ping/core cleanup before closing the window. The app stays visible if adding
 the tray icon fails, and attempts to restore it after Explorer restarts.
 
-Close the running application before opening a different package. Replace the downloaded launcher to update; settings remain separate from the application files. There is no automatic update system.
+Close the running application before opening a different package. For an installed copy, use a newer Setup EXE or **Settings → Updates**. For a portable copy, replacing the downloaded launcher retains settings; the signed Setup EXE can also install into that existing storage root.
+
+### Application updates and uninstalling
+
+**Settings → Updates** checks GitHub automatically at startup by default. Users
+approve downloads and installation; installing requires the VPN to be disconnected
+and server checks to be idle. Additional HTTPS update sources are optional.
+**Update from file** verifies the same Setup EXE locally, without GitHub access.
+The updater checks the release signature, SHA-256, application/platform, and
+version before launching the installer. It rejects older or modified packages.
+
+The Windows uninstaller removes app/core files and shortcuts. Saved data is kept
+by default; the interactive uninstaller offers a checkbox to delete it.
+Update signing is separate from Windows code signing and does not eliminate
+SmartScreen or administrator prompts.
+
+See [docs/updates.md](docs/updates.md) for signing-key storage, release publishing,
+installer builds, mirrors, and offline updates.
 
 ### Subscriptions
 
@@ -146,6 +166,10 @@ The packaged Windows client uses one app-managed root:
 
 The downloaded launcher stays wherever you save it.
 
+Installed copies also have an `uninstall/` folder and `installed-version.txt`
+under that root. Update preferences are in `settings/updates.json`; downloaded
+update sessions are staged in `runtime/`.
+
 Subscription links and settings are stored as **unencrypted JSON**. Generated core configurations can contain server credentials. Do not publish these files or include them in public issue reports.
 
 Runtime session folders are removed during normal cleanup. A crash or forced termination can leave files behind. Diagnostic logs and ping history are held in memory rather than a dedicated log archive.
@@ -212,6 +236,20 @@ build/portable/AORAConnect-windows-x64.exe
 To package an existing release build, add `-SkipFlutterBuild`. The script prints the executable's SHA-256 hash.
 
 Distribute the packaged executable, **not** the raw `aoravpn.exe` from the Flutter build folder. The portable package includes the Flutter bundle, both cores, native helpers, and app-local C++ runtime DLLs.
+
+### Build the installer and update metadata
+
+Install Inno Setup 6 and configure the private release key as described in
+[docs/updates.md](docs/updates.md), then run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tool\build_installer.ps1 -ReleaseNotes "Describe this release"
+```
+
+The script builds the portable bundle, compiles the installer, and generates a
+signed `build/installer/AORAConnect-Setup.exe` and `aora-update.json`. Publish both
+as assets of the GitHub release matching `v<version+build>` from `pubspec.yaml`.
+Release metadata is generated automatically; the private key is never bundled.
 
 To check extraction without launching the app or starting a VPN:
 

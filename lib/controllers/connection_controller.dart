@@ -95,6 +95,7 @@ class ConnectionController extends ChangeNotifier {
   RoutingPolicy _routingPolicy = const RoutingPolicy();
   String? _selectedServerAddress;
   bool _busy = false;
+  bool _maintenance = false;
   bool _disposed = false;
   String? _error;
   ConnectionErrorScope? _errorScope;
@@ -138,7 +139,19 @@ class ConnectionController extends ChangeNotifier {
   SubscriptionLoadResult? subscriptionDetailsFor(String url) =>
       _profileCache[url];
   List<String> get logs => List.unmodifiable(_lines);
-  bool get canEdit => !_busy && _state == TunnelState.stopped;
+  bool get canEdit => !_busy && !_maintenance && _state == TunnelState.stopped;
+  bool beginMaintenance() {
+    if (!canEdit || _cleanup != null) return false;
+    _maintenance = true;
+    _changed();
+    return true;
+  }
+
+  void cancelMaintenance() {
+    _maintenance = false;
+    _changed();
+  }
+
   bool get canConnect =>
       supported &&
       canEdit &&
@@ -181,7 +194,9 @@ class ConnectionController extends ChangeNotifier {
     Future<void> Function() action, {
     required ConnectionErrorScope errorScope,
   }) {
-    if (_disposed || _cleanup != null || _busy) return Future.value();
+    if (_disposed || _cleanup != null || _busy || _maintenance) {
+      return Future.value();
+    }
     _busy = true;
     _error = null;
     _errorScope = errorScope;

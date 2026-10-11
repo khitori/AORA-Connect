@@ -138,10 +138,15 @@ fn run() -> Result<()> {
         "cores/xray-v26.9.30-windows-64/xray.exe",
         "cores/xray-v26.9.30-windows-64/wintun.dll",
     ];
-    if fs::read_to_string(root.join("app/package-id.txt")).unwrap_or_default() != PACKAGE_ID
-        || required.iter().any(|path| !root.join(path).is_file())
+    let installed = root.join("installed-version.txt").is_file();
+    if !installed
+        && (fs::read_to_string(root.join("app/package-id.txt")).unwrap_or_default() != PACKAGE_ID
+            || required.iter().any(|path| !root.join(path).is_file()))
     {
         unpack(&root)?;
+    }
+    if installed && !root.join("app/aoravpn.exe").is_file() {
+        return Err("Repair this installation with AORAConnect-Setup.exe.".into());
     }
     if extract_only {
         return Ok(());

@@ -196,6 +196,14 @@ fn run(instance: HINSTANCE) -> Result<i32, Box<dyn std::error::Error>> {
     let args: Vec<_> = std::env::args().skip(1).collect();
     let smoke = args.iter().any(|arg| arg == "--runner-smoke-test");
     unsafe {
+        let app_mutex = owned(CreateMutexW(
+            null(),
+            0,
+            wide("Local\\AORAConnectApp").as_ptr(),
+        ))?;
+        if GetLastError() == ERROR_ALREADY_EXISTS && !smoke {
+            return Err("AORA Connect is already running. Open it from the tray.".into());
+        }
         // Keep Flutter debug output on the parent's terminal without creating a
         // visible console when launched from Explorer.
         if !smoke {
@@ -208,7 +216,8 @@ fn run(instance: HINSTANCE) -> Result<i32, Box<dyn std::error::Error>> {
         let _com = Com;
         let job = owned(CreateJobObjectW(null(), null()))?;
         let mut limits: JOBOBJECT_EXTENDED_LIMIT_INFORMATION = zeroed();
-        limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+        limits.BasicLimitInformation.LimitFlags =
+            JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE | JOB_OBJECT_LIMIT_BREAKAWAY_OK;
         if SetInformationJobObject(
             job.as_raw_handle(),
             JobObjectExtendedLimitInformation,
@@ -362,6 +371,7 @@ fn run(instance: HINSTANCE) -> Result<i32, Box<dyn std::error::Error>> {
         // The job handle remains owned until process exit, matching the old
         // runner. Closing it while this process is alive would terminate us too.
         std::mem::forget(job);
+        std::mem::forget(app_mutex);
         Ok(0)
     }
 }

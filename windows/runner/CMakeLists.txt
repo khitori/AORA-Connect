@@ -35,7 +35,7 @@ add_custom_target(aoravpn_windows_helpers ALL
   COMMENT "Building Rust Windows helpers"
   VERBATIM
 )
-foreach(HELPER aoravpn_core_host aoravpn_core_console aoravpn_server_ping aoravpn_kill_switch)
+foreach(HELPER aoravpn_core_host aoravpn_core_console aoravpn_server_ping aoravpn_kill_switch aoravpn_update)
   add_custom_command(TARGET aoravpn_windows_helpers POST_BUILD
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
       "${RUST_TARGET_DIR}/x86_64-pc-windows-msvc/${RUST_OUTPUT_PROFILE}/${HELPER}.exe"
