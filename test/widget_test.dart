@@ -2,6 +2,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:aoravpn/core/desktop_window.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aoravpn/controllers/node_ping_controller.dart';
 import 'package:aoravpn/app.dart';
@@ -46,13 +47,110 @@ class FakeEngine implements TunnelEngine {
 }
 
 Future<void> _openSettings(WidgetTester tester) async {
-  await tester.tap(find.byTooltip('Open menu'));
-  await tester.pumpAndSettle();
-  await tester.tap(find.widgetWithText(TextButton, 'Settings'));
+  await tester.tap(find.byKey(const ValueKey('open-settings')));
   await tester.pumpAndSettle();
 }
 
+class WindowCleanupEngine extends FakeEngine {
+  bool cleanupStarted = false;
+  @override
+  Future<void> dispose() async {
+    cleanupStarted = true;
+  }
+}
+
 void main() {
+  testWidgets('Compact window buttons send tray and close commands', (
+    tester,
+  ) async {
+    if (!DesktopWindow().supported) return;
+    tester.view.physicalSize = const Size(360, 740);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final messenger = tester.binding.defaultBinaryMessenger;
+    final commands = <String?>[];
+    final engine = WindowCleanupEngine();
+    messenger.setMockDecodedMessageHandler<String>(DesktopWindow.channel, (
+      message,
+    ) async {
+      commands.add(message);
+      return 'ok';
+    });
+    addTearDown(
+      () => messenger.setMockDecodedMessageHandler<String>(
+        DesktopWindow.channel,
+        null,
+      ),
+    );
+    await tester.pumpWidget(MyApp(engine: engine));
+    await tester.pumpAndSettle();
+    final settings = tester.getRect(
+      find.byKey(const ValueKey('open-settings')),
+    );
+    final tray = tester.getRect(find.byTooltip('Hide to tray'));
+    final close = tester.getRect(find.byTooltip('Close app'));
+    expect(settings.right, lessThan(tray.left));
+    expect(settings.center.dy, closeTo(tray.center.dy, 0.1));
+    expect(find.byTooltip('Open menu'), findsNothing);
+    expect(settings.size, close.size);
+    expect(tester.widget<AppBar>(find.byType(AppBar)).bottom, isNull);
+    expect(find.byIcon(Icons.minimize_rounded), findsOneWidget);
+    expect(tray.right, lessThan(close.left));
+    await tester.tap(find.byTooltip('Hide to tray'));
+    await tester.pumpAndSettle();
+    expect(commands, contains('tray'));
+    expect(engine.cleanupStarted, isFalse);
+    await _openSettings(tester);
+    expect(find.text('About'), findsOneWidget);
+    await tester.tap(find.byTooltip('Close app'));
+    await tester.pumpAndSettle();
+    expect(commands, contains('close'));
+    // The host's awaited exit round trip is covered by desktop_window_test
+    // and the real hidden native smoke test, outside the fake frame clock.
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+    await engine.changes.close();
+    await engine.messages.close();
+  });
+  testWidgets('Connection header displays the bundled logo', (tester) async {
+    final engine = FakeEngine();
+    await tester.pumpWidget(MyApp(engine: engine));
+    await tester.pumpAndSettle();
+    final image = tester.widget<Image>(find.byKey(const ValueKey('app-logo')));
+    expect((image.image as AssetImage).assetName, 'lib/assets/logo.png');
+    expect(image.excludeFromSemantics, isTrue);
+    expect(image.width, 32);
+    expect(image.height, 32);
+    expect(find.widgetWithText(AppBar, 'AORA Connect'), findsOneWidget);
+    final brandStyle = DefaultTextStyle.of(
+      tester.element(find.text('AORA Connect')),
+    ).style;
+    expect(
+      find.ancestor(
+        of: find.byKey(const ValueKey('app-logo')),
+        matching: find.byType(ClipOval),
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.byKey(const ValueKey('bottom-nav-routing')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('app-logo')), findsOneWidget);
+    expect(find.text('Routing'), findsWidgets);
+    final routingTitle = find.descendant(
+      of: find.byType(AppBar),
+      matching: find.text('Routing'),
+    );
+    final routingStyle = DefaultTextStyle.of(tester.element(routingTitle))
+        .style;
+    expect(brandStyle.fontSize, routingStyle.fontSize);
+    expect(brandStyle.letterSpacing, routingStyle.letterSpacing);
+    expect(brandStyle.fontWeight, routingStyle.fontWeight);
+    await tester.pumpWidget(const SizedBox());
+    await engine.changes.close();
+    await engine.messages.close();
+  });
   testWidgets('Routing tab adds and edits a rule on compact navigation', (
     tester,
   ) async {

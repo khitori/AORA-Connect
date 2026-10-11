@@ -4,6 +4,9 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aoravpn/core/core_kind.dart';
+import 'package:aoravpn/core/connection_mode.dart';
+import 'package:aoravpn/core/tunnel_engine.dart';
+import 'package:aoravpn/core/windows_core_engine.dart';
 import 'package:aoravpn/profiles/subscription_loader.dart';
 import 'package:aoravpn/routing/routing_policy.dart';
 import 'package:aoravpn/storage/app_settings_store.dart';
@@ -17,6 +20,71 @@ const rules = [
 ];
 
 void main() {
+  test('Routing configs start both cores without changing system networking', () async {
+    if (!Platform.isWindows) return;
+    final directory = await Directory.systemTemp.createTemp(
+      'aora-routing-start-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    for (final link in [
+      'hy2://secret@127.0.0.1:443#Server',
+      'vless://bf000d23-0752-40b4-affe-68f7707a9661@127.0.0.1:443?security=tls&type=grpc&mode=gun&serviceName=vpn&pcs=${'ab' * 32}',
+    ]) {
+      final profile = parseSubscription(link).single;
+      final kind = profile.coreKind;
+      final executable = File(
+        kind == CoreKind.singBox
+            ? 'cores/sing-box-${kind.configuredVersion}-windows-amd64/sing-box.exe'
+            : 'cores/xray-v${kind.configuredVersion}-windows-64/xray.exe',
+      );
+      expect(
+        executable.existsSync(),
+        isTrue,
+        reason: 'Bundled ${kind.name} is required.',
+      );
+      for (final direction in RoutingAction.values) {
+        for (final rule in rules) {
+          final reserved = await ServerSocket.bind(
+            InternetAddress.loopbackIPv4,
+            0,
+          );
+          final port = reserved.port;
+          await reserved.close();
+          final config = applyRouting(
+            profile.config(mode: ConnectionMode.proxy, listenPort: port),
+            kind,
+            RoutingPolicy(direction: direction, rules: [rule]),
+          );
+          final file = File('${directory.path}/config.json');
+          await file.writeAsString(jsonEncode(config));
+          final engine = WindowsCoreEngine(
+            executablePath: executable.absolute.path,
+            hostPath: 'missing-host.exe',
+            coreKind: kind,
+          );
+          final logs = <String>[];
+          final subscription = engine.logs.listen(logs.add);
+          try {
+            await engine.start(file.path);
+            expect(engine.state, TunnelState.running);
+            final socket = await Socket.connect(
+              InternetAddress.loopbackIPv4,
+              port,
+            );
+            socket.destroy();
+            await engine.stop();
+          } catch (error) {
+            fail(
+              '${kind.name} / ${direction.name} / ${rule.match.name}: $error\n${logs.join('\n')}',
+            );
+          } finally {
+            await engine.dispose();
+            await subscription.cancel();
+          }
+        }
+      }
+    }
+  });
   test('Fresh routing is enabled and empty list keeps traffic through VPN', () {
     const policy = RoutingPolicy();
     expect(policy.enabled, isTrue);

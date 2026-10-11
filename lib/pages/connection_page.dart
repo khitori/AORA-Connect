@@ -93,9 +93,20 @@ class ConnectionPage extends StatelessWidget {
                 Text(
                   '${connection.core.displayName}: ${connection.state.name}',
                   textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                if (connection.probeResult != null)
-                  Text(connection.probeResult!, textAlign: TextAlign.center),
+                // Reserve this line while connecting so a successful check
+                // does not change the space centering the connection button.
+                Tooltip(
+                  message: connection.probeResult ?? '',
+                  child: Text(
+                    connection.probeResult ?? '',
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
                 if (connection.errorFor(ConnectionErrorScope.connection) !=
                     null)
                   Padding(

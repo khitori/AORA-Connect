@@ -4,6 +4,25 @@ use std::{env, fs, path::PathBuf};
 fn main() {
     println!("cargo:rerun-if-env-changed=AORA_FLUTTER_HEADER");
     println!("cargo:rerun-if-env-changed=AORA_PLUGIN_REGISTRANT");
+    println!("cargo:rerun-if-env-changed=AORA_RESOURCE_COMPILER");
+    if env::var_os("CARGO_FEATURE_PORTABLE").is_some() {
+        println!("cargo:rerun-if-changed=portable.rc");
+        println!("cargo:rerun-if-changed=../../windows/runner/resources/app_icon.ico");
+        let resource = PathBuf::from(env::var_os("OUT_DIR").unwrap()).join("portable.res");
+        let compiler = env::var_os("AORA_RESOURCE_COMPILER").unwrap_or_else(|| "rc.exe".into());
+        let status = std::process::Command::new(compiler)
+            .arg("/nologo")
+            .arg("/fo")
+            .arg(&resource)
+            .arg("portable.rc")
+            .status()
+            .expect("Run Windows SDK resource compiler for launcher icon");
+        assert!(status.success(), "Compile launcher icon resource");
+        println!(
+            "cargo:rustc-link-arg-bin=AORAConnect={}",
+            resource.display()
+        );
+    }
     if env::var_os("CARGO_FEATURE_RUNNER").is_none() {
         return;
     }

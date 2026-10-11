@@ -153,7 +153,16 @@ void main() {
           port,
         );
         try {
-          await expectLater(engine.start(config.path), throwsStateError);
+          await expectLater(
+            engine.start(config.path),
+            throwsA(
+              isA<StateError>().having(
+                (error) => error.message.toString(),
+                'actual startup error',
+                allOf(contains('listen tcp'), contains('127.0.0.1:$port')),
+              ),
+            ),
+          );
           expect(engine.state, TunnelState.stopped);
         } finally {
           await occupied.close();

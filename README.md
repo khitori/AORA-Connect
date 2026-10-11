@@ -48,6 +48,19 @@ No separate Flutter installation or manual core download is needed to use the pa
 
 Current locally built packages are unsigned. Do not disable Windows security protections to run an unfamiliar executable; use only a build whose source and origin you trust.
 
+### Window and tray controls
+
+Windows uses an app-designed header instead of the native title bar. Drag the
+logo/title area to move the fixed-size window. The header buttons are ordered
+Settings, Hide to tray, and Close app. The reusable morphing-menu component
+remains in the source tree but is not shown in the app header.
+**Hide to tray** keeps the app
+and its connection running; click the tray icon to reopen it. Right-click the
+icon for **Show AORA Connect**, **Disconnect**, or **Exit**. Disconnect is enabled
+when the connection can be stopped. **Close app**, tray **Exit**, and Alt+F4 await
+ping/core cleanup before closing the window. The app stays visible if adding
+the tray icon fails, and attempts to restore it after Explorer restarts.
+
 Close the running application before opening a different package. Replace the downloaded launcher to update; settings remain separate from the application files. There is no automatic update system.
 
 ### Connection modes
@@ -212,6 +225,12 @@ test/               Automated tests
 ```
 
 For visual changes, start with [lib/theme/app_colors.dart](lib/theme/app_colors.dart) and [lib/theme/app_theme.dart](lib/theme/app_theme.dart).
+
+The header logo is `lib/assets/logo.png`. After replacing that image, run
+`powershell -ExecutionPolicy Bypass -File tool/update_app_icon.ps1` to regenerate
+the multi-resolution Windows icon. Both the app runner and portable launcher
+use that icon; rebuild the package to include it. The launcher build uses the
+Windows SDK resource compiler already supplied with the build tools.
 
 Our application-owned Windows native sources, including the window runner, are Rust.
 Flutter's generated files, engine, and upstream Windows plugins may still use C++;

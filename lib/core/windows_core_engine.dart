@@ -21,6 +21,7 @@ class WindowsCoreEngine implements TunnelEngine {
   final _logs = StreamController<String>.broadcast();
   final _states = StreamController<TunnelState>.broadcast();
   Process? _process;
+  Future<void>? _processCompletion;
   Future<void>? _operation;
   Future<void>? _disposal;
   bool _disposed = false;
@@ -63,7 +64,10 @@ class WindowsCoreEngine implements TunnelEngine {
     final output = '${result.stdout}${result.stderr}'.trim();
     if (output.isNotEmpty) _logs.add(output);
     if (result.exitCode != 0) {
-      throw StateError('Configuration rejected (exit ${result.exitCode}).');
+      throw StateError(
+        'Configuration rejected (exit ${result.exitCode}).'
+        '${output.isEmpty ? '' : '\n$output'}',
+      );
     }
     _logs.add('Configuration is valid.');
   }
@@ -112,8 +116,14 @@ class WindowsCoreEngine implements TunnelEngine {
       _process = process;
       final ready = Completer<void>();
       final subscriptions = <StreamSubscription<String>>[];
+      final outputFinished = <Future<void>>[];
+      final startupOutput = <String>[];
       void read(String line) {
         _logs.add(line);
+        if (!ready.isCompleted && line.trim().isNotEmpty) {
+          startupOutput.add(line);
+          if (startupOutput.length > 12) startupOutput.removeAt(0);
+        }
         if ((coreKind == CoreKind.singBox
                 ? line.contains('sing-box started')
                 : line.contains('Xray') && line.contains('started')) &&
@@ -123,31 +133,47 @@ class WindowsCoreEngine implements TunnelEngine {
       }
 
       for (final stream in [process.stdout, process.stderr]) {
+        final finished = Completer<void>();
+        outputFinished.add(finished.future);
         subscriptions.add(
           stream
               .transform(const Utf8Decoder(allowMalformed: true))
               .transform(const LineSplitter())
-              .listen(read),
+              .listen(
+                read,
+                onDone: () {
+                  if (!finished.isCompleted) finished.complete();
+                },
+                onError: (Object error, StackTrace stack) {
+                  read('Could not read core output: $error');
+                  if (!finished.isCompleted) finished.complete();
+                },
+              ),
         );
       }
-      unawaited(
-        process.exitCode.then((code) async {
-          if (!ready.isCompleted) {
-            ready.completeError(
-              StateError('Core exited during startup (exit $code).'),
-            );
-          }
-          // Drain the pipes before disposing their listeners.
-          for (final subscription in subscriptions) {
-            await subscription.cancel();
-          }
-          if (identical(_process, process)) {
-            _process = null;
-            _setState(TunnelState.stopped);
-            _logs.add('Core exited (exit $code).');
-          }
-        }),
-      );
+      _processCompletion = process.exitCode.then((code) async {
+        // Process exit can arrive before its final stderr lines. Read both
+        // pipes to completion before reporting the reason for a failed start.
+        await Future.wait(outputFinished);
+        // Both pipes are drained; release their listeners.
+        for (final subscription in subscriptions) {
+          await subscription.cancel();
+        }
+        if (identical(_process, process)) {
+          _process = null;
+          _setState(TunnelState.stopped);
+          _logs.add('Core exited (exit $code).');
+        }
+        if (!ready.isCompleted) {
+          ready.completeError(
+            StateError(
+              'Core exited during startup (exit $code).'
+              '${startupOutput.isEmpty ? '' : '\n${startupOutput.join('\n')}'}',
+            ),
+          );
+        }
+      });
+      unawaited(_processCompletion);
       await ready.future.timeout(const Duration(seconds: 20));
       if (!identical(_process, process)) throw StateError('Core has exited.');
       _setState(TunnelState.running);
@@ -175,6 +201,7 @@ class WindowsCoreEngine implements TunnelEngine {
       process.kill();
       await process.exitCode.timeout(const Duration(seconds: 5));
     }
+    await _processCompletion;
     _process = null;
     _setState(TunnelState.stopped);
   }

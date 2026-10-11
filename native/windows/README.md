@@ -87,9 +87,16 @@ C++ bridge is used. Generated C++ registration files are build inputs only;
 formats instead of silently omitting a plugin.
 
 The engine-properties structure is generated from the installed SDK header.
-Centered portrait sizing, monitor-work-area fitting, DPI updates, minimize/close
-controls, first-frame display, font/theme changes, message delegation, command-
+Centered portrait sizing, monitor-work-area fitting, DPI updates,
+first-frame display, font/theme changes, message delegation, command-
 line forwarding, and kill-on-exit child-process handling are retained.
+
+The runner now creates a fixed-size frameless window. `controls.rs` owns the
+notification-area icon, Explorer restart handling, drag dispatch, and the
+`aora/window` UTF-8 channel. Native close requests are sent to Dart for awaited
+session cleanup; only Dart's subsequent destroy command ends the window. Tray
+registration must succeed before hiding. The UI retains keyboard-accessible
+Close/Tray controls and the native tray menu supports reopening and disconnect.
 
 The `runner` Cargo feature must be built through CMake, which supplies
 `AORA_FLUTTER_HEADER` and `AORA_PLUGIN_REGISTRANT`. The normal standalone Cargo
@@ -106,6 +113,8 @@ The optional smoke target is outside the distributable bundle, uses an asInvoker
 manifest, isolated LOCALAPPDATA/APPDATA, and no network helpers. It renders the
 first Flutter frame hidden, registers plugins, checks hidden/fixed-size window
 invariants, and exits. It does not test opening a browser or a real VPN tunnel.
+It also checks caption removal, channel readiness, tray registration/removal,
+and the native-close/Dart-cleanup/native-destroy round trip.
 Test folders remain under ignored `build/` for inspection. The driver enables
 `AORA_BUILD_RUNNER_SMOKE` in the local CMake cache; set it OFF to omit that target
 from normal builds.

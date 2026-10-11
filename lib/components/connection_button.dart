@@ -69,14 +69,19 @@ class ConnectionButton extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (busy)
-                const SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: CircularProgressIndicator(strokeWidth: 3),
-                )
-              else
-                const Icon(Icons.power_settings_new, size: 56),
+              SizedBox(
+                width: 56,
+                height: 56,
+                child: Center(
+                  child: busy
+                      ? const SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: CircularProgressIndicator(strokeWidth: 3),
+                        )
+                      : const Icon(Icons.power_settings_new, size: 56),
+                ),
+              ),
               const SizedBox(height: 12),
               FittedBox(
                 fit: BoxFit.scaleDown,

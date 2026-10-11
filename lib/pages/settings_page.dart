@@ -28,7 +28,7 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
+    padding: const EdgeInsets.fromLTRB(24, 32, 24, 120),
     children: [
       AppExpansionCard(
         title: 'Core',

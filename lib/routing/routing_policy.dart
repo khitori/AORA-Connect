@@ -157,7 +157,15 @@ Map<String, Object?> applyRouting(
     for (final tag in ['direct', 'proxy']) {
       final dnsTag = tag == 'proxy' ? 'vpn-dns' : 'direct-dns';
       if (!servers.any((server) => server['tag'] == dnsTag)) {
-        servers.add(dnsProvider.singBoxServer(tag: dnsTag, detour: tag));
+        // HTTPS DNS uses its own direct dialer when no detour is specified.
+        // sing-box rejects a detour to an unconfigured direct outbound at
+        // startup, even though `check` accepts that configuration.
+        servers.add(
+          dnsProvider.singBoxServer(
+            tag: dnsTag,
+            detour: tag == 'proxy' ? tag : null,
+          ),
+        );
       }
     }
     dns['final'] = policy.defaultAction == RoutingAction.direct

@@ -65,6 +65,26 @@ $packageId = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLower
 $nativeBuild = Join-Path $output 'rust-launcher'
 $oldPayload = $env:AORA_PAYLOAD_ZIP
 $oldPackageId = $env:AORA_PACKAGE_ID
+$oldResourceCompiler = $env:AORA_RESOURCE_COMPILER
+$resourceCompiler = Get-Command rc.exe -ErrorAction SilentlyContinue
+if ($resourceCompiler) {
+  $env:AORA_RESOURCE_COMPILER = $resourceCompiler.Source
+} else {
+  $kits = @(
+    'HKLM:\SOFTWARE\Microsoft\Windows Kits\Installed Roots',
+    'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows Kits\Installed Roots'
+  ) | ForEach-Object {
+    (Get-ItemProperty -LiteralPath $_ -ErrorAction SilentlyContinue).KitsRoot10
+  } | Where-Object { $_ -and (Test-Path -LiteralPath (Join-Path $_ 'bin')) } |
+    Select-Object -First 1
+  if (!$kits) { throw 'Windows SDK installation missing' }
+  $resourceCompilerPath = Get-ChildItem -LiteralPath (Join-Path $kits 'bin') -Directory |
+    Sort-Object Name -Descending |
+    ForEach-Object { Join-Path $_.FullName 'x64/rc.exe' } |
+    Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+  if (!$resourceCompilerPath) { throw 'Windows SDK resource compiler missing' }
+  $env:AORA_RESOURCE_COMPILER = $resourceCompilerPath
+}
 $env:AORA_PAYLOAD_ZIP = $archive
 $env:AORA_PACKAGE_ID = $packageId
 Push-Location $rustProject
@@ -75,6 +95,7 @@ try {
   Pop-Location
   $env:AORA_PAYLOAD_ZIP = $oldPayload
   $env:AORA_PACKAGE_ID = $oldPackageId
+  $env:AORA_RESOURCE_COMPILER = $oldResourceCompiler
 }
 $executable = Join-Path $output 'AORAConnect-windows-x64.exe'
 Copy-Item -LiteralPath (Join-Path $nativeBuild 'x86_64-pc-windows-msvc/release/AORAConnect.exe') -Destination $executable -Force

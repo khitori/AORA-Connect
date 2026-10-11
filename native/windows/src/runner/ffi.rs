@@ -6,7 +6,35 @@ use windows_sys::Win32::Graphics::Gdi::HMONITOR;
 
 include!(concat!(env!("OUT_DIR"), "/flutter_generated.rs"));
 
+#[repr(C)]
+pub struct DesktopMessage {
+    pub struct_size: usize,
+    pub channel: *const std::ffi::c_char,
+    pub message: *const u8,
+    pub message_size: usize,
+    pub response_handle: *const c_void,
+}
+
 extern "C" {
+    pub fn FlutterDesktopEngineGetMessenger(engine: *mut c_void) -> *mut c_void;
+    pub fn FlutterDesktopMessengerSetCallback(
+        messenger: *mut c_void,
+        channel: *const std::ffi::c_char,
+        callback: Option<unsafe extern "C" fn(*mut c_void, *const DesktopMessage, *mut c_void)>,
+        data: *mut c_void,
+    );
+    pub fn FlutterDesktopMessengerSendResponse(
+        messenger: *mut c_void,
+        handle: *const c_void,
+        data: *const u8,
+        length: usize,
+    );
+    pub fn FlutterDesktopMessengerSend(
+        messenger: *mut c_void,
+        channel: *const std::ffi::c_char,
+        data: *const u8,
+        length: usize,
+    ) -> bool;
     pub fn FlutterDesktopEngineCreate(properties: *const EngineProperties) -> *mut c_void;
     pub fn FlutterDesktopViewControllerCreate(
         width: i32,

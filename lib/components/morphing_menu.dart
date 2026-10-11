@@ -24,12 +24,18 @@ class MorphingMenuShell<T> extends StatefulWidget {
     required this.selected,
     required this.onSelected,
     this.itemSpacing = 8,
+    this.rightInset = 12,
+    this.topInset = 6,
+    this.barrierTopInset = 0,
   });
   final Widget child;
   final List<MorphingMenuEntry<T>> entries;
   final T selected;
   final ValueChanged<T> onSelected;
   final double itemSpacing;
+  final double rightInset;
+  final double topInset;
+  final double barrierTopInset;
 
   @override
   State<MorphingMenuShell<T>> createState() => _MorphingMenuShellState<T>();
@@ -123,7 +129,7 @@ class _MorphingMenuShellState<T> extends State<MorphingMenuShell<T>>
     final colors = Theme.of(context).colorScheme;
     final expandedWidth = math.min(
       208.0,
-      MediaQuery.sizeOf(context).width - 24,
+      MediaQuery.sizeOf(context).width - widget.rightInset - 12,
     );
     return AnimatedBuilder(
       animation: _controller,
@@ -140,7 +146,11 @@ class _MorphingMenuShellState<T> extends State<MorphingMenuShell<T>>
           children: [
             child!,
             if (visible)
-              Positioned.fill(
+              Positioned(
+                top: widget.barrierTopInset,
+                left: 0,
+                right: 0,
+                bottom: 0,
                 child: ModalBarrier(
                   color: Colors.transparent,
                   dismissible: true,
@@ -149,8 +159,8 @@ class _MorphingMenuShellState<T> extends State<MorphingMenuShell<T>>
                 ),
               ),
             Positioned(
-              top: MediaQuery.paddingOf(context).top + 6,
-              right: 12,
+              top: MediaQuery.paddingOf(context).top + widget.topInset,
+              right: widget.rightInset,
               child: FocusScope(
                 node: _menuFocus,
                 onKeyEvent: (_, event) {

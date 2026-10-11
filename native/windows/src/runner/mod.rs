@@ -2,6 +2,7 @@
 // Window-host behavior adapted from Flutter's Windows runner template.
 // Copyright 2014 The Flutter Authors. Upstream notice is retained in
 // native/windows/LICENSE-FlutterWindowsRunner.txt.
+mod controls;
 mod ffi;
 
 use crate::{owned, wide};
@@ -31,10 +32,12 @@ struct Window {
     controller: *mut c_void,
     smoke: bool,
     first_frame: bool,
+    controls: controls::Controls,
 }
 impl Drop for Window {
     fn drop(&mut self) {
         unsafe {
+            self.controls.uninstall(self.hwnd);
             let controller = self.controller;
             self.controller = null_mut();
             self.child = null_mut();
@@ -98,6 +101,9 @@ unsafe extern "system" fn window_proc(
     }
     let state = GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *mut Window;
     if !state.is_null() {
+        if let Some(result) = controls::handle(state, message, lparam) {
+            return result;
+        }
         let controller = (*state).controller;
         if !controller.is_null() {
             let mut result = 0;
@@ -154,14 +160,25 @@ unsafe extern "system" fn window_proc(
             WM_TIMER if (*state).smoke && wparam == 1 => {
                 KillTimer(hwnd, 1);
                 let style = GetWindowLongPtrW(hwnd, GWL_STYLE) as u32;
-                if IsWindowVisible(hwnd) != 0 || style & (WS_THICKFRAME | WS_MAXIMIZEBOX) != 0 {
+                if IsWindowVisible(hwnd) != 0
+                    || style & (WS_CAPTION | WS_THICKFRAME | WS_MAXIMIZEBOX) != 0
+                    || !(*state).controls.ready
+                {
                     eprintln!("Rust runner smoke: hidden/fixed-size window invariant failed");
                     (*state).first_frame = false;
                 }
-                DestroyWindow(hwnd);
+                if !(*state).controls.add_tray(hwnd) {
+                    eprintln!("Rust runner smoke: tray registration failed");
+                    (*state).first_frame = false;
+                }
+                (*state).controls.remove_tray(hwnd);
+                // Exercise the real native -> Dart cleanup -> native destroy
+                // round trip. The fixture contains no core or firewall helpers.
+                PostMessageW(hwnd, WM_CLOSE, 0, 0);
                 return 0;
             }
             WM_DESTROY => {
+                (*state).controls.remove_tray(hwnd);
                 (*state).hwnd = null_mut();
                 PostQuitMessage(0);
                 return 0;
@@ -215,7 +232,7 @@ fn run(instance: HINSTANCE) -> Result<i32, Box<dyn std::error::Error>> {
         }
         let monitor = MonitorFromPoint(POINT { x: 10, y: 10 }, MONITOR_DEFAULTTONEAREST);
         let dpi = FlutterDesktopGetDpiForMonitor(monitor).max(96);
-        let style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+        let style = WS_POPUP | WS_SYSMENU | WS_MINIMIZEBOX;
         let mut frame = RECT {
             left: 0,
             top: 0,
@@ -243,6 +260,7 @@ fn run(instance: HINSTANCE) -> Result<i32, Box<dyn std::error::Error>> {
             controller: null_mut(),
             smoke,
             first_frame: false,
+            controls: controls::Controls::default(),
         });
         let hwnd = CreateWindowExW(
             0,
@@ -262,6 +280,13 @@ fn run(instance: HINSTANCE) -> Result<i32, Box<dyn std::error::Error>> {
             return Err(io::Error::last_os_error().into());
         }
         update_theme(hwnd);
+        let corners: i32 = 2; // DWMWCP_ROUND; ignored on older Windows versions.
+        DwmSetWindowAttribute(
+            hwnd,
+            DWMWA_WINDOW_CORNER_PREFERENCE as u32,
+            (&corners as *const i32).cast(),
+            size_of::<i32>() as u32,
+        );
         let data = std::env::current_exe()?
             .parent()
             .ok_or("Missing executable directory")?
@@ -296,6 +321,7 @@ fn run(instance: HINSTANCE) -> Result<i32, Box<dyn std::error::Error>> {
         if state.controller.is_null() {
             return Err("Could not create Flutter view".into());
         }
+        controls::install((&mut *state) as *mut Window, engine);
         register(FlutterDesktopViewControllerGetEngine(state.controller));
         state.child =
             FlutterDesktopViewGetHWND(FlutterDesktopViewControllerGetView(state.controller));

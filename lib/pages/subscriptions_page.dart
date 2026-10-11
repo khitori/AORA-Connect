@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../components/app_select.dart';
 import '../components/compact_outline_icon_button.dart';
+import '../components/subscription_refresh_button.dart';
 import '../components/subscription_input.dart';
 import '../components/server_node_details.dart';
 import '../controllers/node_ping_controller.dart';
@@ -56,7 +57,7 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
       slivers: [
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -267,14 +268,8 @@ class _SavedSubscriptionSelector extends StatelessWidget {
                 ),
               ),
             ),
-            CompactOutlineIconButton(
-              tooltip: 'Refresh selected subscription',
-              onPressed: active != null && connection.canEdit
-                  ? () => connection.refreshSubscription(active!.url)
-                  : null,
-              icon: Icons.refresh_rounded,
-            ),
-            const SizedBox(width: 8),
+            SubscriptionRefreshButton(connection: connection),
+            const SizedBox(width: 6),
             CompactOutlineIconButton(
               tooltip: 'Remove selected subscription',
               onPressed: active != null && connection.canEdit

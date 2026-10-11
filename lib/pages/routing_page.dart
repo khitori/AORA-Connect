@@ -54,7 +54,7 @@ class RoutingPage extends StatelessWidget {
       slivers: [
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

@@ -5,11 +5,12 @@ import 'dart:ui' show AppExitResponse;
 import 'package:flutter/material.dart';
 
 import 'components/floating_bottom_navigation.dart';
-import 'components/morphing_menu.dart';
+import 'components/compact_outline_icon_button.dart';
 import 'controllers/connection_controller.dart';
 import 'controllers/statistics_controller.dart';
 import 'controllers/node_ping_controller.dart';
 import 'core/tunnel_engine.dart';
+import 'core/desktop_window.dart';
 import 'pages/connection_page.dart';
 import 'pages/settings_page.dart';
 import 'pages/routing_page.dart';
@@ -52,6 +53,9 @@ class _AppShellState extends State<_AppShell> {
   late final StatisticsController _statistics;
   late final NodePingController _pings;
   late final AppLifecycleListener _lifecycle;
+  final _window = DesktopWindow();
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+  Future<void>? _exitCleanup;
   final _subscriptionUrl = TextEditingController();
   _AppPage _page = _AppPage.connection;
 
@@ -68,17 +72,73 @@ class _AppShellState extends State<_AppShell> {
     _statistics = StatisticsController(_connection);
     _pings = NodePingController(_connection);
     unawaited(_connection.restore());
+    _connection.addListener(_syncTray);
+    unawaited(
+      _window
+          .initialize(
+            onExit: () async {
+              await _cleanupForExit();
+              await _window.command('destroy');
+            },
+            onDisconnect: () async {
+              if (_connection.canStop) {
+                await _connection.stop();
+                final error = _connection.error;
+                if (error != null) throw StateError(error);
+              }
+            },
+            onError: _showWindowError,
+          )
+          .then((_) => _syncTray()),
+    );
     _lifecycle = AppLifecycleListener(
       onExitRequested: () async {
-        await _pings.shutdown();
-        await _connection.shutdown();
+        await _cleanupForExit();
         return AppExitResponse.exit;
       },
     );
   }
 
+  Future<void> _cleanupForExit() => _exitCleanup ??= (() async {
+    await _pings.shutdown();
+    await _connection.shutdown();
+  })();
+
+  void _showWindowError(Object error) {
+    final context = _scaffoldKey.currentContext;
+    if (mounted && context != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('$error')));
+    }
+  }
+
+  void _syncTray() {
+    unawaited(
+      _window
+          .setCanDisconnect(_connection.canStop)
+          .catchError(_showWindowError),
+    );
+  }
+
+  Future<void> _windowAction(String command) async {
+    try {
+      await _window.command(command);
+    } catch (error) {
+      _showWindowError(error);
+    }
+  }
+
+  Widget _settingsButton() => CompactOutlineIconButton(
+    key: const ValueKey('open-settings'),
+    tooltip: 'Settings',
+    icon: Icons.settings_outlined,
+    onPressed: () => setState(() => _page = _AppPage.settings),
+  );
+
   @override
   void dispose() {
+    _connection.removeListener(_syncTray);
+    _window.dispose();
     _lifecycle.dispose();
     _subscriptionUrl.dispose();
     _statistics.dispose();
@@ -88,71 +148,113 @@ class _AppShellState extends State<_AppShell> {
   }
 
   @override
-  Widget build(BuildContext context) => MorphingMenuShell<_AppPage>(
-    selected: _page,
-    entries: const [
-      MorphingMenuEntry(_AppPage.settings, 'Settings', Icons.settings_outlined),
-    ],
-    onSelected: (page) => setState(() => _page = page),
-    child: Scaffold(
-      appBar: AppBar(
-        actions: const [SizedBox(width: 56)],
-        title: Text(switch (_page) {
-          _AppPage.connection => 'AORA Connect',
-          _AppPage.subscriptions => 'Subscriptions',
-          _AppPage.routing => 'Routing',
-          _AppPage.settings => 'Settings',
-        }),
-      ),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: ListenableBuilder(
-              listenable: _connection,
-              builder: (context, _) => switch (_page) {
-                _AppPage.connection => ConnectionPage(
-                  connection: _connection,
-                  pings: _pings,
+  Widget build(BuildContext context) => Scaffold(
+    key: _scaffoldKey,
+    appBar: AppBar(
+      actions: _window.supported
+          ? [
+              _settingsButton(),
+              const SizedBox(width: 6),
+              CompactOutlineIconButton(
+                tooltip: 'Hide to tray',
+                icon: Icons.minimize_rounded,
+                onPressed: () => _windowAction('tray'),
+              ),
+              const SizedBox(width: 6),
+              CompactOutlineIconButton(
+                tooltip: 'Close app',
+                icon: Icons.close_rounded,
+                onPressed: () => _windowAction('close'),
+              ),
+              const SizedBox(width: 12),
+            ]
+          : [_settingsButton(), const SizedBox(width: 12)],
+      title: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onPanStart: _window.supported ? (_) => _windowAction('drag') : null,
+        child: SizedBox(
+          height: kToolbarHeight,
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Row(
+              children: [
+                ClipOval(
+                  child: Image.asset(
+                    'lib/assets/logo.png',
+                    key: const ValueKey('app-logo'),
+                    width: 32,
+                    height: 32,
+                    fit: BoxFit.contain,
+                    excludeFromSemantics: true,
+                  ),
                 ),
-                _AppPage.subscriptions => SubscriptionsPage(
-                  connection: _connection,
-                  subscriptionUrl: _subscriptionUrl,
-                  pings: _pings,
-                ),
-                _AppPage.settings => SettingsPage(
-                  connection: _connection,
-                  statistics: _statistics,
-                ),
-                _AppPage.routing => RoutingPage(connection: _connection),
-              },
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: FloatingBottomNavigation<_AppPage>(
-              selected: _page,
-              onSelected: (page) => setState(() => _page = page),
-              destinations: const [
-                FloatingNavigationDestination(
-                  _AppPage.connection,
-                  'Connection',
-                  Icons.power_settings_new_rounded,
-                ),
-                FloatingNavigationDestination(
-                  _AppPage.subscriptions,
-                  'Subscriptions',
-                  Icons.link_rounded,
-                ),
-                FloatingNavigationDestination(
-                  _AppPage.routing,
-                  'Routing',
-                  Icons.alt_route_rounded,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    switch (_page) {
+                      _AppPage.connection => 'AORA Connect',
+                      _AppPage.subscriptions => 'Subscriptions',
+                      _AppPage.routing => 'Routing',
+                      _AppPage.settings => 'Settings',
+                    },
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
+    ),
+    body: Stack(
+      children: [
+        Positioned.fill(
+          child: ListenableBuilder(
+            listenable: _connection,
+            builder: (context, _) => switch (_page) {
+              _AppPage.connection => ConnectionPage(
+                connection: _connection,
+                pings: _pings,
+              ),
+              _AppPage.subscriptions => SubscriptionsPage(
+                connection: _connection,
+                subscriptionUrl: _subscriptionUrl,
+                pings: _pings,
+              ),
+              _AppPage.settings => SettingsPage(
+                connection: _connection,
+                statistics: _statistics,
+              ),
+              _AppPage.routing => RoutingPage(connection: _connection),
+            },
+          ),
+        ),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: FloatingBottomNavigation<_AppPage>(
+            selected: _page,
+            onSelected: (page) => setState(() => _page = page),
+            destinations: const [
+              FloatingNavigationDestination(
+                _AppPage.connection,
+                'Connection',
+                Icons.power_settings_new_rounded,
+              ),
+              FloatingNavigationDestination(
+                _AppPage.subscriptions,
+                'Subscriptions',
+                Icons.link_rounded,
+              ),
+              FloatingNavigationDestination(
+                _AppPage.routing,
+                'Routing',
+                Icons.alt_route_rounded,
+              ),
+            ],
+          ),
+        ),
+      ],
     ),
   );
 }

@@ -9,6 +9,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'app_select.dart';
 import 'compact_outline_icon_button.dart';
+import 'subscription_refresh_button.dart';
 import 'server_node_details.dart';
 
 class ServerSelector extends StatefulWidget {
@@ -95,20 +96,12 @@ class _ServerSelectorState extends State<ServerSelector> {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      CompactOutlineIconButton(
-                        tooltip: 'Refresh selected subscription',
-                        icon: Icons.refresh_rounded,
-                        onPressed:
-                            pings.connection.canEdit &&
-                                !pings.busy &&
-                                pings.connection.activeSubscriptionUrl != null
-                            ? () => pings.connection.refreshSubscription(
-                                pings.connection.activeSubscriptionUrl!,
-                                errorScope: ConnectionErrorScope.connection,
-                              )
-                            : null,
+                      SubscriptionRefreshButton(
+                        connection: pings.connection,
+                        enabled: !pings.busy,
+                        errorScope: ConnectionErrorScope.connection,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       CompactOutlineIconButton(
                         tooltip: pings.busy
                             ? 'Cancel server checks'
