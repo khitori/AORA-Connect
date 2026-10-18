@@ -13,11 +13,30 @@ Debug/Release runner smoke tests, Rust unit/lint checks, loopback core lifecycle
 checks have passed; real-provider TUN and clean-machine checks remain separate.
 See [native/windows/README.md](native/windows/README.md).
 
-Linux and Android are planned targets, but their networking engines are not implemented yet. Platform folders in this repository do not mean those platforms are ready to use.
+Android ARM64 has development sing-box and Xray VPN backends using Android's VPN
+permission and a foreground service. Both cores have passed IPv4, IPv6,
+HTTPS/DNS and repeated connect/disconnect on a physical Android 13 phone through
+controlled Shadowsocks and pinned-TLS VLESS/gRPC gateways. ICMP, TCP and
+Proxy GET/HEAD checks are available, including scans while connected. Android
+supports release signing and verified APK updates from GitHub or a local file.
+Linux networking is not implemented.
+See [docs/android.md](docs/android.md) for Android setup, builds and limitations.
+
+Android release build (after restoring/configuring the private signing files):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tool/build_android_release.ps1 -ReleaseNotes "Describe changes here"
+```
+
+See [Android signing and updates](docs/updates.md#android-signing-and-updates) for
+portable key storage, Google Drive backups and custom signing-file paths.
 
 The application and portable Windows package can be built from source. Clean-machine and real-provider testing are still required before treating a build as production-ready. This project does not claim an independent security audit or guaranteed protection against every traffic leak.
 
 ## Features
+
+The following list describes the Windows client; Android support is a subset
+documented above.
 
 - Multiple saved subscriptions with provider descriptions, Website/Support links, and server selection.
 - Subscription cards showing the last successful update, expiry date, and days remaining when supplied by the provider.
@@ -159,7 +178,7 @@ The packaged Windows client uses one app-managed root:
 ```text
 %LOCALAPPDATA%\AORAConnect\
 ├── app\         Application, DLLs, assets, native helpers, license notices
-├── cores\       Bundled networking cores and their companion files
+├── cores\windows\  Bundled Windows networking cores and their companion files
 ├── settings\    app-state.json: settings, subscription links/dates, routing rules
 └── runtime\     Generated connection, ping, and unpacking session files
 ```
@@ -202,8 +221,8 @@ The current configured versions are:
 
 | Core | Upstream release | Expected development folder |
 | --- | --- | --- |
-| sing-box | [1.14.2](https://github.com/SagerNet/sing-box/releases/tag/v1.14.2) | `cores/sing-box-1.14.2-windows-amd64/` |
-| Xray | [26.9.30](https://github.com/XTLS/Xray-core/releases/tag/v26.9.30) | `cores/xray-v26.9.30-windows-64/` |
+| sing-box | [1.14.2](https://github.com/SagerNet/sing-box/releases/tag/v1.14.2) | `cores/windows/sing-box-1.14.2-windows-amd64/` |
+| Xray | [26.9.30](https://github.com/XTLS/Xray-core/releases/tag/v26.9.30) | `cores/windows/xray-v26.9.30-windows-64/` |
 
 Download the Windows amd64/x64 archives from the linked upstream releases and extract their contents into those folders. Keep companion DLLs, data files, and license notices beside each executable. Xray 26.9.30 is marked as an upstream prerelease; review upstream release and security information before publishing packages.
 

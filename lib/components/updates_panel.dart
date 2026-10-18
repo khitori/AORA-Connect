@@ -28,7 +28,17 @@ class UpdatesPanel extends StatelessWidget {
     try {
       final file = await openFile(
         acceptedTypeGroups: [
-          const XTypeGroup(label: 'AORA update installer', extensions: ['exe']),
+          if (updates.isAndroid)
+            const XTypeGroup(
+              label: 'AORA Android APK',
+              extensions: ['apk'],
+              mimeTypes: ['application/vnd.android.package-archive'],
+            )
+          else
+            const XTypeGroup(
+              label: 'AORA update installer',
+              extensions: ['exe'],
+            ),
         ],
       );
       if (file != null) await updates.importFile(file.path);
@@ -46,8 +56,10 @@ class UpdatesPanel extends StatelessWidget {
       context: context,
       builder: (context) => AppDialog(
         title: 'Install ${updates.release!.version.split('+').first}?',
-        content: const Text(
-          'AORA Connect will close and reopen after installation. Your settings and subscriptions will be kept.',
+        content: Text(
+          updates.isAndroid
+              ? 'Android will ask you to confirm installation. Your settings, subscriptions and routing rules will be kept.'
+              : 'AORA Connect will close and reopen after installation. Your settings and subscriptions will be kept.',
         ),
         actions: [
           AppActionButton(
@@ -166,7 +178,9 @@ class UpdatesPanel extends StatelessWidget {
               width: double.infinity,
               child: AppActionButton(
                 label: 'Install update',
-                icon: Icons.install_desktop_rounded,
+                icon: updates.isAndroid
+                    ? Icons.install_mobile_rounded
+                    : Icons.install_desktop_rounded,
                 onPressed: disabled ? null : () => _confirmInstall(context),
               ),
             ),

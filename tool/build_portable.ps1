@@ -18,7 +18,7 @@ $output = Join-Path $project 'build/portable'
 # Each build has its own staging directory; no recursive cleanup of existing builds.
 $stage = Join-Path $output ('stage-' + [guid]::NewGuid().ToString('N'))
 $app = Join-Path $stage 'app'
-$cores = Join-Path $stage 'cores'
+$cores = Join-Path $stage 'cores/windows'
 New-Item -ItemType Directory -Force -Path $app,$cores | Out-Null
 if (!(Test-Path -LiteralPath (Join-Path $release 'aoravpn.exe'))) { throw 'Release application missing' }
 Get-ChildItem -LiteralPath $release | Copy-Item -Destination $app -Recurse -Force
@@ -46,7 +46,7 @@ foreach ($helper in @('aoravpn_core_host','aoravpn_core_console','aoravpn_server
   Copy-Item -LiteralPath (Join-Path $helperBuild "x86_64-pc-windows-msvc/release/$helper.exe") -Destination $app -Force
 }
 foreach ($folder in @('sing-box-1.14.2-windows-amd64','xray-v26.9.30-windows-64')) {
-  $source = Join-Path $project "cores/$folder"
+  $source = Join-Path $project "cores/windows/$folder"
   if (!(Test-Path -LiteralPath $source)) { throw "Missing core: $folder" }
   Copy-Item -LiteralPath $source -Destination $cores -Recurse
 }

@@ -34,8 +34,8 @@ void main() {
       final kind = profile.coreKind;
       final executable = File(
         kind == CoreKind.singBox
-            ? 'cores/sing-box-${kind.configuredVersion}-windows-amd64/sing-box.exe'
-            : 'cores/xray-v${kind.configuredVersion}-windows-64/xray.exe',
+            ? 'cores/windows/sing-box-${kind.configuredVersion}-windows-amd64/sing-box.exe'
+            : 'cores/windows/xray-v${kind.configuredVersion}-windows-64/xray.exe',
       );
       expect(
         executable.existsSync(),
@@ -96,6 +96,59 @@ void main() {
   final xray = parseSubscription(
     'vless://bf000d23-0752-40b4-affe-68f7707a9661@127.0.0.1:443?security=tls&type=grpc&mode=gun&serviceName=vpn&pcs=${'ab' * 32}',
   ).single;
+
+  test('Android application rules match package names in traffic and DNS', () {
+    for (final direction in RoutingAction.values) {
+      final config = applyRouting(
+        singBox.config(),
+        CoreKind.singBox,
+        RoutingPolicy(
+          direction: direction,
+          rules: const [
+            RoutingRule(
+              match: RoutingMatch.application,
+              target: 'com.android.chrome',
+            ),
+          ],
+        ),
+        android: true,
+      );
+      final appRule = ((config['route'] as Map)['rules'] as List).last;
+      expect(appRule['package_name'], ['com.android.chrome']);
+      expect(appRule.containsKey('process_name'), isFalse);
+      expect(
+        appRule['outbound'],
+        direction == RoutingAction.vpn ? 'proxy' : 'direct',
+      );
+      final dnsRule = ((config['dns'] as Map)['rules'] as List).last;
+      expect(dnsRule['package_name'], ['com.android.chrome']);
+      expect(
+        dnsRule['server'],
+        direction == RoutingAction.vpn ? 'vpn-dns' : 'direct-dns',
+      );
+    }
+  });
+
+  test(
+    'Android rejects executable paths instead of silently ignoring app rules',
+    () {
+      for (final target in ['chrome.exe/path', r'C:\Chrome\chrome.exe']) {
+        expect(
+          () => applyRouting(
+            singBox.config(),
+            CoreKind.singBox,
+            RoutingPolicy(
+              rules: [
+                RoutingRule(match: RoutingMatch.application, target: target),
+              ],
+            ),
+            android: true,
+          ),
+          throwsFormatException,
+        );
+      }
+    },
+  );
 
   test('Both list modes route matches one way and everything else the opposite way', () {
     for (final direction in RoutingAction.values) {
@@ -231,8 +284,8 @@ void main() {
       final kind = profile.coreKind;
       final executable = File(
         kind == CoreKind.singBox
-            ? 'cores/sing-box-${kind.configuredVersion}-windows-amd64/sing-box.exe'
-            : 'cores/xray-v${kind.configuredVersion}-windows-64/xray.exe',
+            ? 'cores/windows/sing-box-${kind.configuredVersion}-windows-amd64/sing-box.exe'
+            : 'cores/windows/xray-v${kind.configuredVersion}-windows-64/xray.exe',
       );
       if (!executable.existsSync()) continue;
       for (final action in RoutingAction.values) {

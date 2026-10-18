@@ -57,6 +57,7 @@ class StatisticsController extends ChangeNotifier {
 
   void _syncConnection() {
     final shouldRun =
+        connection.serverChecksSupported &&
         connection.statisticsEnabled &&
         connection.state == TunnelState.running &&
         connection.selected != null;

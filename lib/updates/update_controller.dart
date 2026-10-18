@@ -6,6 +6,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 import '../storage/app_paths.dart';
+import 'android_updates.dart';
+
+enum UpdatePlatform { windows, android, unsupported }
 
 typedef UpdateVerifier = Future<Map<String, dynamic>> Function(
   String command,
@@ -59,12 +62,27 @@ class UpdateController extends ChangeNotifier {
     this.verifier,
     this.preferencesDirectory,
     this.sessionCreator,
+    UpdatePlatform? platform,
     String? helperPath,
-  }) : helperPath =
+  }) : platform =
+           platform ??
+           (Platform.isAndroid
+               ? UpdatePlatform.android
+               : Platform.isWindows
+               ? UpdatePlatform.windows
+               : UpdatePlatform.unsupported),
+       helperPath =
            helperPath ??
            '${File(Platform.resolvedExecutable).parent.path}/aoravpn_update.exe';
   static const githubSource =
       'https://github.com/khitori/AORA-Connect/releases/latest/download/aora-update.json';
+  static const androidGithubSource =
+      'https://github.com/khitori/AORA-Connect/releases/latest/download/aora-update-android.json';
+  final UpdatePlatform platform;
+  bool get isAndroid => platform == UpdatePlatform.android;
+  String get packageName =>
+      isAndroid ? 'AORAConnect.apk' : 'AORAConnect-Setup.exe';
+  String get defaultSource => isAndroid ? androidGithubSource : githubSource;
   final UpdateVerifier? verifier;
   final Directory? preferencesDirectory;
   final Future<Directory> Function()? sessionCreator;
@@ -82,7 +100,11 @@ class UpdateController extends ChangeNotifier {
   bool _disposed = false;
   HttpClient? _client;
   final _sessions = <Directory>[];
-  bool get supported => Platform.isWindows;
+  bool get supported => platform != UpdatePlatform.unsupported;
+
+  bool _newer(String version) => isAndroid
+      ? releaseVersion(version).last > releaseVersion(currentVersion).last
+      : newerRelease(version, currentVersion);
 
   void _changed() {
     if (!_disposed) notifyListeners();
@@ -105,6 +127,7 @@ class UpdateController extends ChangeNotifier {
 
   Future<Map<String, dynamic>> _verify(String command, String path) async {
     if (verifier != null) return verifier!(command, path);
+    if (isAndroid) return AndroidUpdates.verify(command, path);
     if (!await File(helperPath).exists()) {
       throw StateError('Restart the rebuilt application to enable updates.');
     }
@@ -155,7 +178,7 @@ class UpdateController extends ChangeNotifier {
   }
 
   Future<void> _perform(Future<void> Function() action) async {
-    if (busy || _disposed) return;
+    if (busy || installing || _disposed) return;
     busy = true;
     error = null;
     progress = null;
@@ -206,7 +229,7 @@ class UpdateController extends ChangeNotifier {
     status = 'Checking for updates…';
     _changed();
     Object? failure;
-    for (final source in [githubSource, ...additionalSources]) {
+    for (final source in [defaultSource, ...additionalSources]) {
       try {
         final response = await _get(updateUrl(source));
         final bytes = <int>[];
@@ -224,9 +247,7 @@ class UpdateController extends ChangeNotifier {
         final candidate = AppRelease(
           await _verify('verify-manifest', metadata.path),
         );
-        release = newerRelease(candidate.version, currentVersion)
-            ? candidate
-            : null;
+        release = _newer(candidate.version) ? candidate : null;
         package = null;
         status = release == null
             ? 'No newer update found'
@@ -245,13 +266,15 @@ class UpdateController extends ChangeNotifier {
   Future<void> download() => _perform(() async {
     final expected = release;
     if (expected == null) return;
+    package = null;
     final directory = await _session();
-    final file = File('${directory.path}/AORAConnect-Setup.exe');
+    final file = File('${directory.path}/$packageName');
+    final sizeLimit = expected.size + (isAndroid ? 0 : 65560);
     Object? failure;
     for (final url in {
       ...expected.urls,
       for (final source in additionalSources)
-        updateUrl(source).resolve('AORAConnect-Setup.exe').toString(),
+        updateUrl(source).resolve(packageName).toString(),
     }) {
       try {
         status = 'Downloading update…';
@@ -264,22 +287,26 @@ class UpdateController extends ChangeNotifier {
             const Duration(seconds: 20),
           )) {
             received += chunk.length;
-            if (received > expected.size + 65560) {
+            if (received > sizeLimit) {
               throw StateError(
                 'Update download exceeds its signed size limit.',
               );
             }
             sink.add(chunk);
-            progress = (received / (expected.size + 65560)).clamp(0, 1);
+            progress = (received / sizeLimit).clamp(0, 1);
             _changed();
           }
           await sink.flush();
         } finally {
           await sink.close();
         }
+        if (isAndroid && received != expected.size) {
+          throw StateError('APK download is incomplete.');
+        }
         final actual = AppRelease(await _verify('verify-package', file.path));
         if (actual.version != expected.version ||
-            actual.sha256 != expected.sha256) {
+            actual.sha256 != expected.sha256 ||
+            actual.size != expected.size) {
           throw StateError(
             'Downloaded file does not match the selected release.',
           );
@@ -298,6 +325,7 @@ class UpdateController extends ChangeNotifier {
     throw StateError('Could not download a verified update.\n$failure');
   });
   Future<void> importFile(String path) => _perform(() async {
+    package = null;
     status = 'Verifying update file…';
     _changed();
     final source = File(path);
@@ -305,9 +333,9 @@ class UpdateController extends ChangeNotifier {
       throw StateError('Update file is too large.');
     }
     final directory = await _session();
-    final file = await source.copy('${directory.path}/AORAConnect-Setup.exe');
+    final file = await source.copy('${directory.path}/$packageName');
     final candidate = AppRelease(await _verify('verify-package', file.path));
-    if (!newerRelease(candidate.version, currentVersion)) {
+    if (!_newer(candidate.version)) {
       throw StateError('Choose an update newer than $currentVersion.');
     }
     await _stageHelper(directory);
@@ -317,6 +345,7 @@ class UpdateController extends ChangeNotifier {
         'Update ${candidate.version.split('+').first} verified and ready to install';
   });
   Future<void> _stageHelper(Directory directory) async {
+    if (isAndroid) return;
     await File(helperPath).copy('${directory.path}/aoravpn_update.exe');
   }
 
@@ -336,15 +365,28 @@ class UpdateController extends ChangeNotifier {
       final candidate = AppRelease(
         await _verify('verify-package', package!.path),
       );
-      if (!newerRelease(candidate.version, currentVersion)) {
+      if (!_newer(candidate.version)) {
         throw StateError(
           'This update is not newer than the installed application.',
+        );
+      }
+      if (release == null ||
+          candidate.version != release!.version ||
+          candidate.sha256 != release!.sha256 ||
+          candidate.size != release!.size) {
+        throw StateError(
+          'Update file changed after verification. Import or download it again.',
         );
       }
       if (!canInstall()) {
         throw StateError('Disconnect before installing an update.');
       }
       await launch(package!.path);
+      if (isAndroid) {
+        installing = false;
+        status = 'Installation completed';
+        _changed();
+      }
     } catch (e) {
       error = '$e';
       installing = false;

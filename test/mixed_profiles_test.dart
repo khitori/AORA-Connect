@@ -146,7 +146,7 @@ void main() {
 
   test('Bundled Xray accepts pinned VLESS TUN and proxy configurations', () async {
     if (!Platform.isWindows) return;
-    final core = File('cores/xray-v26.9.30-windows-64/xray.exe');
+    final core = File('cores/windows/xray-v26.9.30-windows-64/xray.exe');
     if (!await core.exists()) return;
     final profile = parseSubscription(
       'vless://bf000d23-0752-40b4-affe-68f7707a9661@127.0.0.1:443?security=tls&type=grpc&mode=gun&serviceName=vpn&pcs=${'ab' * 32}',
@@ -209,7 +209,9 @@ void main() {
 
   test('Bundled sing-box accepts generated TUN and proxy configurations', () async {
     if (!Platform.isWindows) return;
-    final core = File('cores/sing-box-1.14.2-windows-amd64/sing-box.exe');
+    final core = File(
+      'cores/windows/sing-box-1.14.2-windows-amd64/sing-box.exe',
+    );
     if (!await core.exists()) return;
     final directory = await Directory.systemTemp.createTemp(
       'aoravpn-protocol-',

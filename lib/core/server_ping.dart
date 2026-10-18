@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'dart:io';
 
+import 'package:flutter/services.dart';
+
+import 'android_tunnel_engine.dart';
+
 class ServerPingException implements Exception {
   const ServerPingException(this.message);
   final String message;
@@ -10,12 +14,32 @@ class ServerPingException implements Exception {
 
 /// ICMP round-trip time to the selected server's resolved address.
 Future<Duration> pingServer(String address) async {
+  if (Platform.isAndroid) return androidPing(address);
   final output = await runPingHelper(address);
   final milliseconds = int.tryParse(output);
   if (milliseconds == null || milliseconds < 0) {
     throw const ServerPingException('Invalid ping response.');
   }
   return Duration(milliseconds: milliseconds);
+}
+
+Future<Duration> androidPing(String address, {int? port}) async {
+  try {
+    final microseconds = await AndroidTunnelEngine.channel.invokeMethod<int>(
+      'ping',
+      {
+        'address': address,
+        'type': port == null ? 'icmp' : 'tcp',
+        'port': ?port,
+      },
+    );
+    if (microseconds == null || microseconds < 0) {
+      throw const ServerPingException('Invalid ping response.');
+    }
+    return Duration(microseconds: microseconds);
+  } on PlatformException catch (error) {
+    throw ServerPingException(error.message ?? 'Server check failed.');
+  }
 }
 
 Future<String> runPingHelper(

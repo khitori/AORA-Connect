@@ -298,9 +298,32 @@ class _SavedSubscriptionSelector extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.lineStrong),
               ),
-              child: Text(
-                details!.description!,
-                style: Theme.of(context).textTheme.bodySmall,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.description_outlined,
+                        size: 16,
+                        color: AppColors.muted500,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Description',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.muted500),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    details!.description!,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
               ),
             ),
           ),
@@ -340,6 +363,9 @@ class _SubscriptionLinkButton extends StatelessWidget {
   Widget build(BuildContext context) => Tooltip(
     message: url == null ? '$label link not provided' : 'Open $label',
     child: OutlinedButton.icon(
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+      ),
       onPressed: url == null
           ? null
           : () async {

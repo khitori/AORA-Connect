@@ -50,7 +50,11 @@ class SettingsPage extends StatelessWidget {
             value: connection.core,
             items: [
               for (final core in CoreKind.values)
-                DropdownMenuItem(value: core, child: Text(core.displayName)),
+                DropdownMenuItem(
+                  value: core,
+                  enabled: connection.supportsCore(core),
+                  child: Text(core.displayName),
+                ),
             ],
             onChanged: connection.canEdit
                 ? (core) {
@@ -87,14 +91,15 @@ class SettingsPage extends StatelessWidget {
           const SizedBox(height: 8),
           AppSelect<ConnectionMode>(
             value: connection.mode,
-            items: const [
-              DropdownMenuItem(
+            items: [
+              const DropdownMenuItem(
                 value: ConnectionMode.tun,
                 child: Text('VPN (TUN)'),
               ),
               DropdownMenuItem(
                 value: ConnectionMode.proxy,
-                child: Text('Local proxy'),
+                enabled: connection.supportsMode(ConnectionMode.proxy),
+                child: const Text('Local proxy'),
               ),
             ],
             onChanged: connection.canEdit
@@ -220,7 +225,7 @@ class SettingsPage extends StatelessWidget {
         icon: Icons.tune_rounded,
         children: [
           ConnectionControls(
-            onValidate: connection.canConnect ? connection.validate : null,
+            onValidate: connection.canValidate ? connection.validate : null,
             onTest: connection.canTest ? connection.testConnection : null,
           ),
           const SizedBox(height: 16),

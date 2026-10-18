@@ -98,6 +98,33 @@ class MemoryKillSwitch implements KillSwitch {
 
 void main() {
   test(
+    'Diagnostics reports validation success and failure in settings and logs',
+    () async {
+      final engine = ControlledEngine();
+      final controller = ConnectionController(
+        engine: engine,
+        configPath: 'unused.json',
+      );
+      addTearDown(() async {
+        await controller.shutdown();
+        controller.dispose();
+      });
+      expect(controller.canValidate, isTrue);
+      await controller.validate();
+      expect(controller.logs.last, contains('Configuration valid'));
+      engine.rejectValidation = true;
+      await controller.validate();
+      expect(controller.logs.last, contains('Configuration validation failed'));
+      expect(
+        controller.errorFor(ConnectionErrorScope.settings),
+        contains('Invalid configuration'),
+      );
+      engine.changes.add(TunnelState.running);
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.canValidate, isTrue);
+    },
+  );
+  test(
     'Subscription timing changes only after a successful fetch and is saved',
     () async {
       final engine = ControlledEngine();
@@ -471,11 +498,11 @@ void main() {
     await controller.validate();
     expect(controller.error, contains('Invalid configuration'));
     expect(
-      controller.errorFor(ConnectionErrorScope.connection),
+      controller.errorFor(ConnectionErrorScope.settings),
       contains('Invalid configuration'),
     );
     expect(controller.errorFor(ConnectionErrorScope.subscriptions), isNull);
-    expect(controller.errorFor(ConnectionErrorScope.settings), isNull);
+    expect(controller.errorFor(ConnectionErrorScope.connection), isNull);
     expect(controller.busy, isFalse);
     expect(controller.canConnect, isTrue);
     await controller.shutdown();

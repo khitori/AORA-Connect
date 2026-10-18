@@ -3,6 +3,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/services.dart';
+
 import '../profiles/server_profile.dart';
 import '../storage/app_paths.dart';
 import 'core_kind.dart';
@@ -11,6 +13,7 @@ import 'ping_type.dart';
 import 'server_ping.dart';
 import 'tunnel_engine.dart';
 import 'windows_core_engine.dart';
+import 'android_tunnel_engine.dart';
 
 class PingCancellation {
   bool cancelled = false;
@@ -67,6 +70,16 @@ class NodePingService {
 
   static Future<String> _resolve(String server) async {
     if (InternetAddress.tryParse(server) != null) return server;
+    if (Platform.isAndroid) {
+      final address = await AndroidTunnelEngine.channel.invokeMethod<String>(
+        'resolve',
+        {'host': server},
+      );
+      if (address == null || InternetAddress.tryParse(address) == null) {
+        throw const ServerPingException('DNS lookup failed.');
+      }
+      return address;
+    }
     final addresses = await InternetAddress.lookup(server)
         .timeout(const Duration(seconds: 5));
     if (addresses.isEmpty) {
@@ -102,6 +115,14 @@ class NodePingService {
     }
     final address = await _resolve(profile.server);
     cancellation.check();
+    if (Platform.isAndroid) {
+      final duration = await androidPing(
+        address,
+        port: type == PingType.tcp ? profile.port : null,
+      );
+      cancellation.check();
+      return duration;
+    }
     final output = await runPingHelper(
       address,
       helperPath: helperPath,
@@ -118,6 +139,7 @@ class NodePingService {
     List<ServerProfile> profiles,
     PingCancellation cancellation,
   ) async {
+    if (Platform.isAndroid) return _openAndroidBatch(profiles, cancellation);
     final batch = NodePingBatch._(targetUrl);
     final reservations = <ServerSocket>[];
     final prepared = <ServerProfile, _PreparedNode>{};
@@ -198,8 +220,8 @@ class NodePingService {
           if (nodes.isEmpty) return;
           final root = findCoreRoot();
           final executable = kind == CoreKind.xray
-              ? '${root.path}/cores/xray-v${kind.configuredVersion}-windows-64/xray.exe'
-              : '${root.path}/cores/sing-box-${kind.configuredVersion}-windows-amd64/sing-box.exe';
+              ? '${root.path}/cores/windows/xray-v${kind.configuredVersion}-windows-64/xray.exe'
+              : '${root.path}/cores/windows/sing-box-${kind.configuredVersion}-windows-amd64/sing-box.exe';
           _PingSession? session;
           try {
             if (!await File(executable).exists()) {
@@ -350,6 +372,74 @@ class NodePingService {
       }
     }
   }
+
+  Future<NodePingBatch> _openAndroidBatch(
+    List<ServerProfile> profiles,
+    PingCancellation cancellation,
+  ) async {
+    final batch = NodePingBatch._(targetUrl);
+    final nodes = <Map<String, Object?>>[];
+    final addresses = <String, Future<String>>{};
+    var next = 0;
+    Future<void> prepare() async {
+      while (!cancellation.cancelled && next < profiles.length) {
+        final index = next++;
+        final profile = profiles[index];
+        try {
+          final address = await addresses.putIfAbsent(
+            profile.server,
+            () => _resolve(profile.server),
+          );
+          cancellation.check();
+          nodes.add({
+            'index': index,
+            'core': profile.coreKind.name,
+            'outbound': profile.outbound(serverAddress: address),
+          });
+        } catch (error) {
+          batch._errors[profile] = error;
+        }
+      }
+    }
+
+    try {
+      await Future.wait(
+        List.generate(profiles.length.clamp(0, 24), (_) => prepare()),
+      );
+      cancellation.check();
+      if (nodes.isEmpty) return batch;
+      final response = await AndroidTunnelEngine.channel
+          .invokeMapMethod<String, dynamic>('openPingBatch', {'nodes': nodes});
+      batch._androidId = response!['id'] as int;
+      final prepared = response['nodes'] as Map;
+      for (var index = 0; index < profiles.length; index++) {
+        final item = prepared['$index'] as Map?;
+        if (item == null) continue;
+        if (item['error'] case final String error) {
+          batch._errors[profiles[index]] = ServerPingException(error);
+        }
+        if (item['port'] case final int port) {
+          batch._ports[profiles[index]] = port;
+        }
+        if (item['xrayIndex'] case final int position) {
+          batch._xrayIndices[profiles[index]] = position;
+        }
+      }
+      cancellation.check();
+      batch._cancellation = cancellation;
+      batch._abort = () => unawaited(batch.dispose().catchError((Object _) {}));
+      cancellation.add(batch._abort!);
+      return batch;
+    } on PlatformException catch (error) {
+      await batch.dispose();
+      throw ServerPingException(
+        error.message ?? 'Could not prepare server checks.',
+      );
+    } catch (_) {
+      await batch.dispose();
+      rethrow;
+    }
+  }
 }
 
 class _PreparedNode {
@@ -384,6 +474,10 @@ class NodePingBatch {
   final _ports = <ServerProfile, int>{};
   final _errors = <ServerProfile, Object>{};
   final _sessions = <_PingSession>[];
+  int? _androidId;
+  final _xrayIndices = <ServerProfile, int>{};
+  PingCancellation? _cancellation;
+  void Function()? _abort;
   Future<void>? _disposal;
 
   Future<Duration> check(
@@ -394,6 +488,25 @@ class NodePingBatch {
     cancellation.check();
     final error = _errors[profile];
     if (error != null) throw error;
+    final xrayIndex = _xrayIndices[profile];
+    if (xrayIndex != null && _disposal == null) {
+      try {
+        final microseconds = await AndroidTunnelEngine.channel
+            .invokeMethod<int>('checkPingBatch', {
+              'id': _androidId,
+              'index': xrayIndex,
+              'method': type == PingType.proxyHead ? 'HEAD' : 'GET',
+              'url': targetUrl.toString(),
+            });
+        cancellation.check();
+        if (microseconds == null || microseconds < 0) {
+          throw const ServerPingException('Invalid ping response.');
+        }
+        return Duration(microseconds: microseconds);
+      } on PlatformException catch (error) {
+        throw ServerPingException(error.message ?? 'Proxy request failed.');
+      }
+    }
     final port = _ports[profile];
     if (port == null || _disposal != null) {
       throw const ServerPingException('Proxy check session is unavailable.');
@@ -432,7 +545,17 @@ class NodePingBatch {
     }
   }
 
-  Future<void> dispose() =>
-      _disposal ??= Future.wait(_sessions.map((session) => session.dispose()))
-          .then((_) {});
+  Future<void> dispose() => _disposal ??= _dispose();
+  Future<void> _dispose() async {
+    if (_abort != null) _cancellation?.remove(_abort!);
+    try {
+      await Future.wait(_sessions.map((session) => session.dispose()));
+    } finally {
+      if (_androidId != null) {
+        await AndroidTunnelEngine.channel.invokeMethod<void>('closePingBatch', {
+          'id': _androidId,
+        });
+      }
+    }
+  }
 }

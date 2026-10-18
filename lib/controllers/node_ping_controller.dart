@@ -56,7 +56,10 @@ class NodePingController extends ChangeNotifier {
   DateTime? lastCheckedAt;
   bool get busy => _operation != null;
   bool get canCheck =>
-      connection.supported && !connection.busy && _profiles.isNotEmpty && !busy;
+      connection.serverChecksSupported &&
+      !connection.busy &&
+      _profiles.isNotEmpty &&
+      !busy;
   NodePingResult? resultFor(ServerProfile profile) => _results[profile];
 
   void _sync() {

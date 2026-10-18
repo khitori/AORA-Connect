@@ -133,10 +133,10 @@ fn run() -> Result<()> {
         "app/aoravpn_server_ping.exe",
         "app/aoravpn_kill_switch.exe",
         "app/vcruntime140.dll",
-        "cores/sing-box-1.14.2-windows-amd64/sing-box.exe",
-        "cores/sing-box-1.14.2-windows-amd64/libcronet.dll",
-        "cores/xray-v26.9.30-windows-64/xray.exe",
-        "cores/xray-v26.9.30-windows-64/wintun.dll",
+        "cores/windows/sing-box-1.14.2-windows-amd64/sing-box.exe",
+        "cores/windows/sing-box-1.14.2-windows-amd64/libcronet.dll",
+        "cores/windows/xray-v26.9.30-windows-64/xray.exe",
+        "cores/windows/xray-v26.9.30-windows-64/wintun.dll",
     ];
     let installed = root.join("installed-version.txt").is_file();
     if !installed

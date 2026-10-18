@@ -5,6 +5,38 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:aoravpn/components/app_select.dart';
 
 void main() {
+  testWidgets('Popup uses compact rows without outer vertical padding', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppSelect<int>(
+            value: 0,
+            items: List.generate(
+              4,
+              (index) =>
+                  DropdownMenuItem(value: index, child: Text('Compact $index')),
+            ),
+            onChanged: (_) {},
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byType(AppSelect<int>));
+    await tester.pumpAndSettle();
+    final row = find.ancestor(
+      of: find.text('Compact 1'),
+      matching: find.byType(InkWell),
+    );
+    expect(tester.getSize(row).height, 40);
+    expect(
+      tester.getSize(find.byKey(const ValueKey('app-select-menu'))).height,
+      160,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+  });
   testWidgets('Selector opens below at matching width and scrolls long lists', (
     tester,
   ) async {

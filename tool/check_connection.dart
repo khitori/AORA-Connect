@@ -21,9 +21,9 @@ Future<void> main(List<String> arguments) async {
   }
   final directory = await AppPaths.createSession('connection-check-');
   final engine = WindowsSingBoxEngine(
-    executablePath: File('cores/sing-box-1.14.2-windows-amd64/sing-box.exe')
-        .absolute
-        .path,
+    executablePath: File(
+      'cores/windows/sing-box-1.14.2-windows-amd64/sing-box.exe',
+    ).absolute.path,
     hostPath: File('build/windows/x64/runner/Debug/aoravpn_core_host.exe')
         .absolute
         .path,

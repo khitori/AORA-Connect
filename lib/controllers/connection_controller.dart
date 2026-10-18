@@ -13,6 +13,8 @@ import '../core/development_paths.dart';
 import '../core/kill_switch.dart';
 import '../core/ping_type.dart';
 import '../core/tunnel_engine.dart';
+import '../core/android_tunnel_engine.dart';
+import '../core/unavailable_tunnel_engine.dart';
 import '../core/windows_core_engine.dart';
 import '../profiles/server_profile.dart';
 import '../profiles/hysteria_profile.dart';
@@ -36,22 +38,32 @@ class ConnectionController extends ChangeNotifier {
     this.settingsStore,
     SubscriptionLoader? subscriptionLoader,
     KillSwitch? killSwitch,
-  }) : supported = engine != null || Platform.isWindows,
+  }) : supported =
+           engine is! UnavailableTunnelEngine &&
+           (engine != null || Platform.isWindows || Platform.isAndroid),
        _hasTestConfig = configPath != null,
        _subscriptionLoader = subscriptionLoader ?? loadSubscriptionDetailed {
     final root = findCoreRoot();
     _engine =
         engine ??
-        WindowsSingBoxEngine(
-          executablePath:
-              '${root.path}/cores/sing-box-${CoreKind.singBox.configuredVersion}-windows-amd64/sing-box.exe',
-        );
+        (Platform.isWindows
+            ? WindowsSingBoxEngine(
+                executablePath:
+                    '${root.path}/cores/windows/sing-box-${CoreKind.singBox.configuredVersion}-windows-amd64/sing-box.exe',
+              )
+            : Platform.isAndroid
+            ? AndroidTunnelEngine()
+            : const UnavailableTunnelEngine());
     _xrayEngine =
         xrayEngine ??
-        WindowsXrayEngine(
-          executablePath:
-              '${root.path}/cores/xray-v${CoreKind.xray.configuredVersion}-windows-64/xray.exe',
-        );
+        (Platform.isWindows
+            ? WindowsXrayEngine(
+                executablePath:
+                    '${root.path}/cores/windows/xray-v${CoreKind.xray.configuredVersion}-windows-64/xray.exe',
+              )
+            : Platform.isAndroid
+            ? AndroidTunnelEngine(core: CoreKind.xray)
+            : const UnavailableTunnelEngine());
     _configPath = configPath ?? '${root.path}/configs/local-test.json';
     _killSwitch =
         killSwitch ??
@@ -70,6 +82,11 @@ class ConnectionController extends ChangeNotifier {
   }
 
   final bool supported;
+  bool supportsCore(CoreKind kind) =>
+      _engineFor(kind) is! UnavailableTunnelEngine;
+  bool supportsMode(ConnectionMode mode) =>
+      mode == ConnectionMode.tun || Platform.isWindows;
+  bool get serverChecksSupported => supported;
   final AppSettingsStore? settingsStore;
   final SubscriptionLoader _subscriptionLoader;
   final bool _hasTestConfig;
@@ -154,12 +171,20 @@ class ConnectionController extends ChangeNotifier {
 
   bool get canConnect =>
       supported &&
+      supportsCore(_core) &&
       canEdit &&
       (_selected != null
           ? _selected!.coreKind == _core
           : _hasTestConfig && _core == CoreKind.singBox);
   bool get canStop => !_busy && _state == TunnelState.running;
   bool get canTest => canStop && _selected != null;
+  bool get canValidate =>
+      supported &&
+      supportsCore(_core) &&
+      !_busy &&
+      !_maintenance &&
+      !selectedRequiresDifferentCore &&
+      (_selected != null || _hasTestConfig);
   String get _activeConfig => _importedConfigPath ?? _configPath;
   CoreKind get activeCore => _core;
   bool get selectedRequiresDifferentCore =>
@@ -171,10 +196,14 @@ class ConnectionController extends ChangeNotifier {
   StreamSubscription<String> _listenLogs(TunnelEngine engine, CoreKind kind) =>
       engine.logs.listen((line) {
         if (kind != activeCore) return;
-        _lines.add(line);
-        if (_lines.length > 500) _lines.removeAt(0);
-        _changed();
+        _appendLog(line);
       });
+
+  void _appendLog(String line) {
+    _lines.add(line);
+    if (_lines.length > 500) _lines.removeAt(0);
+    _changed();
+  }
 
   StreamSubscription<TunnelState> _listenStates(
     TunnelEngine engine,
@@ -267,14 +296,19 @@ class ConnectionController extends ChangeNotifier {
   Future<void> restore() {
     if (settingsStore == null && _killSwitch == null) return Future.value();
     return _perform(() async {
+      if (_engine case final AndroidTunnelEngine android) await android.ready;
+      if (_xrayEngine case final AndroidTunnelEngine android) {
+        await android.ready;
+      }
       // Recovery for the previous persistent firewall implementation. Perform
       // this before any network requests, even if saved preferences are invalid.
       await _killSwitch?.disarm();
       final saved = await settingsStore?.read() ?? const AppSettingsData();
       _subscriptions = saved.subscriptions;
       _activeSubscriptionUrl = saved.activeSubscriptionUrl;
-      _mode = saved.mode;
-      _core = saved.core;
+      _mode = Platform.isAndroid ? ConnectionMode.tun : saved.mode;
+      _core = supportsCore(saved.core) ? saved.core : CoreKind.singBox;
+      _state = _activeEngine.state;
       _dnsProvider = saved.dnsProvider;
       _pingType = saved.pingType;
       _killSwitchEnabled = saved.killSwitchEnabled;
@@ -405,6 +439,9 @@ class ConnectionController extends ChangeNotifier {
   }, errorScope: ConnectionErrorScope.connection);
 
   Future<void> setMode(ConnectionMode mode) => _perform(() async {
+    if (Platform.isAndroid && mode != ConnectionMode.tun) {
+      throw UnsupportedError('Android connections require VPN (TUN) mode.');
+    }
     if (_selected == null) {
       _mode = mode;
     } else {
@@ -416,6 +453,11 @@ class ConnectionController extends ChangeNotifier {
   Future<void> setCore(CoreKind core) {
     if (!canEdit) return Future.value();
     return _perform(() async {
+      if (!supportsCore(core)) {
+        throw UnsupportedError(
+          '${core.label} is not available on this platform yet.',
+        );
+      }
       if (_selected != null && _selected!.coreKind == core) {
         await _engineFor(core).validate(_activeConfig);
       }
@@ -519,7 +561,7 @@ class ConnectionController extends ChangeNotifier {
           ),
         ),
       );
-      if (profile.coreKind == _core) {
+      if (supported && profile.coreKind == _core) {
         await _activeEngine.validate(config.path);
       }
       final previous = _runtimeDirectory;
@@ -541,8 +583,16 @@ class ConnectionController extends ChangeNotifier {
     if (selectedRequiresDifferentCore) {
       throw StateError('Select ${_selected!.coreKind.label} in Settings.');
     }
-    await _activeEngine.validate(_activeConfig);
-  }, errorScope: ConnectionErrorScope.connection);
+    try {
+      await _activeEngine.validate(_activeConfig);
+      _appendLog(
+        'Configuration valid (${activeCore.label}). This checks configuration, not DNS or server reachability.',
+      );
+    } catch (error) {
+      _appendLog('Configuration validation failed: $error');
+      rethrow;
+    }
+  }, errorScope: ConnectionErrorScope.settings);
   Future<void> connect() => _perform(() async {
     if (selectedRequiresDifferentCore) {
       throw StateError('Select ${_selected!.coreKind.label} in Settings.');
@@ -555,7 +605,10 @@ class ConnectionController extends ChangeNotifier {
         port: _mode == ConnectionMode.tun ? null : 17890,
       );
       _probeResult = 'Connection verified (${elapsed.inMilliseconds} ms).';
-    } catch (_) {
+    } catch (error) {
+      _appendLog(
+        'Connection verification failed (${_dnsProvider.label} DNS): $error',
+      );
       await _activeEngine.stop();
       rethrow;
     }
@@ -564,12 +617,18 @@ class ConnectionController extends ChangeNotifier {
     await _activeEngine.stop();
   }, errorScope: ConnectionErrorScope.connection);
   Future<void> testConnection() => _perform(() async {
-    final elapsed = await probeConnection(
-      port: _mode == ConnectionMode.tun ? null : 17890,
-    );
-    _probeResult =
-        'HTTPS through ${_selected?.protocol ?? 'proxy'} succeeded (${elapsed.inMilliseconds} ms).';
-  }, errorScope: ConnectionErrorScope.connection);
+    try {
+      final elapsed = await probeConnection(
+        port: _mode == ConnectionMode.tun ? null : 17890,
+      );
+      _probeResult =
+          'HTTPS through ${_selected?.protocol ?? 'proxy'} succeeded (${elapsed.inMilliseconds} ms).';
+      _appendLog(_probeResult!);
+    } catch (error) {
+      _appendLog('Connection test failed (${_dnsProvider.label} DNS): $error');
+      rethrow;
+    }
+  }, errorScope: ConnectionErrorScope.settings);
 
   /// Await this before accepting an application exit request.
   Future<void> shutdown() => _cleanup ??= _shutdown();

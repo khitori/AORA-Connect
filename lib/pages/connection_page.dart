@@ -67,8 +67,6 @@ class ConnectionPage extends StatelessWidget {
                       color: Theme.of(context).colorScheme.error,
                     ),
                   ),
-                if (!connection.supported)
-                  const Text('This milestone supports Windows only.'),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 32),

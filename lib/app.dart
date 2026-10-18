@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui' show AppExitResponse;
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'components/floating_bottom_navigation.dart';
 import 'components/compact_outline_icon_button.dart';
 import 'components/app_notification.dart';
 import 'updates/update_controller.dart';
+import 'updates/android_updates.dart';
 import 'controllers/connection_controller.dart';
 import 'controllers/statistics_controller.dart';
 import 'controllers/node_ping_controller.dart';
@@ -75,7 +77,7 @@ class _AppShellState extends State<_AppShell> {
     );
     _statistics = StatisticsController(_connection);
     _pings = NodePingController(_connection);
-    if (widget.engine == null && _window.supported) {
+    if (widget.engine == null && (_window.supported || Platform.isAndroid)) {
       _updates = UpdateController()..addListener(_updateChanged);
       unawaited(_updates!.initialize());
     }
@@ -134,6 +136,14 @@ class _AppShellState extends State<_AppShell> {
           throw StateError('Disconnect before installing an update.');
         }
         try {
+          if (Platform.isAndroid) {
+            try {
+              await AndroidUpdates.install(path);
+            } finally {
+              _connection.cancelMaintenance();
+            }
+            return;
+          }
           await _window.command('install-update:$path');
           await _cleanupForExit();
           await _window.command('destroy');
@@ -191,9 +201,19 @@ class _AppShellState extends State<_AppShell> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => PopScope<Object?>(
+    canPop: _window.supported || _page == _AppPage.connection,
+    onPopInvokedWithResult: (didPop, _) {
+      if (!didPop) setState(() => _page = _AppPage.connection);
+    },
+    child: _buildScaffold(context),
+  );
+
+  Widget _buildScaffold(BuildContext context) => Scaffold(
     key: _scaffoldKey,
     appBar: AppBar(
+      titleSpacing: 24,
+      actionsPadding: EdgeInsets.zero,
       actions: _window.supported
           ? [
               _settingsButton(),
@@ -209,9 +229,9 @@ class _AppShellState extends State<_AppShell> {
                 icon: Icons.close_rounded,
                 onPressed: () => _windowAction('close'),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 24),
             ]
-          : [_settingsButton(), const SizedBox(width: 12)],
+          : [_settingsButton(), const SizedBox(width: 24)],
       title: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onPanStart: _window.supported ? (_) => _windowAction('drag') : null,

@@ -352,17 +352,17 @@ void main() {
     skip:
         !nativeAvailable ||
         !File(
-          'cores/sing-box-${CoreKind.singBox.configuredVersion}-windows-amd64/sing-box.exe',
+          'cores/windows/sing-box-${CoreKind.singBox.configuredVersion}-windows-amd64/sing-box.exe',
         ).existsSync() ||
         !File(
-          'cores/xray-v${CoreKind.xray.configuredVersion}-windows-64/xray.exe',
+          'cores/windows/xray-v${CoreKind.xray.configuredVersion}-windows-64/xray.exe',
         ).existsSync(),
   );
 
   for (final kind in CoreKind.values) {
     final binary = kind == CoreKind.xray
-        ? 'cores/xray-v${kind.configuredVersion}-windows-64/xray.exe'
-        : 'cores/sing-box-${kind.configuredVersion}-windows-amd64/sing-box.exe';
+        ? 'cores/windows/xray-v${kind.configuredVersion}-windows-64/xray.exe'
+        : 'cores/windows/sing-box-${kind.configuredVersion}-windows-amd64/sing-box.exe';
     test(
       'Shared ${kind.label} core routes multiple nodes and isolates failed requests',
       () async {

@@ -56,6 +56,15 @@ class _AppSelectState<T> extends State<AppSelect<T>>
   @override
   void initState() {
     super.initState();
+    _focusNode.onKeyEvent = (_, event) {
+      if (_open &&
+          event is KeyDownEvent &&
+          event.logicalKey == LogicalKeyboardKey.escape) {
+        _hide();
+        return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    };
     _menuAnimation = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 160),
@@ -161,7 +170,7 @@ class _AppSelectState<T> extends State<AppSelect<T>>
                         },
                         child: ListView.builder(
                           shrinkWrap: true,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          padding: EdgeInsets.zero,
                           itemCount: widget.items.length,
                           itemBuilder: (_, index) {
                             final item = widget.items[index];
@@ -172,12 +181,12 @@ class _AppSelectState<T> extends State<AppSelect<T>>
                                   : null,
                               child: Container(
                                 constraints: const BoxConstraints(
-                                  minHeight: 48,
+                                  minHeight: 40,
                                 ),
                                 alignment: Alignment.centerLeft,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
-                                  vertical: 12,
+                                  vertical: 8,
                                 ),
                                 color: item.value == widget.value
                                     ? AppTheme.selectedSurface

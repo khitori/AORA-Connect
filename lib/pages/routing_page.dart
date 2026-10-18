@@ -1,19 +1,41 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../components/app_expansion_card.dart';
 import '../components/app_select.dart';
 import '../components/app_toggle.dart';
-import '../components/compact_outline_icon_button.dart';
+import '../components/routing_rule_card.dart';
 import '../components/routing_rule_editor.dart';
+import '../components/installed_application_picker.dart';
 import '../controllers/connection_controller.dart';
 import '../routing/routing_policy.dart';
 import '../theme/app_colors.dart';
-import '../theme/app_theme.dart';
 
-class RoutingPage extends StatelessWidget {
-  const RoutingPage({super.key, required this.connection});
+class RoutingPage extends StatefulWidget {
+  const RoutingPage({
+    super.key,
+    required this.connection,
+    this.applicationLoader,
+  });
   final ConnectionController connection;
+  final Future<List<InstalledApplication>> Function()? applicationLoader;
+
+  @override
+  State<RoutingPage> createState() => _RoutingPageState();
+}
+
+class _RoutingPageState extends State<RoutingPage> {
+  static const _sectionGap = 16.0;
+  ConnectionController get connection => widget.connection;
+  // Resolve display metadata once per page, not once for every rule/rebuild.
+  late final Future<List<InstalledApplication>>? _applications =
+      widget.applicationLoader != null
+      ? widget.applicationLoader!()
+      : Platform.isAndroid
+      ? InstalledApplication.load()
+      : null;
 
   Future<void> _saveRules(List<RoutingRule> rules) =>
       connection.setRoutingPolicy(
@@ -47,14 +69,26 @@ class RoutingPage extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      FutureBuilder<List<InstalledApplication>>(
+        future: _applications,
+        builder: (context, snapshot) => _buildRules(context, {
+          for (final app in snapshot.data ?? <InstalledApplication>[])
+            app.packageName: app,
+        }),
+      );
+
+  Widget _buildRules(
+    BuildContext context,
+    Map<String, InstalledApplication> applications,
+  ) {
     final policy = connection.routingPolicy;
     final error = connection.errorFor(ConnectionErrorScope.routing);
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 32, 24, 12),
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, _sectionGap),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -114,7 +148,7 @@ class RoutingPage extends StatelessWidget {
                     const Text('Use VPN (TUN) mode to route system traffic.'),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: _sectionGap),
                 OutlinedButton.icon(
                   onPressed: connection.canEdit ? () => _edit(context) : null,
                   icon: const Icon(Icons.add_rounded),
@@ -159,91 +193,37 @@ class RoutingPage extends StatelessWidget {
             itemCount: policy.rules.length,
             itemBuilder: (context, index) {
               final rule = policy.rules[index];
+              final application = rule.match == RoutingMatch.application
+                  ? applications[rule.target]
+                  : null;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.card,
-                    borderRadius: BorderRadius.circular(AppTheme.controlRadius),
-                    border: Border.all(color: AppColors.lineStrong),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              rule.target,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${index + 1} · ${rule.match.label}',
-                        style: Theme.of(context).textTheme.bodySmall
-                            ?.copyWith(color: AppColors.muted500),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          AppToggle(
-                            semanticLabel: 'Enable ${rule.target}',
-                            value: rule.enabled,
-                            onChanged: connection.canEdit
-                                ? (enabled) {
-                                    final rules = List.of(policy.rules);
-                                    rules[index] = rule.withEnabled(enabled);
-                                    _saveRules(rules);
-                                  }
-                                : null,
-                          ),
-                          const Spacer(),
-                          CompactOutlineIconButton(
-                            tooltip: 'Move up',
-                            icon: Icons.keyboard_arrow_up_rounded,
-                            onPressed: connection.canEdit && index > 0
-                                ? () => _move(index, -1)
-                                : null,
-                          ),
-                          const SizedBox(width: 6),
-                          CompactOutlineIconButton(
-                            tooltip: 'Move down',
-                            icon: Icons.keyboard_arrow_down_rounded,
-                            onPressed:
-                                connection.canEdit &&
-                                    index < policy.rules.length - 1
-                                ? () => _move(index, 1)
-                                : null,
-                          ),
-                          const SizedBox(width: 6),
-                          CompactOutlineIconButton(
-                            tooltip: 'Edit rule',
-                            icon: Icons.edit_outlined,
-                            onPressed: connection.canEdit
-                                ? () => _edit(context, index)
-                                : null,
-                          ),
-                          const SizedBox(width: 6),
-                          CompactOutlineIconButton(
-                            tooltip: 'Delete rule',
-                            icon: Icons.delete_outline_rounded,
-                            onPressed: connection.canEdit
-                                ? () {
-                                    final rules = List.of(policy.rules)
-                                      ..removeAt(index);
-                                    _saveRules(rules);
-                                  }
-                                : null,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                child: RoutingRuleCard(
+                  rule: rule,
+                  application: application,
+                  onEnabledChanged: connection.canEdit
+                      ? (enabled) {
+                          final rules = List.of(policy.rules);
+                          rules[index] = rule.withEnabled(enabled);
+                          _saveRules(rules);
+                        }
+                      : null,
+                  onMoveUp: connection.canEdit && index > 0
+                      ? () => _move(index, -1)
+                      : null,
+                  onMoveDown:
+                      connection.canEdit && index < policy.rules.length - 1
+                      ? () => _move(index, 1)
+                      : null,
+                  onEdit: connection.canEdit
+                      ? () => _edit(context, index)
+                      : null,
+                  onDelete: connection.canEdit
+                      ? () {
+                          final rules = List.of(policy.rules)..removeAt(index);
+                          _saveRules(rules);
+                        }
+                      : null,
                 ),
               );
             },

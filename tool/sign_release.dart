@@ -41,7 +41,8 @@ Future<void> main(List<String> args) async {
     );
     return;
   }
-  if (args[0] != 'sign' || args.length != 5) {
+  final android = args[0] == 'sign-android';
+  if ((!android && args[0] != 'sign') || args.length != 5) {
     throw ArgumentError('Invalid signing arguments.');
   }
   final keyJson = jsonDecode(await keyFile.readAsString()) as Map;
@@ -63,7 +64,7 @@ Future<void> main(List<String> args) async {
   final signed = utf8.encode(
     jsonEncode({
       'appId': 'AORAConnect',
-      'platform': 'windows-x64',
+      'platform': android ? 'android-arm64' : 'windows-x64',
       'version': args[3],
       'size': size,
       'sha256': hex(hash.bytes),
@@ -78,6 +79,18 @@ Future<void> main(List<String> args) async {
       'signature': base64Encode(signature.bytes),
     }),
   );
+  if (envelope.length > 65536) {
+    throw StateError('Release metadata exceeds 64 KiB.');
+  }
+  if (android) {
+    // APK v2/v3 signatures cover the complete ZIP layout. Never append a footer.
+    await File('${installer.parent.path}/aora-update-android.json')
+        .writeAsBytes(envelope, flush: true);
+    stdout.writeln(
+      'Generated signed aora-update-android.json; APK bytes unchanged.',
+    );
+    return;
+  }
   final footer = ByteData(24);
   for (var i = 0; i < 8; i++) {
     footer.setUint8(i, ascii.encode('AORAUPD1')[i]);

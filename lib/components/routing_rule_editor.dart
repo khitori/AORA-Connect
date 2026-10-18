@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../routing/routing_policy.dart';
 import 'app_select.dart';
 import 'running_application_picker.dart';
+import 'installed_application_picker.dart';
 
 Future<RoutingRule?> showRoutingRuleEditor(
   BuildContext context, {
@@ -17,9 +20,12 @@ Future<RoutingRule?> showRoutingRuleEditor(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, update) => AlertDialog(
+        insetPadding: const EdgeInsets.all(24),
+        actionsAlignment: MainAxisAlignment.spaceBetween,
+        actionsOverflowButtonSpacing: 8,
         title: Text(initial == null ? 'Add routing rule' : 'Edit routing rule'),
         content: SizedBox(
-          width: 320,
+          width: 400,
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -50,19 +56,33 @@ Future<RoutingRule?> showRoutingRuleEditor(
                       vertical: 8,
                     ),
                     labelText: 'Value',
-                    hintText: match.hint,
+                    hintText:
+                        Platform.isAndroid && match == RoutingMatch.application
+                        ? 'com.android.chrome'
+                        : match.hint,
                     errorText: error,
                   ),
                 ),
-                if (match == RoutingMatch.application) ...[
+                if (match == RoutingMatch.application &&
+                    (Platform.isWindows || Platform.isAndroid)) ...[
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                    ),
                     icon: const Icon(Icons.apps_rounded),
-                    label: const Text('Choose running application'),
+                    label: const Text(
+                      'Choose application',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     onPressed: () async {
-                      final selected = await showRunningApplicationPicker(
-                        context,
-                      );
+                      final selected = Platform.isAndroid
+                          ? await showInstalledApplicationPicker(context)
+                          : await showRunningApplicationPicker(context);
                       if (selected == null || !context.mounted) return;
                       update(() {
                         target = selected;

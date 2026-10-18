@@ -1,4 +1,4 @@
-# Windows installation and updates
+# Installation and updates
 
 The default update source is the `khitori/AORA-Connect` GitHub repository.
 Users may add optional HTTPS metadata mirrors in **Settings → Updates**.
@@ -102,3 +102,91 @@ without Start Menu/Desktop shortcuts or an Installed Apps registration.
 It checks fresh install, upgrade, data retention, and silent uninstall.
 
 Neither release creation nor these checks publishes anything to GitHub.
+
+## Android signing and updates
+
+Android release APKs use their own RSA signing keystore. The shared Ed25519
+release key signs download metadata; it is not a replacement for the APK's
+Android signature. Both private keys must be retained for future releases.
+
+### Portable private files and Google Drive backups
+
+The Android signing folder on this checkout is `.release-keys/android/`:
+
+- `release.jks`: private Android signing keystore.
+- `signing.properties`: alias/passwords and `storeFile=release.jks`, relative
+  to this file, not an absolute PC-specific keystore path.
+
+These files are ignored by Git. Back up **both together**, preferably in an
+encrypted archive before storing it in a private Google Drive folder. Keep the
+archive password separately. This task never uploads private keys or credentials.
+Also retain the existing Windows/metadata key at
+`%USERPROFILE%/.aora-connect/release-private.json`; do not regenerate it.
+
+On another PC, restore the files anywhere and pass their paths to the build:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tool/build_android_release.ps1 -SigningProperties "D:/Private/AORA/android/signing.properties" -UpdateSigningKey "D:/Private/AORA/release-private.json" -ReleaseNotes "Describe changes here"
+```
+
+Without overrides, the build uses `.release-keys/android/signing.properties`
+and the existing metadata key in the user profile. Direct Flutter/Gradle
+release builds accept `AORA_ANDROID_SIGNING_PROPERTIES` as the properties-file
+path. Public certificates/keys may be published; private keys and passwords
+must not be committed or attached to a release.
+
+For a new application/channel only, create the Android folder once with
+`dart run tool/create_android_signing.dart`. The tool refuses to overwrite
+existing signing files. Restoring the same folder preserves the signing identity.
+
+### Build and publish Android
+
+1. Increase the version in `pubspec.yaml`. **The number after `+` must increase
+   for every Android release, including changes to the public version name.**
+   For example, `1.0.5+1` → `1.0.6+2`. Android orders upgrades by that build number.
+2. Build with `tool/build_android_release.ps1` as shown above. It signs the APK,
+   verifies its signature/application/version, then generates signed metadata.
+3. Attach both files from `build/android-release/` to the GitHub release:
+   `AORAConnect.apk` and `aora-update-android.json`. Windows assets may share
+   the same release. Do not replace Windows `aora-update.json` with Android metadata.
+
+No JSON editing is needed. The metadata generator leaves APK bytes unchanged:
+appending the Windows update footer would invalidate an APK signature.
+
+### Android user workflow and verification
+
+Settings → Updates supports automatic startup checks, user-approved downloads,
+optional HTTPS mirrors and offline **Update from file** imports. GitHub is the
+default, using `releases/latest/download/aora-update-android.json`. An APK
+downloaded elsewhere can also be opened directly in Android's package installer.
+
+Metadata is verified against the pinned Ed25519 public key before its URLs or
+hash are trusted. APK imports/downloads undergo full APK signature verification,
+must match the installed app's signer and application ID, and require a higher
+Android build number. A downloaded APK must additionally match the selected
+signed metadata's SHA-256, size and version. Limits are 64 KiB for metadata and
+512 MiB for APKs. No unsigned fallback is provided.
+
+Installation requires a disconnected VPN and idle server checks. A private
+verified copy is shared read-only with Android's installer using a scoped
+FileProvider. Android may ask the user to allow installations from AORA Connect;
+the system installation confirmation is still required. Cancelling returns to
+the app without deleting user settings. Nothing installs silently.
+
+Development and release builds use different signing keys. A release APK cannot
+replace the debug build currently used for development. Do not uninstall a
+development copy containing important settings just to bypass this check.
+Tests should use the isolated `.updatetest` application ID. Normal subsequent
+release-to-release upgrades with the same signing key preserve private app data.
+
+The signature comparison intentionally rejects key rotation until an explicit
+trusted migration is implemented. Publishing to Google Play with a different
+Play signing key would require a separate distribution/update strategy.
+
+Android verification: 111 automated Flutter tests pass. On the Android 13 phone,
+the isolated release-signed test application accepted the correct APK and signed
+metadata, rejected altered/wrong-app/wrong-key APKs, and retained its synthetic
+saved data after an ADB-driven signed upgrade. The test package and USB mapping
+were removed afterward; the normal development app was refreshed in place.
+The unknown-source permission and installer confirmation/cancellation screens
+still need a manual end-to-end UI check; the ADB upgrade does not exercise them.

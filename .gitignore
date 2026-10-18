@@ -51,3 +51,6 @@ app.*.map.json
 /.release-keys/
 *.release-private.json
 release-private.json
+**/*.jks
+**/*.keystore
+**/signing.properties

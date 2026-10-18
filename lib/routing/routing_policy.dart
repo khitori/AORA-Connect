@@ -130,11 +130,25 @@ Map<String, Object?> applyRouting(
   CoreKind core,
   RoutingPolicy policy, {
   DnsProvider dnsProvider = DnsProvider.cloudflare,
+  bool? android,
 }) {
+  final androidRules = android ?? Platform.isAndroid;
   if (!policy.enabled ||
       policy.rules.every((rule) => !rule.enabled) &&
           policy.defaultAction == RoutingAction.vpn) {
     return config;
+  }
+  if (androidRules) {
+    for (final rule in policy.rules.where(
+      (rule) => rule.enabled && rule.match == RoutingMatch.application,
+    )) {
+      if (!RegExp(r'^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$')
+          .hasMatch(rule.target)) {
+        throw const FormatException(
+          'Use an Android package name, such as com.android.chrome.',
+        );
+      }
+    }
   }
   final outbounds = List<Map<String, Object?>>.from(
     config['outbounds'] as List,
@@ -178,7 +192,9 @@ Map<String, Object?> applyRouting(
     for (final rule in policy.rules.where((rule) => rule.enabled)) {
       final field = switch (rule.match) {
         RoutingMatch.application =>
-          rule.target.contains('/') || rule.target.contains('\\')
+          androidRules
+              ? 'package_name'
+              : rule.target.contains('/') || rule.target.contains('\\')
               ? 'process_path'
               : 'process_name',
         RoutingMatch.domain => 'domain_suffix',

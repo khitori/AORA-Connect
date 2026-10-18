@@ -8,7 +8,7 @@ import 'package:aoravpn/core/windows_core_engine.dart';
 
 void main() {
   test('Xray proxy starts, accepts HTTP, and stops', () async {
-    final xray = File('cores/xray-v26.9.30-windows-64/xray.exe');
+    final xray = File('cores/windows/xray-v26.9.30-windows-64/xray.exe');
     if (!Platform.isWindows || !xray.existsSync()) return;
     final temp = await Directory.systemTemp.createTemp('aoravpn-xray-run-');
     final reserved = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
@@ -44,7 +44,7 @@ void main() {
   });
 
   test('Windows core host launches and gracefully stops Xray', () async {
-    final xray = File('cores/xray-v26.9.30-windows-64/xray.exe');
+    final xray = File('cores/windows/xray-v26.9.30-windows-64/xray.exe');
     final host = File('build/windows/x64/runner/Debug/aoravpn_core_host.exe');
     if (!Platform.isWindows || !xray.existsSync() || !host.existsSync()) return;
     final temp = await Directory.systemTemp.createTemp('aoravpn-xray-host-');
@@ -88,9 +88,9 @@ void main() {
       await temp.delete(recursive: true);
     }
   });
-  final executable = File('cores/sing-box-1.14.2-windows-amd64/sing-box.exe')
-      .absolute
-      .path;
+  final executable = File(
+    'cores/windows/sing-box-1.14.2-windows-amd64/sing-box.exe',
+  ).absolute.path;
   final available = Platform.isWindows && File(executable).existsSync();
 
   test(

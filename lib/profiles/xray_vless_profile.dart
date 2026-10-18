@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import '../core/connection_mode.dart';
+
+import 'dart:io';
+
 import '../core/core_kind.dart';
 import '../core/dns_provider.dart';
 import 'server_profile.dart';
@@ -81,9 +84,10 @@ class XrayVlessProfile extends ServerProfile {
             'mtu': 1500,
             'gateway': ['172.29.0.1/30', 'fdfe:dcba:9876::1/126'],
             'dns': [dnsProvider.address],
-            'autoSystemRoutingTable': ['0.0.0.0/0', '::/0'],
-            'autoOutboundsInterface': 'auto',
-            if (leakProtection)
+            if (!Platform.isAndroid)
+              'autoSystemRoutingTable': ['0.0.0.0/0', '::/0'],
+            if (!Platform.isAndroid) 'autoOutboundsInterface': 'auto',
+            if (leakProtection && !Platform.isAndroid)
               'autoSystemWfpBlockLeak': ['dns', 'misconfigtun'],
           },
         },

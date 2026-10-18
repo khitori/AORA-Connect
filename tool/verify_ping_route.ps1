@@ -15,7 +15,7 @@ try {
     $taskTarget = $taskConfig.outbounds[0].server
     if (!$taskTarget) { throw 'This diagnostic expects a sing-box runtime config.' }
     $taskBuild = Join-Path $taskRoot 'build/windows/x64/runner/Debug'
-    $taskCore = Join-Path $taskRoot 'cores/sing-box-1.14.2-windows-amd64/sing-box.exe'
+    $taskCore = Join-Path $taskRoot 'cores/windows/sing-box-1.14.2-windows-amd64/sing-box.exe'
     $taskProbe = Join-Path $taskBuild 'aoravpn_server_ping.exe'
     $taskReport.target = $taskTarget
     $taskReport.disconnectedMs = (& $taskProbe $taskTarget | Out-String).Trim()

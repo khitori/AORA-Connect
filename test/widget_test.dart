@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:aoravpn/controllers/node_ping_controller.dart';
 import 'package:aoravpn/app.dart';
 import 'package:aoravpn/components/app_select.dart';
+import 'package:aoravpn/components/app_expansion_card.dart';
 import 'package:aoravpn/components/app_toggle.dart';
 import 'package:aoravpn/core/tunnel_engine.dart';
 import 'package:aoravpn/core/connection_mode.dart';
@@ -122,6 +123,10 @@ void main() {
     expect(image.excludeFromSemantics, isTrue);
     expect(image.width, 32);
     expect(image.height, 32);
+    expect(tester.getTopLeft(find.byKey(const ValueKey('app-logo'))).dx, 24);
+    final header = tester.widget<AppBar>(find.byType(AppBar));
+    expect(header.actionsPadding, EdgeInsets.zero);
+    expect((header.actions!.last as SizedBox).width, 24);
     expect(find.widgetWithText(AppBar, 'AORA Connect'), findsOneWidget);
     final brandStyle = DefaultTextStyle.of(
       tester.element(find.text('AORA Connect')),
@@ -196,7 +201,7 @@ void main() {
     await tester.tap(find.text('Add rule'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), 'chrome.exe');
-    expect(find.text('Choose running application'), findsOneWidget);
+    expect(find.text('Choose application'), findsOneWidget);
     expect(
       find.descendant(
         of: find.byType(AlertDialog),
@@ -385,8 +390,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(TextField), findsNothing);
     expect(input.text, 'draft-link');
-    expect(find.text('sing-box'), findsOneWidget);
-    expect(find.text('Xray'), findsOneWidget);
+    expect(find.textContaining('sing-box · Hysteria2'), findsOneWidget);
+    expect(find.textContaining('Xray · VLESS'), findsOneWidget);
     final savedSelect = find.byKey(const ValueKey('saved-subscription-select'));
     expect(savedSelect, findsOneWidget);
     expect(
@@ -459,6 +464,10 @@ void main() {
     expect(find.byKey(const ValueKey('bottom-nav-settings')), findsNothing);
     await _openSettings(tester);
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Connection').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Core'));
+    await tester.pumpAndSettle();
     expect(find.text('Connection mode'), findsOneWidget);
     expect(find.text('Networking core'), findsOneWidget);
     expect(find.text('Core'), findsOneWidget);
@@ -488,6 +497,8 @@ void main() {
       find.byType(AppSelect<ConnectionMode>),
     );
     expect(selector.value, ConnectionMode.tun);
+    await tester.ensureVisible(find.byType(AppSelect<ConnectionMode>));
+    await tester.pumpAndSettle();
     await tester.tap(find.byType(AppSelect<ConnectionMode>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Local proxy').last);
@@ -558,10 +569,41 @@ void main() {
     await tester.tap(find.text('Connect'));
     await tester.pumpAndSettle();
     expect(find.text('sing-box 1.14.2: running'), findsOneWidget);
+    await _openSettings(tester);
+    await tester.scrollUntilVisible(
+      find.text('Diagnostics'),
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byType(ListView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Diagnostics'));
     await tester.pumpAndSettle();
     expect(find.text('Test core started'), findsOneWidget);
-    await _openSettings(tester);
+    await tester.scrollUntilVisible(
+      find.descendant(
+        of: find.byType(AppExpansionCard),
+        matching: find.text('Connection'),
+      ),
+      -200,
+      scrollable: find
+          .descendant(
+            of: find.byType(ListView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AppExpansionCard),
+        matching: find.text('Connection'),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(
       tester
@@ -572,7 +614,7 @@ void main() {
       isNull,
     );
     await tester.scrollUntilVisible(
-      find.text('License: GNU GPL version 3 or later.'),
+      find.text('About'),
       200,
       scrollable: find
           .descendant(
@@ -581,6 +623,8 @@ void main() {
           )
           .first,
     );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('About'));
     await tester.pumpAndSettle();
     expect(find.text('License: GNU GPL version 3 or later.'), findsOneWidget);
     expect(engine.state, TunnelState.running);

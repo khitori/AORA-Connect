@@ -1,0 +1,11 @@
+diff --git a/transport/internet/grpc/dial.go b/transport/internet/grpc/dial.go
+--- a/transport/internet/grpc/dial.go
++++ b/transport/internet/grpc/dial.go
+@@ -211,6 +211,7 @@ func getGrpcClient(ctx context.Context, dest net.Destination, streamSettings *intern
+ 		conn.Connect()
+ 	}
+ 	globalDialerMap[dialerConf{dest, streamSettings}] = conn
++	aoraTrackClient(ctx, conn)
+ 	return conn, err
+ }
+ 

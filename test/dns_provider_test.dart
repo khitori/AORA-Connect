@@ -87,8 +87,8 @@ void main() {
       final core = profile.coreKind;
       final executable = File(
         core == CoreKind.singBox
-            ? 'cores/sing-box-${core.configuredVersion}-windows-amd64/sing-box.exe'
-            : 'cores/xray-v${core.configuredVersion}-windows-64/xray.exe',
+            ? 'cores/windows/sing-box-${core.configuredVersion}-windows-amd64/sing-box.exe'
+            : 'cores/windows/xray-v${core.configuredVersion}-windows-64/xray.exe',
       );
       expect(
         executable.existsSync(),

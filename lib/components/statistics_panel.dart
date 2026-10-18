@@ -42,7 +42,9 @@ class StatisticsPanel extends StatelessWidget {
           key: const ValueKey('statistics-toggle'),
           semanticLabel: 'Statistics',
           value: statistics.connection.statisticsEnabled,
-          onChanged: statistics.connection.busy
+          onChanged:
+              statistics.connection.busy ||
+                  !statistics.connection.serverChecksSupported
               ? null
               : statistics.connection.setStatisticsEnabled,
         ),

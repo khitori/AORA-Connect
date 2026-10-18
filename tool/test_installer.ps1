@@ -5,10 +5,10 @@ $compiler = 'C:/Program Files (x86)/Inno Setup 6/ISCC.exe'
 $fixture = Join-Path ([IO.Path]::GetTempPath()) ('aora-installer-test-' + [guid]::NewGuid().ToString('N'))
 $stage = Join-Path $fixture 'stage'
 $installation = Join-Path $fixture 'installed'
-New-Item -ItemType Directory -Path (Join-Path $stage 'app'),(Join-Path $stage 'cores'),(Join-Path $installation 'settings') -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $stage 'app'),(Join-Path $stage 'cores/windows'),(Join-Path $installation 'settings') -Force | Out-Null
 # Inert fixture files; no app or VPN core is executed.
 Copy-Item -LiteralPath (Join-Path $project 'LICENSE') -Destination (Join-Path $stage 'app/fixture.txt')
-Copy-Item -LiteralPath (Join-Path $project 'LICENSE') -Destination (Join-Path $stage 'cores/fixture.txt')
+Copy-Item -LiteralPath (Join-Path $project 'LICENSE') -Destination (Join-Path $stage 'cores/windows/fixture.txt')
 $saved = Join-Path $installation 'settings/app-state.json'
 [IO.File]::WriteAllText($saved, '{"fixture":"preserve"}')
 function Run-FixtureInstaller([string]$path) {
@@ -22,6 +22,7 @@ try {
     & $compiler /Q /DTestInstall=1 "/DStageDir=$stage" "/DAppVersion=$version" "/DOutputPath=$output" 'installer/aora.iss'
     if ($LASTEXITCODE -ne 0) { throw 'Fixture installer did not compile.' }
     if ((Run-FixtureInstaller (Join-Path $output 'AORAConnect-Setup.exe')) -ne 0) { throw "Fixture installation failed: $version" }
+    if (!(Test-Path -LiteralPath (Join-Path $installation 'cores/windows/fixture.txt'))) { throw 'Installer did not preserve the Windows core subdirectory.' }
     if ([IO.File]::ReadAllText($saved) -ne '{"fixture":"preserve"}') { throw 'Saved settings were changed.' }
     if ([IO.File]::ReadAllText((Join-Path $installation 'installed-version.txt')) -ne $version) { throw 'Installation version was not updated.' }
   }
