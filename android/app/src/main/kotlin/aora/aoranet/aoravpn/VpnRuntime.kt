@@ -60,7 +60,10 @@ internal object VpnRuntime {
     fun update(value: String) {
         state = value
         val core = coreKind
-        main.post { sink?.success(mapOf("state" to value, "core" to core)) }
+        main.post {
+            sink?.success(mapOf("state" to value, "core" to core))
+            QuickSettings.refresh()
+        }
     }
 
     fun log(message: String) {
@@ -74,7 +77,8 @@ internal object VpnRuntime {
         }
     }
 
-    fun start(context: Context, config: String, core: String, result: MethodChannel.Result) {
+    fun start(context: Context, config: String, core: String, result: MethodChannel.Result,
+              serverHost: String? = null, verify: Boolean = false) {
         if (state != "stopped") {
             result.error("BUSY", "Disconnect before starting another VPN session.", null)
             return
@@ -87,7 +91,8 @@ internal object VpnRuntime {
         update("starting")
         try {
             context.startForegroundService(Intent(context, AoraVpnService::class.java)
-                .putExtra("config", config).putExtra("core", core).putExtra("generation", generation))
+                .putExtra("config", config).putExtra("core", core).putExtra("generation", generation)
+                .putExtra("serverHost", serverHost).putExtra("verify", verify))
         } catch (error: Exception) {
             update("stopped")
             completeStart(error)
@@ -98,6 +103,16 @@ internal object VpnRuntime {
         "network" to (PhysicalNetworkMonitor.get(context).current()?.description() ?: "unavailable (waiting for Android)"),
         "coreError" to lastCoreError,
     )
+
+    /** A passive snapshot only: copying diagnostics must not initiate network work. */
+    @Suppress("DEPRECATION")
+    fun reportDetails(context: Context): Map<String, String?> {
+        val info = context.packageManager.getPackageInfo(context.packageName, 0)
+        val build = if (android.os.Build.VERSION.SDK_INT >= 28) info.longVersionCode else info.versionCode.toLong()
+        return mapOf("version" to "${info.versionName}+$build",
+            "platform" to "Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})",
+            "network" to PhysicalNetworkMonitor.cachedDescription(), "coreError" to lastCoreError)
+    }
 
     fun completeStart(error: Throwable? = null, token: Long = generation) {
         main.post {

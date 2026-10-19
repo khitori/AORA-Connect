@@ -1,0 +1,10 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="1024" android:viewportHeight="1024">
+    <!-- Monochrome rendition of the app's A/orbit mark for system tinting. -->
+    <path android:fillColor="@android:color/transparent" android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="38" android:strokeLineCap="round"
+        android:pathData="M250,920 L512,100 L774,920 M100,740 C-30,580 930,360 940,535 C945,700 140,895 100,740 Z" />
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M564,625 A52,52 0,1 0,460 625 A52,52 0,1 0,564 625" />
+</vector>

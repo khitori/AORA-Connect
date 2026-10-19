@@ -163,6 +163,7 @@ internal class PhysicalNetworkMonitor private constructor(context: Context) {
 
     companion object {
         @Volatile private var instance: PhysicalNetworkMonitor? = null
+        fun cachedDescription(): String = instance?.current()?.description() ?: "Not available"
         fun get(context: Context): PhysicalNetworkMonitor = instance ?: synchronized(this) {
             instance ?: PhysicalNetworkMonitor(context.applicationContext).also { instance = it }
         }

@@ -2,7 +2,7 @@
 #![windows_subsystem = "windows"]
 use aora_windows_helpers::{owned, updates::*, wide};
 use std::{
-    os::windows::{io::AsRawHandle, process::CommandExt},
+    os::windows::{fs::OpenOptionsExt, io::AsRawHandle, process::CommandExt},
     path::{Path, PathBuf},
     process::Command,
     time::{Duration, Instant},
@@ -14,6 +14,16 @@ fn app_root() -> Result<PathBuf> {
         PathBuf::from(std::env::var_os("LOCALAPPDATA").ok_or("Missing application storage")?)
             .join("AORAConnect"),
     )
+}
+
+fn installer_lease(directory: &Path) -> std::io::Result<std::fs::File> {
+    std::fs::OpenOptions::new()
+        .create(true)
+        .truncate(false)
+        .read(true)
+        .write(true)
+        .share_mode(0)
+        .open(directory.join(".installer.lock"))
 }
 
 fn run(args: &[String]) -> Result<()> {
@@ -31,7 +41,7 @@ fn run(args: &[String]) -> Result<()> {
             let release = verify_manifest(&std::fs::read(file)?)?;
             println!("{}", serde_json::to_string(&release)?);
         }
-        [operation, file] if operation == "verify-package" => {
+        [operation, file] if operation == "verify-package" || operation == "inspect-package" => {
             let release = verify_package(Path::new(file))?;
             println!("{}", serde_json::to_string(&release)?);
         }
@@ -44,6 +54,11 @@ fn run(args: &[String]) -> Result<()> {
             {
                 return Err("Update must be staged in application storage".into());
             }
+            // No sharing: startup cleanup cannot open/delete this session while
+            // the helper or the installer is using it. The persistent handoff
+            // marker also protects the gap before this process acquires it.
+            let _installer_lease =
+                installer_lease(package.parent().ok_or("Missing update directory")?)?;
             let release = verify_package(&package)?;
             if version(&release.version)? <= version(env!("AORA_APP_VERSION"))? {
                 return Err("Update must be newer than the installed application".into());
@@ -116,5 +131,24 @@ fn main() {
             eprintln!("{error}");
         }
         std::process::exit(1);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn installer_lease_blocks_cleanup_until_helper_exits() {
+        let directory =
+            std::env::temp_dir().join(format!("aora-update-lease-{}", std::process::id()));
+        std::fs::create_dir(&directory).unwrap();
+        let path = directory.join(".installer.lock");
+        let lease = installer_lease(&directory).unwrap();
+        assert!(std::fs::OpenOptions::new().write(true).open(&path).is_err());
+        assert!(std::fs::remove_file(&path).is_err());
+        drop(lease);
+        std::fs::remove_file(path).unwrap();
+        std::fs::remove_dir(directory).unwrap();
     }
 }

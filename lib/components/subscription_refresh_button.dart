@@ -2,8 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../controllers/connection_controller.dart';
-import '../core/tunnel_engine.dart';
-import 'app_notification.dart';
+import 'connection_edit_notification.dart';
 import 'compact_outline_icon_button.dart';
 
 class SubscriptionRefreshButton extends StatelessWidget {
@@ -25,11 +24,11 @@ class SubscriptionRefreshButton extends StatelessWidget {
     onPressed:
         enabled && !connection.busy && connection.activeSubscriptionUrl != null
         ? () {
-            if (connection.state != TunnelState.stopped) {
-              AppNotification.show(
-                context,
-                'Disconnect before refreshing your subscription.',
-              );
+            if (!allowConnectionEdit(
+              context,
+              connection,
+              'Disconnect before refreshing your subscription.',
+            )) {
               return;
             }
             connection.refreshSubscription(

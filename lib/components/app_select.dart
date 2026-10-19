@@ -19,6 +19,7 @@ class AppSelect<T> extends StatefulWidget {
     this.hint,
     this.selectedChild,
     this.onOpenChanged,
+    this.onBeforeOpen,
     this.tapRegionGroupId,
     this.readOnly = false,
     this.showOutline = true,
@@ -34,6 +35,7 @@ class AppSelect<T> extends StatefulWidget {
   final Widget? hint;
   final Widget? selectedChild;
   final ValueChanged<bool>? onOpenChanged;
+  final bool Function()? onBeforeOpen;
   final Object? tapRegionGroupId;
   final bool readOnly;
   final bool showOutline;
@@ -99,11 +101,16 @@ class _AppSelectState<T> extends State<AppSelect<T>>
     setState(() => _open = false);
     widget.onOpenChanged?.call(false);
     _focusNode.requestFocus();
-    if (selected != null) widget.onChanged?.call(selected);
+    if (selected != null) {
+      // An already-open menu may outlive the connection becoming locked.
+      if (widget.onBeforeOpen?.call() == false) return;
+      widget.onChanged?.call(selected);
+    }
   }
 
   Future<void> _show() async {
     if (_open || !_enabled || widget.items.isEmpty) return;
+    if (widget.onBeforeOpen?.call() == false) return;
     // If the field is near the bottom of a scrolled page, first bring it up.
     final initialBox = context.findRenderObject()! as RenderBox;
     final initialBottom =
@@ -116,6 +123,7 @@ class _AppSelectState<T> extends State<AppSelect<T>>
       );
     }
     if (!mounted || !_enabled) return;
+    if (widget.onBeforeOpen?.call() == false) return;
     final box = context.findRenderObject()! as RenderBox;
     final anchor = box.localToGlobal(Offset.zero) & box.size;
     final media = MediaQuery.of(context);

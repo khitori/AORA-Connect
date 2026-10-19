@@ -21,7 +21,11 @@ class AndroidUpdates {
       return verifyManifest(await file.readAsBytes(), key);
     }
     final value = await channel.invokeMapMethod<String, dynamic>(
-      command == 'info' ? 'info' : 'verifyApk',
+      command == 'info'
+          ? 'info'
+          : command == 'inspect-package'
+          ? 'inspectApk'
+          : 'verifyApk',
       {'path': path},
     );
     if (value == null) {
@@ -32,6 +36,8 @@ class AndroidUpdates {
 
   static Future<void> install(String path) =>
       channel.invokeMethod<void>('installApk', {'path': path});
+
+  static Future<void> cleanup() => channel.invokeMethod<void>('cleanupUpdates');
 
   static Future<Map<String, dynamic>> verifyManifest(
     List<int> bytes,

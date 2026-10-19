@@ -18,6 +18,9 @@ class MainActivity : FlutterActivity() {
     private var permissionRequest: PermissionRequest? = null
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        QuickSettings.initialize(applicationContext)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "aora/quick_settings")
+            .setMethodCallHandler { call, result -> QuickSettings.handle(this, call, result) }
         updates = AndroidUpdates(this)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "aora/updates")
             .setMethodCallHandler { call, result -> updates.handle(call, result) }
@@ -45,6 +48,7 @@ class MainActivity : FlutterActivity() {
                     "status" -> result.success(if ((call.argument<String>("core") ?: "singBox") == VpnRuntime.coreKind) VpnRuntime.state else "stopped")
                     "validate" -> VpnRuntime.validate(this, call.argument<String>("config")!!, call.argument<String>("core") ?: "singBox", result)
                     "diagnostics" -> result.success(VpnRuntime.diagnostics(applicationContext))
+                    "reportDetails" -> result.success(VpnRuntime.reportDetails(applicationContext))
                     "start" -> {
                         if (permissionRequest != null) result.error("BUSY", "A permission request is already open.", null)
                         else {
@@ -97,6 +101,7 @@ class MainActivity : FlutterActivity() {
 
     override fun onDestroy() {
         if (::updates.isInitialized) updates.close()
+        QuickSettings.releaseActivity()
         super.onDestroy()
     }
 }

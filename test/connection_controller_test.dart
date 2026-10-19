@@ -174,7 +174,7 @@ void main() {
     },
   );
   testWidgets(
-    'Settings DNS selector saves a choice and is disabled while connected',
+    'Settings DNS selector saves a choice and notifies while connected',
     (tester) async {
       tester.view.physicalSize = const Size(420, 1100);
       tester.view.devicePixelRatio = 1;
@@ -227,6 +227,11 @@ void main() {
       engine.changes.add(TunnelState.running);
       await tester.pumpAndSettle();
       expect(tester.widget<AppSelect<DnsProvider>>(selector).onChanged, isNull);
+      await tester.tapAt(tester.getCenter(selector));
+      await tester.pumpAndSettle();
+      expect(find.text('Disconnect before changing DNS.'), findsOneWidget);
+      expect(find.byKey(const ValueKey('app-select-menu')), findsNothing);
+      expect(store.data.dnsProvider, DnsProvider.google);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     },

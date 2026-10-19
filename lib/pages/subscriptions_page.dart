@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../components/app_select.dart';
+import '../components/connection_edit_notification.dart';
 import '../components/compact_outline_icon_button.dart';
 import '../components/subscription_refresh_button.dart';
 import '../components/subscription_timing.dart';
@@ -32,6 +33,22 @@ class SubscriptionsPage extends StatefulWidget {
 class _SubscriptionsPageState extends State<SubscriptionsPage> {
   late bool _addExpanded;
 
+  bool _allowEdit() => allowConnectionEdit(
+    context,
+    widget.connection,
+    'Disconnect before changing subscriptions.',
+  );
+
+  Widget _editControl(
+    Widget child, {
+    String message = 'Disconnect before changing subscriptions.',
+  }) => DisabledControlNotice(
+    disabled: !widget.connection.canEdit,
+    onTap: () => allowConnectionEdit(context, widget.connection, message),
+    label: message,
+    child: child,
+  );
+
   @override
   void initState() {
     super.initState();
@@ -39,6 +56,7 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
   }
 
   Future<void> _addSubscription() async {
+    if (!_allowEdit()) return;
     final url = widget.subscriptionUrl.text.trim();
     await widget.connection.addSubscription(url);
     if (!mounted || widget.connection.error != null) return;
@@ -70,8 +88,11 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
                       alignment: Alignment.centerLeft,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                     ),
-                    onPressed: () =>
-                        setState(() => _addExpanded = !_addExpanded),
+                    onPressed: () {
+                      if (_addExpanded || _allowEdit()) {
+                        setState(() => _addExpanded = !_addExpanded);
+                      }
+                    },
                     child: Row(
                       children: [
                         Icon(
@@ -92,12 +113,14 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
                   child: _addExpanded
                       ? Padding(
                           padding: const EdgeInsets.only(top: 12),
-                          child: SubscriptionInput(
-                            controller: widget.subscriptionUrl,
-                            enabled: connection.canEdit,
-                            onLoad: connection.supported && connection.canEdit
-                                ? _addSubscription
-                                : null,
+                          child: _editControl(
+                            SubscriptionInput(
+                              controller: widget.subscriptionUrl,
+                              enabled: connection.canEdit,
+                              onLoad: connection.supported && connection.canEdit
+                                  ? _addSubscription
+                                  : null,
+                            ),
                           ),
                         )
                       : const SizedBox.shrink(),
@@ -147,21 +170,32 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
                       ),
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
+                    child: _editControl(
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        title: ServerNodeDetails(
+                          profile: profile,
+                          pings: widget.pings,
+                        ),
+                        trailing: selected
+                            ? Icon(Icons.check_rounded, color: AppColors.accent)
+                            : null,
+                        onTap: connection.canEdit
+                            ? () {
+                                if (allowConnectionEdit(
+                                  context,
+                                  connection,
+                                  'Disconnect before changing servers.',
+                                )) {
+                                  connection.selectProfile(profile);
+                                }
+                              }
+                            : null,
                       ),
-                      title: ServerNodeDetails(
-                        profile: profile,
-                        pings: widget.pings,
-                      ),
-                      trailing: selected
-                          ? Icon(Icons.check_rounded, color: AppColors.accent)
-                          : null,
-                      onTap: connection.canEdit
-                          ? () => connection.selectProfile(profile)
-                          : null,
+                      message: 'Disconnect before changing servers.',
                     ),
                   ),
                 );
@@ -178,13 +212,6 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
                   const SizedBox(height: 8),
                   const LinearProgressIndicator(),
                 ],
-                if (!connection.canEdit && !connection.busy)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 12),
-                    child: Text(
-                      'Stop the connection before changing subscriptions.',
-                    ),
-                  ),
                 if (subscriptionError != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 12),
@@ -209,6 +236,23 @@ class _SavedSubscriptionSelector extends StatelessWidget {
 
   final ConnectionController connection;
 
+  bool _allowEdit(BuildContext context) => allowConnectionEdit(
+    context,
+    connection,
+    'Disconnect before changing subscriptions.',
+  );
+
+  Widget _editControl(
+    BuildContext context,
+    Widget child, {
+    bool available = true,
+  }) => DisabledControlNotice(
+    disabled: !connection.canEdit && available,
+    onTap: () => _allowEdit(context),
+    label: 'Disconnect before changing subscriptions.',
+    child: child,
+  );
+
   @override
   Widget build(BuildContext context) {
     final activeUrl = connection.activeSubscriptionUrl;
@@ -231,28 +275,34 @@ class _SavedSubscriptionSelector extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AppSelect<String>(
-          key: const ValueKey('saved-subscription-select'),
-          value: activeUrl,
-          hint: const Text('Choose a subscription'),
-          items: [
-            for (final subscription in connection.subscriptions)
-              DropdownMenuItem(
-                value: subscription.url,
-                child: Text(
-                  subscription.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+        _editControl(
+          context,
+          AppSelect<String>(
+            onBeforeOpen: () => _allowEdit(context),
+            key: const ValueKey('saved-subscription-select'),
+            value: activeUrl,
+            hint: const Text('Choose a subscription'),
+            items: [
+              for (final subscription in connection.subscriptions)
+                DropdownMenuItem(
+                  value: subscription.url,
+                  child: Text(
+                    subscription.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-          ],
-          onChanged: connection.canEdit
-              ? (url) {
-                  if (url != null && url != activeUrl) {
-                    connection.activateSubscription(url);
+            ],
+            onChanged: connection.canEdit
+                ? (url) {
+                    if (url != null &&
+                        url != activeUrl &&
+                        _allowEdit(context)) {
+                      connection.activateSubscription(url);
+                    }
                   }
-                }
-              : null,
+                : null,
+          ),
         ),
         const SizedBox(height: 8),
         Row(
@@ -271,12 +321,20 @@ class _SavedSubscriptionSelector extends StatelessWidget {
             ),
             SubscriptionRefreshButton(connection: connection),
             const SizedBox(width: 6),
-            CompactOutlineIconButton(
-              tooltip: 'Remove selected subscription',
-              onPressed: active != null && connection.canEdit
-                  ? () => connection.removeSubscription(active!.url)
-                  : null,
-              icon: Icons.delete_outline_rounded,
+            _editControl(
+              context,
+              CompactOutlineIconButton(
+                tooltip: 'Remove selected subscription',
+                onPressed: active != null && connection.canEdit
+                    ? () {
+                        if (_allowEdit(context)) {
+                          connection.removeSubscription(active!.url);
+                        }
+                      }
+                    : null,
+                icon: Icons.delete_outline_rounded,
+              ),
+              available: active != null,
             ),
           ],
         ),

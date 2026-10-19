@@ -30,6 +30,8 @@ internal class AndroidUpdates(private val activity: MainActivity) {
     private val main = Handler(Looper.getMainLooper())
     private var pending: MethodChannel.Result? = null
     private var installerFile: File? = null
+    @Volatile private var handedToInstaller = false
+    @Volatile private var closed = false
 
     private fun versionCode(info: PackageInfo) = if (Build.VERSION.SDK_INT >= 28) info.longVersionCode else info.versionCode.toLong()
     private fun ownInfo(): PackageInfo = activity.packageManager.getPackageInfo(activity.packageName,
@@ -44,6 +46,8 @@ internal class AndroidUpdates(private val activity: MainActivity) {
                 mapOf("version" to "${info.versionName}+${versionCode(info)}")
             }
             "verifyApk" -> run(result) { verify(privateFile(requireNotNull(call.argument<String>("path")))) }
+            "inspectApk" -> run(result) { verify(privateFile(requireNotNull(call.argument<String>("path"))), requireNewer = false) }
+            "cleanupUpdates" -> run(result) { cleanup(); true }
             "installApk" -> {
                 if (pending != null) { result.error("BUSY", "An installation is already open.", null); return }
                 pending = result
@@ -54,9 +58,13 @@ internal class AndroidUpdates(private val activity: MainActivity) {
                         val directory = File(activity.cacheDir, "updates").apply { mkdirs() }
                         val target = File.createTempFile("aora-update-", ".apk", directory)
                         installerFile = target
+                        handedToInstaller = false
+                        // Zero means not handed off: an interrupted copy is disposable.
+                        File(target.path + ".installing").writeText("0")
                         source.copyTo(target, overwrite = true)
                         verify(target)
                         main.post {
+                            if (closed) return@post
                             try {
                                 if (Build.VERSION.SDK_INT >= 26 && !activity.packageManager.canRequestPackageInstalls()) {
                                     activity.startActivityForResult(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
@@ -85,7 +93,7 @@ internal class AndroidUpdates(private val activity: MainActivity) {
         return file
     }
 
-    private fun verify(file: File): Map<String, Any> {
+    private fun verify(file: File, requireNewer: Boolean = true): Map<String, Any> {
         require(file.length() in 1..MAX_APK_SIZE) { "Invalid APK size." }
         val verified = ApkVerifier.Builder(file)
             .setMinCheckedPlatformVersion(Build.VERSION.SDK_INT)
@@ -106,7 +114,7 @@ internal class AndroidUpdates(private val activity: MainActivity) {
             "This APK requires a newer Android version."
         }
         val nextCode = versionCode(archive)
-        require(nextCode > versionCode(installed)) { "Choose an APK with a newer Android build number." }
+        require(!requireNewer || nextCode > versionCode(installed)) { "Choose an APK with a newer Android build number." }
         val name = archive.versionName ?: error("APK has no version name.")
         require(Regex("[0-9]+\\.[0-9]+\\.[0-9]+").matches(name)) { "APK version name is invalid." }
         val hash = MessageDigest.getInstance("SHA-256")
@@ -120,12 +128,18 @@ internal class AndroidUpdates(private val activity: MainActivity) {
     }
 
     private fun openInstaller() {
+        if (closed) return
         worker.execute {
             try {
                 check(VpnRuntime.state == "stopped") { "Disconnect before installing an update." }
                 val file = installerFile ?: error("No verified APK is ready.")
-                verify(file)
+                val release = verify(file)
+                // Written before granting access: if Android kills our process
+                // during installation, the next launch must not unlink this APK.
+                File(file.path + ".installing").writeText(
+                    (release["version"] as String).substringAfterLast('+'))
                 main.post {
+                    if (closed) return@post
                     try {
                         val uri = FileProvider.getUriForFile(activity, "${activity.packageName}.updates", file)
                         val intent = Intent(Intent.ACTION_INSTALL_PACKAGE).setData(uri)
@@ -133,6 +147,7 @@ internal class AndroidUpdates(private val activity: MainActivity) {
                             .putExtra(Intent.EXTRA_RETURN_RESULT, true)
                         intent.clipData = ClipData.newRawUri("AORA update", uri)
                         activity.startActivityForResult(intent, INSTALL_REQUEST)
+                        handedToInstaller = true
                     } catch (error: Exception) { finish(error) }
                 }
             } catch (error: Exception) { main.post { finish(error) } }
@@ -151,16 +166,39 @@ internal class AndroidUpdates(private val activity: MainActivity) {
     }
 
     private fun finish(error: Exception? = null) {
+        if (closed) return
         val result = pending
         pending = null
-        installerFile?.delete()
+        installerFile?.let { file ->
+            file.delete()
+            File(file.path + ".installing").delete()
+        }
         installerFile = null
+        handedToInstaller = false
         if (error == null) result?.success(null)
         else result?.error("INSTALL", error.message, null)
     }
 
     fun close() {
-        if (pending != null) finish(IllegalStateException("Installation interrupted."))
+        // Destroying/recreating an Activity does not mean the system installer
+        // has finished reading the content URI. Leave its marked copy intact.
+        closed = true
+        pending?.error("INSTALL", "Installation interrupted.", null)
+        pending = null
+        // Queue behind copying/verification instead of deleting under active I/O.
+        worker.execute {
+            if (!handedToInstaller) installerFile?.let { file ->
+                file.delete()
+                File(file.path + ".installing").delete()
+            }
+        }
         worker.shutdown()
+    }
+
+    private fun cleanup() {
+        if (pending != null) return
+        AndroidUpdateCache.cleanup(File(activity.cacheDir, "updates"), versionCode(ownInfo())) { file ->
+            (verify(file, requireNewer = false)["version"] as String).substringAfterLast('+').toLong()
+        }
     }
 }

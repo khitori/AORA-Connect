@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 
 import '../storage/app_paths.dart';
 import 'android_updates.dart';
+import 'update_cache.dart';
 
 enum UpdatePlatform { windows, android, unsupported }
 
@@ -62,6 +63,7 @@ class UpdateController extends ChangeNotifier {
     this.verifier,
     this.preferencesDirectory,
     this.sessionCreator,
+    this.runtimeDirectory,
     UpdatePlatform? platform,
     String? helperPath,
   }) : platform =
@@ -86,6 +88,7 @@ class UpdateController extends ChangeNotifier {
   final UpdateVerifier? verifier;
   final Directory? preferencesDirectory;
   final Future<Directory> Function()? sessionCreator;
+  final Directory? runtimeDirectory;
   final String helperPath;
   String currentVersion = '';
   String get displayVersion =>
@@ -99,7 +102,9 @@ class UpdateController extends ChangeNotifier {
   double? progress;
   bool _disposed = false;
   HttpClient? _client;
-  final _sessions = <Directory>[];
+  final _sessions = <Directory, RandomAccessFile>{};
+  Timer? _cleanupRetry;
+  UpdateCache? _cache;
   bool get supported => platform != UpdatePlatform.unsupported;
 
   bool _newer(String version) => isAndroid
@@ -121,8 +126,52 @@ class UpdateController extends ChangeNotifier {
   Future<Directory> _session() async {
     final directory =
         await (sessionCreator?.call() ?? AppPaths.createSession('update-'));
-    _sessions.add(directory);
+    final lock = await UpdateCache.acquire(directory);
+    if (lock == null) throw StateError('Update storage is in use.');
+    _sessions[directory] = lock;
     return directory;
+  }
+
+  Future<void> _cleanup({bool recover = false}) async {
+    try {
+      final pending = await _cache?.sweep(
+        currentVersion,
+        preferredPackage: package?.path,
+      );
+      if (recover && pending != null && !_disposed) {
+        await _stageHelper(pending.file.parent);
+        package = pending.file;
+        release = AppRelease(pending.release);
+        status = 'Update verified and ready to install';
+      }
+      if (isAndroid && verifier == null) await AndroidUpdates.cleanup();
+    } catch (_) {
+      // Cleanup is best effort: file locks/permissions must not block updates.
+    }
+  }
+
+  Future<void> _releaseSessions() async {
+    final sessions = Map<Directory, RandomAccessFile>.of(_sessions);
+    _sessions.clear();
+    for (final entry in sessions.entries) {
+      final ready = entry.key.uri == package?.parent.uri;
+      try {
+        if (!ready) {
+          final cache = UpdateCache(
+            entry.key.parent,
+            packageName: packageName,
+            inspect: (path) => _verify('inspect-package', path),
+            newer: newerRelease,
+          );
+          await cache.discardLocked(entry.key);
+        }
+      } on FileSystemException {
+        // A locked file is retried by the next startup sweep.
+      } finally {
+        await UpdateCache.release(entry.key, entry.value);
+        if (!ready) await UpdateCache.removeEmptySession(entry.key);
+      }
+    }
   }
 
   Future<Map<String, dynamic>> _verify(String command, String path) async {
@@ -143,6 +192,27 @@ class UpdateController extends ChangeNotifier {
     if (!supported) return;
     try {
       currentVersion = (await _verify('info', ''))['version'] as String;
+      // Injected test/custom storage must never scan the real application's data.
+      final runtime =
+          runtimeDirectory ??
+          (preferencesDirectory == null && sessionCreator == null
+              ? Directory('${(await AppPaths.root()).path}/runtime')
+              : null);
+      if (runtime != null) {
+        _cache = UpdateCache(
+          runtime,
+          packageName: packageName,
+          inspect: (path) => _verify('inspect-package', path),
+          newer: (a, b) => isAndroid
+              ? releaseVersion(a).last > releaseVersion(b).last
+              : newerRelease(a, b),
+        );
+        await _cleanup(recover: true);
+        // An installer/helper may still be exiting during the first sweep.
+        _cleanupRetry = Timer(const Duration(seconds: 30), () async {
+          if (!_disposed && !busy && !installing) await _cleanup();
+        });
+      }
       final file = await _preferences();
       if (await file.exists()) {
         final json = jsonDecode(await file.readAsString()) as Map;
@@ -153,7 +223,12 @@ class UpdateController extends ChangeNotifier {
         ];
       }
       _changed();
-      if (automaticChecks && checkAutomatically && !_disposed) await check();
+      if (automaticChecks &&
+          checkAutomatically &&
+          !_disposed &&
+          package == null) {
+        await check();
+      }
     } catch (e) {
       error = '$e';
       _changed();
@@ -191,6 +266,8 @@ class UpdateController extends ChangeNotifier {
     } finally {
       _client?.close(force: true);
       _client = null;
+      await _releaseSessions();
+      await _cleanup();
       busy = false;
       _changed();
     }
@@ -247,10 +324,14 @@ class UpdateController extends ChangeNotifier {
         final candidate = AppRelease(
           await _verify('verify-manifest', metadata.path),
         );
-        release = _newer(candidate.version) ? candidate : null;
-        package = null;
+        // A metadata check must not discard a verified package awaiting retry.
+        if (package == null) {
+          release = _newer(candidate.version) ? candidate : null;
+        }
         status = release == null
             ? 'No newer update found'
+            : package != null
+            ? 'Update verified and ready to install'
             : 'Update ${release!.version.split('+').first} available';
         return;
       } catch (e) {
@@ -361,7 +442,12 @@ class UpdateController extends ChangeNotifier {
     }
     installing = true;
     _changed();
+    RandomAccessFile? lease;
+    var marked = false;
+    final directory = package!.parent;
     try {
+      lease = await UpdateCache.acquire(directory);
+      if (lease == null) throw StateError('Update storage is in use.');
       final candidate = AppRelease(
         await _verify('verify-package', package!.path),
       );
@@ -381,30 +467,38 @@ class UpdateController extends ChangeNotifier {
       if (!canInstall()) {
         throw StateError('Disconnect before installing an update.');
       }
+      await File(
+        '${package!.parent.path}/installing.json',
+      ).writeAsString(jsonEncode({'version': candidate.version}), flush: true);
+      marked = true;
       await launch(package!.path);
       if (isAndroid) {
+        await File('${package!.parent.path}/installing.json').delete();
         installing = false;
         status = 'Installation completed';
         _changed();
       }
     } catch (e) {
+      if (marked) {
+        try {
+          await File('${package!.parent.path}/installing.json').delete();
+        } catch (_) {}
+      }
       error = '$e';
       installing = false;
       _changed();
+    } finally {
+      if (lease != null) await UpdateCache.release(directory, lease);
     }
   }
 
   @override
   void dispose() {
     _disposed = true;
+    _cleanupRetry?.cancel();
     _client?.close(force: true);
-    if (!installing) {
-      for (final directory in _sessions) {
-        unawaited(
-          directory.delete(recursive: true).catchError((_) => directory),
-        );
-      }
-    }
+    // In-flight work owns its leases until its finally block. Verified pending
+    // files survive exit for retry; startup sweeps all obsolete versions.
     super.dispose();
   }
 }

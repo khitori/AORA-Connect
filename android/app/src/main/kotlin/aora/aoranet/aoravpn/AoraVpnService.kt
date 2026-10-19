@@ -40,7 +40,7 @@ class AoraVpnService : VpnService(), CommandServerHandler {
             VpnRuntime.stop(this)
             return START_NOT_STICKY
         }
-        val config = intent?.getStringExtra("config")
+        var config = intent?.getStringExtra("config")
         sessionGeneration = intent?.getLongExtra("generation", 0L) ?: 0L
         if (config == null || VpnRuntime.state != "starting") {
             stopSelf()
@@ -57,10 +57,19 @@ class AoraVpnService : VpnService(), CommandServerHandler {
                 stage = "physical network selection"
                 platform = AndroidPlatform(this).also { it.start() }
                 VpnRuntime.log("VPN startup network: ${PhysicalNetworkMonitor.get(this).awaitReady().description()}")
+                val host = intent?.getStringExtra("serverHost")
+                if (host != null) {
+                    stage = "server DNS lookup"
+                    val network = PhysicalNetworkMonitor.get(this).awaitReady().network
+                    val address = QuickSettingsTasks.within(15000, "Server DNS lookup") {
+                        network.getAllByName(host).sortedBy { if (it.address.size == 4) 0 else 1 }.first().hostAddress!!
+                    }
+                    config = QuickSettingsConfiguration.withAddress(config!!, intent.getStringExtra("core") ?: "singBox", address)
+                }
                 stage = "core/TUN startup"
                 xray = intent?.getStringExtra("core") == "xray"
                 if (xray) {
-                    val inbounds = JSONObject(config).getJSONArray("inbounds")
+                    val inbounds = JSONObject(config!!).getJSONArray("inbounds")
                     val settings = (0 until inbounds.length()).map { inbounds.getJSONObject(it) }
                         .first { it.optString("protocol") == "tun" }.getJSONObject("settings")
                     val builder = Builder().setSession("AORA Connect").setMtu(settings.optInt("mtu", 1500))
@@ -88,12 +97,16 @@ class AoraVpnService : VpnService(), CommandServerHandler {
                 VpnNetworkReady.await(this)
                 check(!VpnRuntime.cancelled) { "Connection cancelled." }
                 VpnRuntime.log(if (xray) "Xray 26.9.30 started." else "sing-box ${Libbox.version()} started.")
+                if (intent?.getBooleanExtra("verify", false) == true) {
+                    stage = "HTTPS connection verification"
+                    QuickSettingsProbe.verify(this)
+                }
                 VpnRuntime.update("running")
                 getSystemService(NotificationManager::class.java).notify(1, notification("Connected"))
                 VpnRuntime.completeStart(token = sessionGeneration)
             } catch (error: Exception) {
                 val failure = IllegalStateException("VPN startup failed during $stage: ${error.javaClass.simpleName}: ${error.message}", error)
-                VpnRuntime.log(failure.message ?: "VPN startup failed.")
+                VpnRuntime.log("ERROR ${failure.message ?: "VPN startup failed."}")
                 VpnRuntime.completeStart(failure, sessionGeneration)
                 closeTunnel()
             }

@@ -39,7 +39,21 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
+        <activity android:name=".TilePermissionActivity" android:exported="false"
+            android:theme="@style/LaunchTheme" android:excludeFromRecents="true" />
+        <service android:name=".AoraTileService" android:exported="true"
+            android:label="AORA Connect" android:icon="@drawable/ic_quick_settings"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data android:name="android.service.quicksettings.ACTIVE_TILE" android:value="true" />
+        </service>
         <service android:name=".AoraVpnService"
             android:exported="false"
             android:permission="android.permission.BIND_VPN_SERVICE"

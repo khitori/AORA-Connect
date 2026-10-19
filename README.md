@@ -187,7 +187,12 @@ The downloaded launcher stays wherever you save it.
 
 Installed copies also have an `uninstall/` folder and `installed-version.txt`
 under that root. Update preferences are in `settings/updates.json`; downloaded
-update sessions are staged in `runtime/`.
+update sessions are staged in `runtime/`. On startup, the updater scans all of
+its `update-*` sessions and removes obsolete packages, metadata and staged
+helpers. One verified newer package is retained for retry. Active installer
+handoffs are protected; installed APK copies in Android's private cache are
+also cleaned up. Settings, cores and manually downloaded originals are never
+part of this cleanup.
 
 Subscription links and settings are stored as **unencrypted JSON**. Generated core configurations can contain server credentials. Do not publish these files or include them in public issue reports.
 

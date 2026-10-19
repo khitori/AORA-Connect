@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-class SubscriptionInput extends StatelessWidget {
+import '../profiles/subscription_loader.dart';
+import '../theme/app_theme.dart';
+import 'app_notification.dart';
+
+class SubscriptionInput extends StatefulWidget {
   const SubscriptionInput({
     super.key,
     required this.controller,
@@ -13,25 +18,83 @@ class SubscriptionInput extends StatelessWidget {
   final VoidCallback? onLoad;
 
   @override
+  State<SubscriptionInput> createState() => _SubscriptionInputState();
+}
+
+class _SubscriptionInputState extends State<SubscriptionInput> {
+  bool _reading = false;
+
+  Future<void> _paste() async {
+    if (_reading || !widget.enabled) return;
+    final controller = widget.controller;
+    final previous = controller.value;
+    setState(() => _reading = true);
+    try {
+      final value = (await Clipboard.getData(Clipboard.kTextPlain))?.text
+          ?.trim();
+      if (!mounted ||
+          !widget.enabled ||
+          widget.controller != controller ||
+          controller.value != previous) {
+        return;
+      }
+      if (value == null || !isSupportedSubscriptionInput(value)) {
+        AppNotification.show(
+          context,
+          'Copy a valid subscription or server link first.',
+        );
+        return;
+      }
+      widget.controller.value = TextEditingValue(
+        text: value,
+        selection: TextSelection.collapsed(offset: value.length),
+      );
+    } catch (_) {
+      if (mounted) {
+        AppNotification.show(context, 'Could not read the clipboard.');
+      }
+    } finally {
+      if (mounted) setState(() => _reading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) => SizedBox(
-    height: 36,
+    height: AppTheme.controlHeight,
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Tooltip(
+          message: 'Paste from clipboard',
+          child: SizedBox(
+            width: AppTheme.controlHeight,
+            child: OutlinedButton(
+              key: const ValueKey('paste-subscription'),
+              style: OutlinedButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              onPressed: widget.enabled && !_reading ? _paste : null,
+              child: const Icon(Icons.content_paste_rounded, size: 18),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
         Expanded(
           child: TextField(
-            controller: controller,
+            controller: widget.controller,
             obscureText: true,
             autocorrect: false,
             enableSuggestions: false,
-            enabled: enabled,
+            enabled: widget.enabled,
             decoration: const InputDecoration(
               labelText: 'Subscription or server link...',
             ),
           ),
         ),
         const SizedBox(width: 8),
-        OutlinedButton(onPressed: onLoad, child: const Text('Add')),
+        OutlinedButton(onPressed: widget.onLoad, child: const Text('Add')),
       ],
     ),
   );

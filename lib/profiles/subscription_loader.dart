@@ -107,6 +107,30 @@ SubscriptionLoadResult parseSubscriptionDetailed(String body) {
 List<ServerProfile> parseSubscription(String body) =>
     parseSubscriptionDetailed(body).profiles;
 
+/// Local validation only: pasting must never fetch or import a subscription.
+bool isSupportedSubscriptionInput(String value) {
+  if (value.length > 65536 || RegExp(r'\s').hasMatch(value)) return false;
+  final uri = Uri.tryParse(value);
+  if (uri?.scheme == 'https') {
+    return uri!.host.isNotEmpty && uri.userInfo.isEmpty;
+  }
+  if (!{
+    'hysteria2',
+    'hy2',
+    'vless',
+    'trojan',
+    'ss',
+    'vmess',
+  }.contains(uri?.scheme.toLowerCase())) {
+    return false;
+  }
+  try {
+    return parseSubscription(value).length == 1;
+  } on FormatException {
+    return false;
+  }
+}
+
 Future<SubscriptionLoadResult> loadSubscriptionDetailed(String url) async {
   final source = url.trim();
   final scheme = source.split('://').first.toLowerCase();

@@ -1,5 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import '../components/app_notification.dart';
+import '../components/connection_edit_notification.dart';
+import '../core/android_quick_settings.dart';
+import '../core/android_tunnel_engine.dart';
+import '../core/diagnostics_report.dart';
 
 import '../components/app_select.dart';
 import '../components/app_toggle.dart';
@@ -32,6 +41,72 @@ class SettingsPage extends StatelessWidget {
   final UpdateController? updates;
   final Future<void> Function()? onInstallUpdate;
 
+  bool _allowEdit(BuildContext context, String action) =>
+      allowConnectionEdit(context, connection, 'Disconnect before $action.');
+
+  Widget _editControl(
+    BuildContext context,
+    String action,
+    Widget child, {
+    bool available = true,
+  }) => DisabledControlNotice(
+    disabled: !connection.canEdit && available,
+    onTap: () => _allowEdit(context, action),
+    label: 'Disconnect before $action.',
+    child: child,
+  );
+
+  Future<void> _copyDiagnostics(BuildContext context) async {
+    try {
+      Map<String, dynamic> details = const {};
+      if (Platform.isAndroid) {
+        details =
+            await AndroidTunnelEngine.channel.invokeMapMethod<String, dynamic>(
+              'reportDetails',
+            ) ??
+            {};
+      }
+      final report = buildDiagnosticsReport(
+        connection,
+        version:
+            details['version'] as String? ??
+            (updates?.currentVersion.isNotEmpty == true
+                ? updates!.currentVersion
+                : 'Not available'),
+        platform: details['platform'] as String? ?? Platform.operatingSystem,
+        network: details['network'] as String? ?? 'Not available',
+        coreError: details['coreError'] as String?,
+      );
+      await Clipboard.setData(ClipboardData(text: report));
+      if (context.mounted) AppNotification.show(context, 'Diagnostics copied.');
+    } catch (_) {
+      if (context.mounted) {
+        AppNotification.show(context, 'Could not copy diagnostics.');
+      }
+    }
+  }
+
+  Future<void> _addTile(BuildContext context) async {
+    try {
+      final result = await AndroidQuickSettings.addTile();
+      if (!context.mounted) return;
+      AppNotification.show(context, switch (result) {
+        'added' => 'AORA Connect added to Quick Settings.',
+        'alreadyAdded' => 'AORA Connect is already in Quick Settings.',
+        'manual' => 'Open Quick Settings, tap Edit, then drag AORA Connect into your tiles.',
+        'declined' => 'Quick Settings tile was not added.',
+        _ => 'Could not add the tile. Open Quick Settings and add AORA Connect using Edit.',
+      });
+    } catch (_) {
+      if (context.mounted) {
+        AppNotification.show(
+          context,
+          'Could not add the tile. Open Quick Settings and add AORA Connect using Edit.',
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) => ListView(
     padding: const EdgeInsets.fromLTRB(24, 32, 24, 120),
@@ -46,21 +121,29 @@ class SettingsPage extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          AppSelect<CoreKind>(
-            value: connection.core,
-            items: [
-              for (final core in CoreKind.values)
-                DropdownMenuItem(
-                  value: core,
-                  enabled: connection.supportsCore(core),
-                  child: Text(core.displayName),
-                ),
-            ],
-            onChanged: connection.canEdit
-                ? (core) {
-                    if (core != null) connection.setCore(core);
-                  }
-                : null,
+          _editControl(
+            context,
+            'changing the core',
+            AppSelect<CoreKind>(
+              onBeforeOpen: () => _allowEdit(context, 'changing the core'),
+              value: connection.core,
+              items: [
+                for (final core in CoreKind.values)
+                  DropdownMenuItem(
+                    value: core,
+                    enabled: connection.supportsCore(core),
+                    child: Text(core.displayName),
+                  ),
+              ],
+              onChanged: connection.canEdit
+                  ? (core) {
+                      if (core != null &&
+                          _allowEdit(context, 'changing the core')) {
+                        connection.setCore(core);
+                      }
+                    }
+                  : null,
+            ),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -89,66 +172,109 @@ class SettingsPage extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          AppSelect<ConnectionMode>(
-            value: connection.mode,
-            items: [
-              const DropdownMenuItem(
-                value: ConnectionMode.tun,
-                child: Text('VPN (TUN)'),
-              ),
-              DropdownMenuItem(
-                value: ConnectionMode.proxy,
-                enabled: connection.supportsMode(ConnectionMode.proxy),
-                child: const Text('Local proxy'),
-              ),
-            ],
-            onChanged: connection.canEdit
-                ? (mode) {
-                    if (mode != null) connection.setMode(mode);
-                  }
-                : null,
+          _editControl(
+            context,
+            'changing connection mode',
+            AppSelect<ConnectionMode>(
+              onBeforeOpen: () =>
+                  _allowEdit(context, 'changing connection mode'),
+              value: connection.mode,
+              items: [
+                const DropdownMenuItem(
+                  value: ConnectionMode.tun,
+                  child: Text('VPN (TUN)'),
+                ),
+                DropdownMenuItem(
+                  value: ConnectionMode.proxy,
+                  enabled: connection.supportsMode(ConnectionMode.proxy),
+                  child: const Text('Local proxy'),
+                ),
+              ],
+              onChanged: connection.canEdit
+                  ? (mode) {
+                      if (mode != null &&
+                          _allowEdit(context, 'changing connection mode')) {
+                        connection.setMode(mode);
+                      }
+                    }
+                  : null,
+            ),
           ),
           const SizedBox(height: 8),
           const Text(
             'VPN (TUN) routes system traffic automatically. Local proxy requires proxy configuration in your applications.',
           ),
           const SizedBox(height: 12),
-          Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(AppTheme.controlRadius),
-            clipBehavior: Clip.antiAlias,
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTheme.controlRadius),
-              ),
-              hoverColor: AppColors.ink.withValues(alpha: 0.06),
-              title: const Text('Kill Switch'),
-              subtitle: Text(
-                connection.mode == ConnectionMode.tun
-                    ? 'Protects DNS and TUN routing while connected. Normal internet access resumes when disconnected.'
-                    : 'Available in VPN (TUN) mode.',
-              ),
-              onTap: connection.canEdit && connection.killSwitchAvailable
-                  ? () => connection.setKillSwitchEnabled(
-                      !connection.killSwitchEnabled,
-                    )
-                  : null,
-              trailing: AppToggle(
-                semanticLabel: 'Kill Switch',
-                value: connection.killSwitchEnabled,
-                onChanged: connection.canEdit && connection.killSwitchAvailable
-                    ? connection.setKillSwitchEnabled
+          _editControl(
+            context,
+            'changing Kill Switch',
+            Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+              clipBehavior: Clip.antiAlias,
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+                ),
+                hoverColor: AppColors.ink.withValues(alpha: 0.06),
+                title: const Text('Kill Switch'),
+                subtitle: Text(
+                  connection.mode == ConnectionMode.tun
+                      ? 'Protects DNS and TUN routing while connected. Normal internet access resumes when disconnected.'
+                      : 'Available in VPN (TUN) mode.',
+                ),
+                onTap: connection.canEdit && connection.killSwitchAvailable
+                    ? () {
+                        if (!_allowEdit(context, 'changing Kill Switch')) {
+                          return;
+                        }
+                        connection.setKillSwitchEnabled(
+                          !connection.killSwitchEnabled,
+                        );
+                      }
                     : null,
+                trailing: AppToggle(
+                  semanticLabel: 'Kill Switch',
+                  value: connection.killSwitchEnabled,
+                  onChanged:
+                      connection.canEdit && connection.killSwitchAvailable
+                      ? (enabled) {
+                          if (_allowEdit(context, 'changing Kill Switch')) {
+                            connection.setKillSwitchEnabled(enabled);
+                          }
+                        }
+                      : null,
+                ),
               ),
             ),
+            available: connection.killSwitchAvailable,
           ),
         ],
       ),
       const SizedBox(height: 12),
+      if (Platform.isAndroid) ...[
+        AppExpansionCard(
+          title: 'Quick Settings',
+          subtitle: 'Connect from the Android panel',
+          icon: Icons.dashboard_customize_outlined,
+          children: [
+            const Text(
+              'Use the AORA Connect tile to connect to your selected server or disconnect. Hold the tile to open the app.',
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => _addTile(context),
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: const Text('Add to Quick Settings'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+      ],
       AppExpansionCard(
         title: 'DNS',
         subtitle: connection.dnsProvider.label,
@@ -156,17 +282,28 @@ class SettingsPage extends StatelessWidget {
         children: [
           Text('DNS server', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
-          AppSelect<DnsProvider>(
-            value: connection.dnsProvider,
-            items: [
-              for (final provider in DnsProvider.values)
-                DropdownMenuItem(value: provider, child: Text(provider.label)),
-            ],
-            onChanged: connection.canEdit
-                ? (provider) {
-                    if (provider != null) connection.setDnsProvider(provider);
-                  }
-                : null,
+          _editControl(
+            context,
+            'changing DNS',
+            AppSelect<DnsProvider>(
+              onBeforeOpen: () => _allowEdit(context, 'changing DNS'),
+              value: connection.dnsProvider,
+              items: [
+                for (final provider in DnsProvider.values)
+                  DropdownMenuItem(
+                    value: provider,
+                    child: Text(provider.label),
+                  ),
+              ],
+              onChanged: connection.canEdit
+                  ? (provider) {
+                      if (provider != null &&
+                          _allowEdit(context, 'changing DNS')) {
+                        connection.setDnsProvider(provider);
+                      }
+                    }
+                  : null,
+            ),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -203,11 +340,6 @@ class SettingsPage extends StatelessWidget {
           ),
         ],
       ),
-      if (!connection.canEdit)
-        const Padding(
-          padding: EdgeInsets.only(top: 12),
-          child: Text('Stop the connection before changing core, mode or DNS.'),
-        ),
       if (connection.errorFor(ConnectionErrorScope.settings) != null)
         Padding(
           padding: const EdgeInsets.only(top: 12),
@@ -227,6 +359,7 @@ class SettingsPage extends StatelessWidget {
           ConnectionControls(
             onValidate: connection.canValidate ? connection.validate : null,
             onTest: connection.canTest ? connection.testConnection : null,
+            onCopy: () => _copyDiagnostics(context),
           ),
           const SizedBox(height: 16),
           Row(

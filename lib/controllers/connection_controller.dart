@@ -14,6 +14,7 @@ import '../core/kill_switch.dart';
 import '../core/ping_type.dart';
 import '../core/tunnel_engine.dart';
 import '../core/android_tunnel_engine.dart';
+import '../core/android_quick_settings.dart';
 import '../core/unavailable_tunnel_engine.dart';
 import '../core/windows_core_engine.dart';
 import '../profiles/server_profile.dart';
@@ -118,6 +119,8 @@ class ConnectionController extends ChangeNotifier {
   ConnectionErrorScope? _errorScope;
   String? _probeResult;
   String? _importedConfigPath;
+  String? _tileConfig;
+  bool get _hasAndroidTile => _engine is AndroidTunnelEngine;
   Directory? _runtimeDirectory;
   Future<void>? _pending;
   Future<void>? _cleanup;
@@ -160,12 +163,18 @@ class ConnectionController extends ChangeNotifier {
   bool beginMaintenance() {
     if (!canEdit || _cleanup != null) return false;
     _maintenance = true;
+    if (_hasAndroidTile) {
+      unawaited(AndroidQuickSettings.setBusy(true).catchError((Object _) {}));
+    }
     _changed();
     return true;
   }
 
   void cancelMaintenance() {
     _maintenance = false;
+    if (_hasAndroidTile) {
+      unawaited(AndroidQuickSettings.setBusy(false).catchError((Object _) {}));
+    }
     _changed();
   }
 
@@ -222,6 +231,7 @@ class ConnectionController extends ChangeNotifier {
   Future<void> _perform(
     Future<void> Function() action, {
     required ConnectionErrorScope errorScope,
+    bool restoring = false,
   }) {
     if (_disposed || _cleanup != null || _busy || _maintenance) {
       return Future.value();
@@ -231,17 +241,47 @@ class ConnectionController extends ChangeNotifier {
     _errorScope = errorScope;
     _probeResult = null;
     _changed();
-    final operation = _run(action);
+    final operation = _run(action, restoring: restoring);
     _pending = operation;
     return operation;
   }
 
-  Future<void> _run(Future<void> Function() action) async {
+  Future<void> _run(
+    Future<void> Function() action, {
+    required bool restoring,
+  }) async {
+    var tileLocked = false;
     try {
+      if (_hasAndroidTile) {
+        await AndroidQuickSettings.setBusy(
+          true,
+          expectedState: restoring ? null : _state.name,
+        );
+        tileLocked = true;
+      }
       await action();
     } catch (error) {
       _error = error.toString();
     } finally {
+      if (tileLocked) {
+        try {
+          await AndroidQuickSettings.save(
+            config: selectedRequiresDifferentCore || _selected == null
+                ? null
+                : _tileConfig,
+            core: _core.name,
+            name: _selected?.name,
+            host: _selected?.server,
+          );
+        } catch (_) {
+          // Tile failure must not hide the result of a connection operation.
+          _lines.add('Quick Settings configuration could not be saved.');
+        } finally {
+          try {
+            await AndroidQuickSettings.setBusy(false);
+          } catch (_) {}
+        }
+      }
       _busy = false;
       _pending = null;
       _changed();
@@ -295,31 +335,35 @@ class ConnectionController extends ChangeNotifier {
 
   Future<void> restore() {
     if (settingsStore == null && _killSwitch == null) return Future.value();
-    return _perform(() async {
-      if (_engine case final AndroidTunnelEngine android) await android.ready;
-      if (_xrayEngine case final AndroidTunnelEngine android) {
-        await android.ready;
-      }
-      // Recovery for the previous persistent firewall implementation. Perform
-      // this before any network requests, even if saved preferences are invalid.
-      await _killSwitch?.disarm();
-      final saved = await settingsStore?.read() ?? const AppSettingsData();
-      _subscriptions = saved.subscriptions;
-      _activeSubscriptionUrl = saved.activeSubscriptionUrl;
-      _mode = Platform.isAndroid ? ConnectionMode.tun : saved.mode;
-      _core = supportsCore(saved.core) ? saved.core : CoreKind.singBox;
-      _state = _activeEngine.state;
-      _dnsProvider = saved.dnsProvider;
-      _pingType = saved.pingType;
-      _killSwitchEnabled = saved.killSwitchEnabled;
-      _statisticsEnabled = saved.statisticsEnabled;
-      _routingPolicy = saved.routingPolicy;
-      _changed();
-      if (_activeSubscriptionUrl != null) {
-        await _activate(_activeSubscriptionUrl!, refresh: true);
-        await _persist();
-      }
-    }, errorScope: ConnectionErrorScope.subscriptions);
+    return _perform(
+      () async {
+        if (_engine case final AndroidTunnelEngine android) await android.ready;
+        if (_xrayEngine case final AndroidTunnelEngine android) {
+          await android.ready;
+        }
+        // Recovery for the previous persistent firewall implementation. Perform
+        // this before any network requests, even if saved preferences are invalid.
+        await _killSwitch?.disarm();
+        final saved = await settingsStore?.read() ?? const AppSettingsData();
+        _subscriptions = saved.subscriptions;
+        _activeSubscriptionUrl = saved.activeSubscriptionUrl;
+        _mode = Platform.isAndroid ? ConnectionMode.tun : saved.mode;
+        _core = supportsCore(saved.core) ? saved.core : CoreKind.singBox;
+        _state = _activeEngine.state;
+        _dnsProvider = saved.dnsProvider;
+        _pingType = saved.pingType;
+        _killSwitchEnabled = saved.killSwitchEnabled;
+        _statisticsEnabled = saved.statisticsEnabled;
+        _routingPolicy = saved.routingPolicy;
+        _changed();
+        if (_activeSubscriptionUrl != null) {
+          await _activate(_activeSubscriptionUrl!, refresh: true);
+          await _persist();
+        }
+      },
+      errorScope: ConnectionErrorScope.subscriptions,
+      restoring: true,
+    );
   }
 
   Future<void> load(String url) => addSubscription(url);
@@ -416,6 +460,7 @@ class ConnectionController extends ChangeNotifier {
       _selectedServerAddress = null;
       _state = _engine.state;
       _importedConfigPath = null;
+      _tileConfig = null;
       final previous = _runtimeDirectory;
       _runtimeDirectory = null;
       if (previous != null && await previous.exists()) {
@@ -574,6 +619,7 @@ class ConnectionController extends ChangeNotifier {
       if (previous != null) await previous.delete(recursive: true);
       _runtimeDirectory = directory;
       _importedConfigPath = config.path;
+      if (_hasAndroidTile) _tileConfig = await config.readAsString();
       _selected = profile;
       _selectedServerAddress = address.address;
       _mode = nextMode;

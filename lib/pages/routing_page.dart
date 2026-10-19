@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../components/app_expansion_card.dart';
 import '../components/app_select.dart';
 import '../components/app_toggle.dart';
+import '../components/connection_edit_notification.dart';
 import '../components/routing_rule_card.dart';
 import '../components/routing_rule_editor.dart';
 import '../components/installed_application_picker.dart';
@@ -37,21 +38,37 @@ class _RoutingPageState extends State<RoutingPage> {
       ? InstalledApplication.load()
       : null;
 
-  Future<void> _saveRules(List<RoutingRule> rules) =>
-      connection.setRoutingPolicy(
-        RoutingPolicy(
-          enabled: connection.routingPolicy.enabled,
-          direction: connection.routingPolicy.direction,
-          rules: List.unmodifiable(rules),
-        ),
-      );
+  bool _allowEdit() => allowConnectionEdit(
+    context,
+    connection,
+    'Disconnect before editing routing rules.',
+  );
+
+  Widget _editControl(Widget child) => DisabledControlNotice(
+    disabled: !connection.canEdit,
+    onTap: _allowEdit,
+    label: 'Disconnect before editing routing rules.',
+    child: child,
+  );
+
+  Future<void> _saveRules(List<RoutingRule> rules) async {
+    if (!_allowEdit()) return;
+    await connection.setRoutingPolicy(
+      RoutingPolicy(
+        enabled: connection.routingPolicy.enabled,
+        direction: connection.routingPolicy.direction,
+        rules: List.unmodifiable(rules),
+      ),
+    );
+  }
 
   Future<void> _edit(BuildContext context, [int? index]) async {
+    if (!_allowEdit()) return;
     final rule = await showRoutingRuleEditor(
       context,
       initial: index == null ? null : connection.routingPolicy.rules[index],
     );
-    if (rule == null || !context.mounted || !connection.canEdit) return;
+    if (rule == null || !context.mounted || !_allowEdit()) return;
     final rules = List.of(connection.routingPolicy.rules);
     if (index == null) {
       rules.add(rule);
@@ -62,6 +79,7 @@ class _RoutingPageState extends State<RoutingPage> {
   }
 
   void _move(int index, int delta) {
+    if (!_allowEdit()) return;
     final rules = List.of(connection.routingPolicy.rules);
     final rule = rules.removeAt(index);
     rules.insert(index + delta, rule);
@@ -99,44 +117,52 @@ class _RoutingPageState extends State<RoutingPage> {
                       : 'Off',
                   icon: Icons.alt_route_rounded,
                   initiallyExpanded: true,
-                  titleAction: AppToggle(
-                    semanticLabel: 'Routing',
-                    value: policy.enabled,
-                    onChanged: connection.canEdit
-                        ? (enabled) => connection.setRoutingPolicy(
-                            RoutingPolicy(
-                              enabled: enabled,
-                              direction: policy.direction,
-                              rules: policy.rules,
-                            ),
-                          )
-                        : null,
+                  titleAction: _editControl(
+                    AppToggle(
+                      semanticLabel: 'Routing',
+                      value: policy.enabled,
+                      onChanged: connection.canEdit
+                          ? (enabled) {
+                              if (!_allowEdit()) return;
+                              connection.setRoutingPolicy(
+                                RoutingPolicy(
+                                  enabled: enabled,
+                                  direction: policy.direction,
+                                  rules: policy.rules,
+                                ),
+                              );
+                            }
+                          : null,
+                    ),
                   ),
                   children: [
                     const Text('Route listed applications and addresses'),
                     const SizedBox(height: 8),
-                    AppSelect<RoutingAction>(
-                      value: policy.direction,
-                      items: [
-                        for (final action in RoutingAction.values)
-                          DropdownMenuItem(
-                            value: action,
-                            child: Text(action.label),
-                          ),
-                      ],
-                      onChanged: connection.canEdit
-                          ? (action) {
-                              if (action != null) {
-                                connection.setRoutingPolicy(
-                                  RoutingPolicy(
-                                    enabled: policy.enabled,
-                                    direction: action,
-                                    rules: policy.rules,
-                                  ),
-                                );
+                    _editControl(
+                      AppSelect<RoutingAction>(
+                        onBeforeOpen: _allowEdit,
+                        value: policy.direction,
+                        items: [
+                          for (final action in RoutingAction.values)
+                            DropdownMenuItem(
+                              value: action,
+                              child: Text(action.label),
+                            ),
+                        ],
+                        onChanged: connection.canEdit
+                            ? (action) {
+                                if (action != null && _allowEdit()) {
+                                  connection.setRoutingPolicy(
+                                    RoutingPolicy(
+                                      enabled: policy.enabled,
+                                      direction: action,
+                                      rules: policy.rules,
+                                    ),
+                                  );
+                                }
                               }
-                            }
-                          : null,
+                            : null,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -149,16 +175,13 @@ class _RoutingPageState extends State<RoutingPage> {
                   ],
                 ),
                 const SizedBox(height: _sectionGap),
-                OutlinedButton.icon(
-                  onPressed: connection.canEdit ? () => _edit(context) : null,
-                  icon: const Icon(Icons.add_rounded),
-                  label: const Text('Add rule'),
-                ),
-                if (!connection.canEdit)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 12),
-                    child: Text('Disconnect before editing routing rules.'),
+                _editControl(
+                  OutlinedButton.icon(
+                    onPressed: connection.canEdit ? () => _edit(context) : null,
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text('Add rule'),
                   ),
+                ),
                 if (!policy.enabled)
                   const Padding(
                     padding: EdgeInsets.only(top: 12),
@@ -199,31 +222,24 @@ class _RoutingPageState extends State<RoutingPage> {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: RoutingRuleCard(
+                  editingEnabled: connection.canEdit,
+                  onEditingBlocked: _allowEdit,
                   rule: rule,
                   application: application,
-                  onEnabledChanged: connection.canEdit
-                      ? (enabled) {
-                          final rules = List.of(policy.rules);
-                          rules[index] = rule.withEnabled(enabled);
-                          _saveRules(rules);
-                        }
-                      : null,
-                  onMoveUp: connection.canEdit && index > 0
-                      ? () => _move(index, -1)
-                      : null,
-                  onMoveDown:
-                      connection.canEdit && index < policy.rules.length - 1
+                  onEnabledChanged: (enabled) {
+                    final rules = List.of(policy.rules);
+                    rules[index] = rule.withEnabled(enabled);
+                    _saveRules(rules);
+                  },
+                  onMoveUp: index > 0 ? () => _move(index, -1) : null,
+                  onMoveDown: index < policy.rules.length - 1
                       ? () => _move(index, 1)
                       : null,
-                  onEdit: connection.canEdit
-                      ? () => _edit(context, index)
-                      : null,
-                  onDelete: connection.canEdit
-                      ? () {
-                          final rules = List.of(policy.rules)..removeAt(index);
-                          _saveRules(rules);
-                        }
-                      : null,
+                  onEdit: () => _edit(context, index),
+                  onDelete: () {
+                    final rules = List.of(policy.rules)..removeAt(index);
+                    _saveRules(rules);
+                  },
                 ),
               );
             },

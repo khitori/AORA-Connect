@@ -6,6 +6,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'app_toggle.dart';
 import 'installed_application_picker.dart';
+import 'connection_edit_notification.dart';
 
 class RoutingRuleCard extends StatelessWidget {
   const RoutingRuleCard({
@@ -17,6 +18,8 @@ class RoutingRuleCard extends StatelessWidget {
     this.onMoveDown,
     this.onEdit,
     this.onDelete,
+    this.editingEnabled = true,
+    this.onEditingBlocked,
   });
 
   final RoutingRule rule;
@@ -26,6 +29,16 @@ class RoutingRuleCard extends StatelessWidget {
   final VoidCallback? onMoveDown;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final bool editingEnabled;
+  final VoidCallback? onEditingBlocked;
+
+  Widget _editControl(Widget child, {bool available = true}) =>
+      DisabledControlNotice(
+        disabled: !editingEnabled && available && onEditingBlocked != null,
+        onTap: () => onEditingBlocked?.call(),
+        label: 'Disconnect before editing routing rules.',
+        child: child,
+      );
 
   IconData get _fallbackIcon => switch (rule.match) {
     RoutingMatch.application => Icons.apps_rounded,
@@ -37,19 +50,22 @@ class RoutingRuleCard extends StatelessWidget {
     required String tooltip,
     required IconData icon,
     required VoidCallback? onPressed,
-  }) => IconButton(
-    tooltip: tooltip,
-    onPressed: onPressed,
-    icon: Icon(icon, size: 18),
-    style: IconButton.styleFrom(
-      foregroundColor: AppColors.muted500,
-      disabledForegroundColor: AppColors.lineStrong,
-      minimumSize: const Size(36, 36),
-      maximumSize: const Size(36, 36),
-      padding: EdgeInsets.zero,
-      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+  }) => _editControl(
+    IconButton(
+      tooltip: tooltip,
+      onPressed: editingEnabled ? onPressed : null,
+      icon: Icon(icon, size: 18),
+      style: IconButton.styleFrom(
+        foregroundColor: AppColors.muted500,
+        disabledForegroundColor: AppColors.lineStrong,
+        minimumSize: const Size(36, 36),
+        maximumSize: const Size(36, 36),
+        padding: EdgeInsets.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
     ),
+    available: onPressed != null,
   );
 
   @override
@@ -131,10 +147,13 @@ class RoutingRuleCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                AppToggle(
-                  value: rule.enabled,
-                  semanticLabel: 'Enable ${rule.target}',
-                  onChanged: onEnabledChanged,
+                _editControl(
+                  AppToggle(
+                    value: rule.enabled,
+                    semanticLabel: 'Enable ${rule.target}',
+                    onChanged: editingEnabled ? onEnabledChanged : null,
+                  ),
+                  available: onEnabledChanged != null,
                 ),
               ],
             ),
@@ -157,19 +176,22 @@ class RoutingRuleCard extends StatelessWidget {
                     onPressed: onMoveDown,
                   ),
                   const Spacer(),
-                  Tooltip(
-                    message: 'Edit rule',
-                    child: TextButton.icon(
-                      onPressed: onEdit,
-                      icon: const Icon(Icons.edit_outlined, size: 16),
-                      label: const Text('Edit'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.muted500,
-                        minimumSize: const Size(0, 36),
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  _editControl(
+                    Tooltip(
+                      message: 'Edit rule',
+                      child: TextButton.icon(
+                        onPressed: editingEnabled ? onEdit : null,
+                        icon: const Icon(Icons.edit_outlined, size: 16),
+                        label: const Text('Edit'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.muted500,
+                          minimumSize: const Size(0, 36),
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
                       ),
                     ),
+                    available: onEdit != null,
                   ),
                   const SizedBox(width: 4),
                   _action(
