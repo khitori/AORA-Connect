@@ -4,7 +4,6 @@ package aora.aoranet.aoravpn
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
-import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.system.OsConstants
@@ -14,24 +13,23 @@ import java.net.InetSocketAddress
 /** Physical-network operations shared by both cores and direct server checks. */
 internal class AndroidNetwork(private val context: Context) : Platform {
     private val connectivity = context.getSystemService(ConnectivityManager::class.java)
-    fun physical(): Network {
-        fun usable(value: Network) = connectivity.getNetworkCapabilities(value)?.let {
-            it.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN) &&
-                it.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-        } == true
-        return connectivity.activeNetwork?.takeIf(::usable)
-            ?: connectivity.allNetworks.firstOrNull(::usable)
-            ?: error("No physical network route to this server.")
-    }
+    private val monitor = PhysicalNetworkMonitor.get(context)
+    fun physical(): Network = monitor.awaitReady().network
 
     override fun protect(fd: Int) {
+        val selected = monitor.awaitReady()
         // Duplicate only to get a Java FileDescriptor; socket marks apply to both
         // descriptors. Closing this duplicate must never close the core's FD.
-        ParcelFileDescriptor.fromFd(fd).use { duplicate ->
-            VpnRuntime.service?.let {
-                check(it.protect(duplicate.fd)) { "Could not protect the outbound socket." }
+        try {
+            ParcelFileDescriptor.fromFd(fd).use { duplicate ->
+                VpnRuntime.service?.let {
+                    check(it.protect(duplicate.fd)) { "Could not protect the outbound socket." }
+                }
+                selected.network.bindSocket(duplicate.fileDescriptor)
             }
-            physical().bindSocket(duplicate.fileDescriptor)
+        } catch (error: Exception) {
+            VpnRuntime.log("Outbound socket protection/binding failed (${selected.description()}): ${error.javaClass.simpleName}")
+            throw error
         }
     }
 

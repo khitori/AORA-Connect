@@ -119,7 +119,7 @@ void main() {
       throwsA(isA<PlatformException>()),
     );
     expect(engine.state, TunnelState.stopped);
-    expect(calls, ['status', 'start', 'stop']);
+    expect(calls, ['status', 'start', 'diagnostics', 'stop']);
     await engine.dispose();
   });
 
@@ -145,6 +145,57 @@ void main() {
       await engine.dispose();
     },
   );
+
+  test('Failed verification retains its network and transport error', () async {
+    messenger.setMockMethodCallHandler(AndroidTunnelEngine.channel, (
+      call,
+    ) async {
+      calls.add(call.method);
+      if (call.method == 'status') return 'stopped';
+      if (call.method == 'diagnostics') {
+        return {
+          'network':
+              'mobile data, network=42, interface=rmnet0, IPv4, validated=true',
+          'coreError':
+              'ERROR quic: transport closed: recvmsg: connection refused',
+        };
+      }
+      return null;
+    });
+    final engine = AndroidTunnelEngine();
+    final logs = <String>[];
+    final listener = engine.logs.listen(logs.add);
+    await engine.start(config.path);
+    await engine.captureDiagnostics();
+    await Future<void>.delayed(Duration.zero);
+    expect(logs, contains(contains('VPN outbound:')));
+    expect(logs, contains(contains('mobile data, network=42')));
+    expect(logs, contains(contains('Last core error: ERROR quic:')));
+    await listener.cancel();
+    await engine.dispose();
+  });
+
+  test('Server resolution uses the native shared network resolver', () async {
+    messenger.setMockMethodCallHandler(AndroidTunnelEngine.channel, (
+      call,
+    ) async {
+      expect(call.method, 'resolve');
+      expect(call.arguments, {'host': 'node.example'});
+      return '192.0.2.1';
+    });
+    expect(
+      await AndroidTunnelEngine.resolveServer('node.example'),
+      '192.0.2.1',
+    );
+    messenger.setMockMethodCallHandler(
+      AndroidTunnelEngine.channel,
+      (_) async => '',
+    );
+    await expectLater(
+      AndroidTunnelEngine.resolveServer('node.example'),
+      throwsStateError,
+    );
+  });
 
   test('Start/stop waits for native results and notification disconnect updates state', () async {
     final engine = AndroidTunnelEngine();

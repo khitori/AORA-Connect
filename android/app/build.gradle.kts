@@ -76,6 +76,7 @@ check(libbox.isFile) { "Build the Android core first: tool/build_android_core.ps
 dependencies {
     implementation(files(libbox))
     implementation("com.android.tools.build:apksig:9.1.0")
+    testImplementation("junit:junit:4.13.2")
 }
 
 tasks.configureEach {

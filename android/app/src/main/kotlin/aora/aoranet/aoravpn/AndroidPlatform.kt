@@ -3,10 +3,7 @@ package aora.aoranet.aoravpn
 
 import android.content.Context
 import android.net.ConnectivityManager
-import android.net.LinkProperties
-import android.net.Network
 import android.net.NetworkCapabilities
-import android.net.NetworkRequest
 import android.os.Build
 import android.system.OsConstants
 import io.nekohasekai.libbox.*
@@ -18,46 +15,32 @@ import io.nekohasekai.libbox.NetworkInterface as BoxNetworkInterface
 internal class AndroidPlatform(private val context: Context, private val service: AoraVpnService? = context as? AoraVpnService) : PlatformInterface {
     private val connectivity = context.getSystemService(ConnectivityManager::class.java)
     private val physicalNetwork = AndroidNetwork(context)
-    @Volatile private var network: Network? = null
+    private val monitor = PhysicalNetworkMonitor.get(context)
     @Volatile private var listener: InterfaceUpdateListener? = null
-    private var registered = false
-    private val callback = object : ConnectivityManager.NetworkCallback() {
-        override fun onAvailable(value: Network) { network = value; changed() }
-        override fun onLinkPropertiesChanged(value: Network, properties: LinkProperties) {
-            if (network == value) changed()
-        }
-        override fun onCapabilitiesChanged(value: Network, caps: NetworkCapabilities) {
-            if (network == value) changed()
-        }
-        override fun onLost(value: Network) {
-            if (network == value) { network = null; changed() }
-        }
-    }
+    private var observation: AutoCloseable? = null
+    @Volatile private var closed = true
 
     fun start() {
-        network = connectivity.activeNetwork?.takeIf { physical(it) }
-            ?: connectivity.allNetworks.firstOrNull { physical(it) }
-        connectivity.requestNetwork(NetworkRequest.Builder()
-            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-            .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN).build(), callback)
-        registered = true
+        closed = false
+        monitor.awaitReady()
+        observation = monitor.observe { changed() }
     }
 
     fun close() {
+        closed = true
         listener = null
-        if (registered) connectivity.unregisterNetworkCallback(callback)
-        registered = false
+        observation?.close()
+        observation = null
     }
 
-    private fun physical(value: Network) = connectivity.getNetworkCapabilities(value)
-        ?.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN) == true
-
     private fun changed() {
-        val value = network
-        service?.setUnderlyingNetworks(value?.let { arrayOf(it) })
-        val name = value?.let { connectivity.getLinkProperties(it)?.interfaceName }
+        if (closed) return
+        val selected = monitor.current()
+        // Empty means no underlying network; null would ask Android to choose again.
+        service?.setUnderlyingNetworks(selected?.let { arrayOf(it.network) } ?: emptyArray())
+        val name = selected?.links?.interfaceName
         val iface = name?.let { JavaNetworkInterface.getByName(it) }
-        val caps = value?.let { connectivity.getNetworkCapabilities(it) }
+        val caps = selected?.capabilities
         runCatching {
             listener?.updateDefaultInterface(name ?: "", iface?.index ?: -1,
                 caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED) == false, false)
@@ -72,6 +55,7 @@ internal class AndroidPlatform(private val context: Context, private val service
     override fun openTun(options: TunOptions): Int {
         val service = service ?: error("Server checks cannot establish a VPN.")
         val builder = service.Builder().setSession("AORA Connect").setMtu(options.mtu)
+            .setUnderlyingNetworks(arrayOf(monitor.awaitReady().network))
         if (Build.VERSION.SDK_INT >= 29) builder.setMetered(false)
         val ipv4 = options.inet4Address
         while (ipv4.hasNext()) ipv4.next().let { builder.addAddress(it.address(), it.prefix()) }
@@ -97,9 +81,9 @@ internal class AndroidPlatform(private val context: Context, private val service
     override fun closeDefaultInterfaceMonitor(value: InterfaceUpdateListener?) { listener = null }
 
     override fun getInterfaces(): NetworkInterfaceIterator {
-        val interfaces = connectivity.allNetworks.filter { physical(it) }.mapNotNull { value ->
-            val links = connectivity.getLinkProperties(value) ?: return@mapNotNull null
-            val caps = connectivity.getNetworkCapabilities(value) ?: return@mapNotNull null
+        val interfaces = listOfNotNull(monitor.current()).mapNotNull { selected ->
+            val links = selected.links
+            val caps = selected.capabilities
             val iface = links.interfaceName?.let { JavaNetworkInterface.getByName(it) }
                 ?: return@mapNotNull null
             BoxNetworkInterface().apply {

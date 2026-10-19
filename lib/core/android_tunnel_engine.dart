@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import 'tunnel_engine.dart';
 import 'core_kind.dart';
+import 'connection_diagnostics.dart';
 
 /// Flutter is a client of the foreground service, not the VPN's lifetime owner.
 class AndroidTunnelEngine implements TunnelEngine {
@@ -24,6 +25,23 @@ class AndroidTunnelEngine implements TunnelEngine {
 
   static const channel = MethodChannel('aora/vpn');
   static const events = EventChannel('aora/vpn/events');
+  static Future<String> resolveServer(String host) async {
+    final address = await channel
+        .invokeMethod<String>('resolve', {'host': host})
+        .timeout(
+          const Duration(seconds: 15),
+          onTimeout: () {
+            throw StateError(
+              'Server DNS lookup timed out on the selected physical network after 15 seconds.',
+            );
+          },
+        );
+    if (address == null || InternetAddress.tryParse(address) == null) {
+      throw StateError('Server DNS lookup returned no usable IP address.');
+    }
+    return address;
+  }
+
   static final _nativeEvents = events.receiveBroadcastStream();
   final CoreKind core;
   final _states = StreamController<TunnelState>.broadcast();
@@ -31,6 +49,7 @@ class AndroidTunnelEngine implements TunnelEngine {
   late final StreamSubscription<dynamic> _subscription;
   late final Future<void> ready;
   TunnelState _state = TunnelState.stopped;
+  String? _connectionSummary;
 
   @override
   TunnelState get state => _state;
@@ -66,17 +85,48 @@ class AndroidTunnelEngine implements TunnelEngine {
   Future<void> start(String configPath) async {
     await ready;
     try {
+      final configuration = await File(configPath).readAsString();
+      _connectionSummary = connectionConfigurationSummary(configuration, core);
+      _logs.add(_connectionSummary!);
       await channel
           .invokeMethod<void>('start', {
-            'config': await File(configPath).readAsString(),
+            'config': configuration,
             'core': core.name,
           })
-          .timeout(const Duration(seconds: 90));
+          .timeout(
+            const Duration(seconds: 90),
+            onTimeout: () {
+              throw StateError(
+                'Android VPN startup timed out after 90 seconds. Check the startup-stage logs in Diagnostics.',
+              );
+            },
+          );
       _update('running');
     } catch (error) {
       // A rejected duplicate start does not own the already-running session.
-      if (error is! PlatformException || error.code != 'BUSY') await stop();
+      if (error is! PlatformException || error.code != 'BUSY') {
+        await captureDiagnostics();
+        await stop();
+      }
       rethrow;
+    }
+  }
+
+  /// Repeat concise context at failure, after noisy core traffic logs.
+  Future<void> captureDiagnostics() async {
+    if (_connectionSummary != null) _logs.add(_connectionSummary!);
+    try {
+      final details = await channel
+          .invokeMapMethod<String, dynamic>('diagnostics')
+          .timeout(const Duration(seconds: 2));
+      if (details?['network'] case final String network) {
+        _logs.add('Connection check network: $network');
+      }
+      if (details?['coreError'] case final String error) {
+        _logs.add('Last core error: $error');
+      }
+    } catch (_) {
+      _logs.add('Connection check network: diagnostics unavailable.');
     }
   }
 

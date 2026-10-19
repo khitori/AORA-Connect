@@ -49,17 +49,22 @@ class AoraVpnService : VpnService(), CommandServerHandler {
         startForeground(1, notification("Connecting…"))
         VpnRuntime.worker.execute {
             closed = false
+            var stage = "core initialization"
             try {
                 check(!VpnRuntime.cancelled) { "Connection cancelled." }
                 VpnRuntime.initialize(this)
                 check(prepare(this) == null) { "VPN permission was not granted." }
+                stage = "physical network selection"
                 platform = AndroidPlatform(this).also { it.start() }
+                VpnRuntime.log("VPN startup network: ${PhysicalNetworkMonitor.get(this).awaitReady().description()}")
+                stage = "core/TUN startup"
                 xray = intent?.getStringExtra("core") == "xray"
                 if (xray) {
                     val inbounds = JSONObject(config).getJSONArray("inbounds")
                     val settings = (0 until inbounds.length()).map { inbounds.getJSONObject(it) }
                         .first { it.optString("protocol") == "tun" }.getJSONObject("settings")
                     val builder = Builder().setSession("AORA Connect").setMtu(settings.optInt("mtu", 1500))
+                        .setUnderlyingNetworks(arrayOf(PhysicalNetworkMonitor.get(this).awaitReady().network))
                     if (android.os.Build.VERSION.SDK_INT >= 29) builder.setMetered(false)
                     val addresses = settings.getJSONArray("gateway")
                     for (index in 0 until addresses.length()) {
@@ -79,6 +84,7 @@ class AoraVpnService : VpnService(), CommandServerHandler {
                     runCatching { coreLogs!!.start() }
                         .onFailure { VpnRuntime.log("Could not subscribe to core logs: ${it.message}") }
                 }
+                stage = "Android VPN network readiness"
                 VpnNetworkReady.await(this)
                 check(!VpnRuntime.cancelled) { "Connection cancelled." }
                 VpnRuntime.log(if (xray) "Xray 26.9.30 started." else "sing-box ${Libbox.version()} started.")
@@ -86,8 +92,9 @@ class AoraVpnService : VpnService(), CommandServerHandler {
                 getSystemService(NotificationManager::class.java).notify(1, notification("Connected"))
                 VpnRuntime.completeStart(token = sessionGeneration)
             } catch (error: Exception) {
-                VpnRuntime.log("VPN startup failed: ${error.message}")
-                VpnRuntime.completeStart(error, sessionGeneration)
+                val failure = IllegalStateException("VPN startup failed during $stage: ${error.javaClass.simpleName}: ${error.message}", error)
+                VpnRuntime.log(failure.message ?: "VPN startup failed.")
+                VpnRuntime.completeStart(failure, sessionGeneration)
                 closeTunnel()
             }
         }

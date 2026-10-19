@@ -44,6 +44,7 @@ class MainActivity : FlutterActivity() {
                 when (call.method) {
                     "status" -> result.success(if ((call.argument<String>("core") ?: "singBox") == VpnRuntime.coreKind) VpnRuntime.state else "stopped")
                     "validate" -> VpnRuntime.validate(this, call.argument<String>("config")!!, call.argument<String>("core") ?: "singBox", result)
+                    "diagnostics" -> result.success(VpnRuntime.diagnostics(applicationContext))
                     "start" -> {
                         if (permissionRequest != null) result.error("BUSY", "A permission request is already open.", null)
                         else {

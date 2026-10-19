@@ -68,13 +68,22 @@ Startup waits for Android's default-network callback to report the VPN with
 link properties and unblocked access before returning success. This prevents
 the immediate HTTPS check from racing the physical-to-VPN network switch.
 
-Outbound core sockets are protected from re-entering the VPN and bound to a
-physical Android network. Failure to protect an Xray socket aborts that dial;
+Outbound core sockets are protected from re-entering the VPN and bound to one
+shared physical-network selection. A single process-owned Android network request
+tracks the best INTERNET/NOT_VPN network; service routing, both cores, native
+server resolution and ping checks use that same selection. Capabilities, link
+properties and (on Android 10+) unblocked access must arrive before it is usable.
+There is no fallback to the first network in `allNetworks`. Handover and loss
+invalidate old readiness; late callbacks for an old network cannot replace the
+new selection. Server addresses are resolved again before an Android connection.
+Failure to protect an Xray socket aborts that dial;
 it does not silently fall back to an unprotected socket. The service
 installs the TUN addresses, DNS and IPv4/IPv6 routes from the selected core's profile. Disconnect
-closes the core instance, TUN file descriptors, command server and network
-monitor. It does not leave a persistent firewall block. Always-on/lockdown and
-automatic recovery after process death are not implemented.
+closes the core instance, TUN file descriptors, command server and service's
+network observer. The shared network request lasts until the application process
+exits so disconnected server checks can use it too. It does not leave a persistent
+firewall block. Always-on/lockdown and automatic recovery after process death are
+not implemented.
 
 Application routing uses Android package names, such as `com.android.chrome`,
 not Windows executable paths. Application-rule device testing remains necessary.
@@ -95,7 +104,12 @@ Diagnostics receives sing-box's daemon logs, including DNS and connection
 errors, rather than only service lifecycle messages. Logs are bounded, retained
 across Flutter reconnections and stripped of terminal color escapes. Validate
 reports configuration success/failure; it does not test resolver or server
-reachability. Connection-check failures retain the original error and stage.
+reachability. Startup logs report the physical transport/interface/network ID,
+address families, core/protocol and numeric VPN server IP/port. These added
+summaries do not dump configurations, subscription URLs, credentials or SNI.
+The connection check logs DNS/connection (including TLS), HTTPS request and body
+stages, and timeouts name the stage. On failure, endpoint/network context and the
+latest core error are repeated after noisy traffic logs, before stopping the VPN.
 
 The existing header behavior is unchanged: with the server selector closed,
 check the selected node; with it open, check the active subscription's nodes.

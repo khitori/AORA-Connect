@@ -536,8 +536,14 @@ class ConnectionController extends ChangeNotifier {
     final nextMode = mode ?? _mode;
     final directory = await AppPaths.createSession('profile-');
     try {
-      final addresses = await InternetAddress.lookup(profile.server)
-          .timeout(const Duration(seconds: 10));
+      final addresses = Platform.isAndroid
+          ? [
+              InternetAddress(
+                await AndroidTunnelEngine.resolveServer(profile.server),
+              ),
+            ]
+          : await InternetAddress.lookup(profile.server)
+                .timeout(const Duration(seconds: 10));
       if (addresses.isEmpty) {
         throw StateError('Could not resolve the selected server.');
       }
@@ -598,14 +604,26 @@ class ConnectionController extends ChangeNotifier {
       throw StateError('Select ${_selected!.coreKind.label} in Settings.');
     }
     await _killSwitch?.disarm();
+    // A profile selected on Wi-Fi must not retain an address resolved on that
+    // network when the user connects later using mobile data (or vice versa).
+    if (Platform.isAndroid && _selected != null) {
+      await _selectProfile(_selected!);
+    }
     await _activeEngine.start(_activeConfig);
     if (_selected == null) return;
+    _appendLog(
+      'Connection verification: ${activeCore.displayName}, DNS=${_dnsProvider.label}.',
+    );
     try {
       final elapsed = await probeConnection(
         port: _mode == ConnectionMode.tun ? null : 17890,
+        onStage: _appendLog,
       );
       _probeResult = 'Connection verified (${elapsed.inMilliseconds} ms).';
     } catch (error) {
+      if (_activeEngine case final AndroidTunnelEngine android) {
+        await android.captureDiagnostics();
+      }
       _appendLog(
         'Connection verification failed (${_dnsProvider.label} DNS): $error',
       );
@@ -620,11 +638,15 @@ class ConnectionController extends ChangeNotifier {
     try {
       final elapsed = await probeConnection(
         port: _mode == ConnectionMode.tun ? null : 17890,
+        onStage: _appendLog,
       );
       _probeResult =
           'HTTPS through ${_selected?.protocol ?? 'proxy'} succeeded (${elapsed.inMilliseconds} ms).';
       _appendLog(_probeResult!);
     } catch (error) {
+      if (_activeEngine case final AndroidTunnelEngine android) {
+        await android.captureDiagnostics();
+      }
       _appendLog('Connection test failed (${_dnsProvider.label} DNS): $error');
       rethrow;
     }

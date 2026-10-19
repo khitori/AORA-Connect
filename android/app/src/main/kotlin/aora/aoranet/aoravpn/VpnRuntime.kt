@@ -32,6 +32,7 @@ internal object VpnRuntime {
     private var pendingStart: MethodChannel.Result? = null
     private val history = ArrayDeque<String>()
     private val ansi = Regex("\u001B\\[[0-9;]*m")
+    @Volatile private var lastCoreError: String? = null
 
     @Synchronized fun initialize(context: Context) {
         if (ready) return
@@ -65,6 +66,7 @@ internal object VpnRuntime {
     fun log(message: String) {
         val core = coreKind
         val line = ansi.replace(message, "").take(2048)
+        if (line.startsWith("ERROR") || line.startsWith("FATAL")) lastCoreError = line
         main.post {
             if (history.size >= 128) history.removeFirst()
             history.addLast(line)
@@ -78,6 +80,7 @@ internal object VpnRuntime {
             return
         }
         cancelled = false
+        lastCoreError = null
         coreKind = core
         generation++
         pendingStart = result
@@ -90,6 +93,11 @@ internal object VpnRuntime {
             completeStart(error)
         }
     }
+
+    fun diagnostics(context: Context): Map<String, String?> = mapOf(
+        "network" to (PhysicalNetworkMonitor.get(context).current()?.description() ?: "unavailable (waiting for Android)"),
+        "coreError" to lastCoreError,
+    )
 
     fun completeStart(error: Throwable? = null, token: Long = generation) {
         main.post {

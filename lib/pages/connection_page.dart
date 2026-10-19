@@ -46,8 +46,16 @@ class ConnectionPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (connection.profiles.isNotEmpty)
-                  ServerSelector(
+                // Measure the real selector even before subscriptions restore,
+                // so its arrival cannot recenter the Connect button. Keeping the
+                // actual widget also respects theme and text scaling naturally.
+                Visibility(
+                  key: const ValueKey('connection-server-selector-slot'),
+                  visible: connection.profiles.isNotEmpty,
+                  maintainState: true,
+                  maintainAnimation: true,
+                  maintainSize: true,
+                  child: ServerSelector(
                     pings: pings,
                     profiles: connection.profiles,
                     selected: connection.selected,
@@ -55,6 +63,7 @@ class ConnectionPage extends StatelessWidget {
                         ? connection.selectProfile
                         : null,
                   ),
+                ),
                 if (connection.selected?.insecure == true)
                   const Text(
                     'This profile disables TLS certificate verification.',
