@@ -33,6 +33,56 @@ struct Window {
     smoke: bool,
     first_frame: bool,
     controls: controls::Controls,
+    icons: Option<WindowIcons>,
+}
+
+struct WindowIcons {
+    large: HICON,
+    small: HICON,
+}
+
+impl Drop for WindowIcons {
+    fn drop(&mut self) {
+        unsafe {
+            if !self.large.is_null() {
+                DestroyIcon(self.large);
+            }
+            if !self.small.is_null() {
+                DestroyIcon(self.small);
+            }
+        }
+    }
+}
+
+unsafe fn update_icons(window: &mut Window, dpi: u32) -> io::Result<()> {
+    let instance = GetWindowLongPtrW(window.hwnd, GWLP_HINSTANCE) as HINSTANCE;
+    let mut icons = WindowIcons {
+        large: null_mut(),
+        small: null_mut(),
+    };
+    for (target, width, height) in [
+        (&mut icons.large, SM_CXICON, SM_CYICON),
+        (&mut icons.small, SM_CXSMICON, SM_CYSMICON),
+    ] {
+        // Request each frame at its native DPI size instead of letting Windows
+        // reduce the class's large icon for small taskbar buttons.
+        *target = LoadImageW(
+            instance,
+            101usize as *const u16,
+            IMAGE_ICON,
+            GetSystemMetricsForDpi(width, dpi),
+            GetSystemMetricsForDpi(height, dpi),
+            0,
+        ) as HICON;
+        if target.is_null() {
+            return Err(io::Error::last_os_error());
+        }
+    }
+    SendMessageW(window.hwnd, WM_SETICON, ICON_BIG as usize, icons.large as isize);
+    SendMessageW(window.hwnd, WM_SETICON, ICON_SMALL as usize, icons.small as isize);
+    // Both old handles remain alive until the window has switched to the pair.
+    window.icons = Some(icons);
+    Ok(())
 }
 impl Drop for Window {
     fn drop(&mut self) {
@@ -125,6 +175,9 @@ unsafe extern "system" fn window_proc(
                 return 0
             }
             WM_DPICHANGED => {
+                if let Err(error) = update_icons(&mut *state, (wparam & 0xffff) as u32) {
+                    eprintln!("Could not refresh window icons: {error}");
+                }
                 let rect = &*(lparam as *const RECT);
                 SetWindowPos(
                     hwnd,
@@ -159,6 +212,32 @@ unsafe extern "system" fn window_proc(
             }
             WM_TIMER if (*state).smoke && wparam == 1 => {
                 KillTimer(hwnd, 1);
+                // Exercise native small-frame selection and replacing both
+                // window icons at common display scales, without showing UI.
+                for dpi in [96, 120, 144, 192] {
+                    if let Err(error) = update_icons(&mut *state, dpi) {
+                        eprintln!("Rust runner smoke: icon loading failed: {error}");
+                        (*state).first_frame = false;
+                        break;
+                    }
+                    for (kind, metric) in [(ICON_SMALL, SM_CXSMICON), (ICON_BIG, SM_CXICON)] {
+                        let icon = SendMessageW(hwnd, WM_GETICON, kind as usize, 0) as HICON;
+                        let mut info: ICONINFO = zeroed();
+                        let mut bitmap: BITMAP = zeroed();
+                        let loaded = GetIconInfo(icon, &mut info) != 0;
+                        let read = loaded && GetObjectW(
+                            info.hbmColor,
+                            size_of::<BITMAP>() as i32,
+                            (&mut bitmap as *mut BITMAP).cast(),
+                        ) != 0;
+                        if !read || bitmap.bmWidth != GetSystemMetricsForDpi(metric, dpi) {
+                            eprintln!("Rust runner smoke: incorrect icon size at DPI {dpi}");
+                            (*state).first_frame = false;
+                        }
+                        if !info.hbmColor.is_null() { DeleteObject(info.hbmColor); }
+                        if !info.hbmMask.is_null() { DeleteObject(info.hbmMask); }
+                    }
+                }
                 let style = GetWindowLongPtrW(hwnd, GWL_STYLE) as u32;
                 if IsWindowVisible(hwnd) != 0
                     || style & (WS_CAPTION | WS_THICKFRAME | WS_MAXIMIZEBOX) != 0
@@ -270,6 +349,7 @@ fn run(instance: HINSTANCE) -> Result<i32, Box<dyn std::error::Error>> {
             smoke,
             first_frame: false,
             controls: controls::Controls::default(),
+            icons: None,
         });
         let hwnd = CreateWindowExW(
             0,
@@ -288,6 +368,7 @@ fn run(instance: HINSTANCE) -> Result<i32, Box<dyn std::error::Error>> {
         if hwnd.is_null() {
             return Err(io::Error::last_os_error().into());
         }
+        update_icons(&mut state, GetDpiForWindow(hwnd).max(96))?;
         update_theme(hwnd);
         let corners: i32 = 2; // DWMWCP_ROUND; ignored on older Windows versions.
         DwmSetWindowAttribute(
