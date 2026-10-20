@@ -3,7 +3,7 @@ param([string]$Package = '')
 $ErrorActionPreference = 'Stop'
 $project = Split-Path $PSScriptRoot -Parent
 if (!$Package) { $Package = Join-Path $project 'build/installer/AORAConnect-Setup.exe' }
-$stage = (Get-Content -LiteralPath (Join-Path $project 'build/portable/stage-path.txt') -Raw).Trim()
+$stage = (Get-Content -LiteralPath (Join-Path $project 'build/installer/stage-path.txt') -Raw).Trim()
 $helper = Join-Path $stage 'app/aoravpn_update.exe'
 $fixture = Join-Path ([IO.Path]::GetTempPath()) ('aora-update-package-test-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $fixture | Out-Null

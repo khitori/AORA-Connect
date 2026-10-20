@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-param([switch]$SkipFlutterBuild)
+param([switch]$SkipFlutterBuild, [switch]$BundleOnly)
 $ErrorActionPreference = 'Stop'
 $project = Split-Path $PSScriptRoot -Parent
 $cargo = Get-Command cargo -ErrorAction SilentlyContinue
@@ -14,7 +14,7 @@ if (!$SkipFlutterBuild) {
   finally { Pop-Location }
 }
 $release = Join-Path $project 'build/windows/x64/runner/Release'
-$output = Join-Path $project 'build/portable'
+$output = Join-Path $project $(if ($BundleOnly) { 'build/installer' } else { 'build/portable' })
 # Each build has its own staging directory; no recursive cleanup of existing builds.
 $stage = Join-Path $output ('stage-' + [guid]::NewGuid().ToString('N'))
 $app = Join-Path $stage 'app'
@@ -59,6 +59,11 @@ $crt = Get-ChildItem -LiteralPath (Join-Path $vs 'VC/Redist/MSVC') -Recurse -Dir
   Sort-Object FullName -Descending | Select-Object -First 1
 if (!$crt) { throw 'Visual C++ x64 redistributable DLLs not found' }
 Get-ChildItem -LiteralPath $crt.FullName -Filter '*.dll' | Copy-Item -Destination $app
+Set-Content -LiteralPath (Join-Path $output 'stage-path.txt') -Value $stage
+if ($BundleOnly) {
+  Write-Output "Installer staging bundle: $stage"
+  return
+}
 $archive = Join-Path $output 'payload.zip'
 # Some crate archives preserve pre-1980 license timestamps; ZIP cannot store
 # those dates. Normalize only generated staging files, never the source files.
@@ -69,7 +74,6 @@ Get-ChildItem -LiteralPath $stage -Recurse -File | ForEach-Object {
   elseif ($_.LastWriteTime -gt $zipMaximum) { $_.LastWriteTime = $zipMaximum }
 }
 Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $archive -Force
-Set-Content -LiteralPath (Join-Path $output 'stage-path.txt') -Value $stage
 $packageId = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
 $nativeBuild = Join-Path $output 'rust-launcher'
 $oldPayload = $env:AORA_PAYLOAD_ZIP

@@ -63,7 +63,8 @@ powershell -ExecutionPolicy Bypass -File tool/build_installer.ps1 -ReleaseNotes 
 ```
 
 Use `-SigningKey C:/Private/AORA/release-private.json` for a custom key location.
-`-SkipBuild` reuses the most recent complete portable staging bundle. Rebuild
+`-SkipBuild` reuses the most recent complete installer staging bundle in
+`build/installer/`. The installer build does not generate a portable executable. Rebuild
 after changing source or the version; the script verifies the finished package.
 
 4. Create a GitHub release with tag **`v<major.minor.patch>`**, for example

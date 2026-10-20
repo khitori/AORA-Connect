@@ -12,8 +12,13 @@ if (!(Test-Path -LiteralPath $compilerPath)) { throw 'Install Inno Setup 6 or pl
 if (!(Test-Path -LiteralPath $SigningKey)) { throw 'Release signing key is missing; see docs/updates.md.' }
 Push-Location $project
 try {
-  if (!$SkipBuild) { & "$PSScriptRoot/build_portable.ps1"; if ($LASTEXITCODE -ne 0) { throw 'Portable build failed' } }
-  $stage = (Get-Content -LiteralPath 'build/portable/stage-path.txt' -Raw).Trim()
+  if (!$SkipBuild) {
+    & "$PSScriptRoot/update_app_icon.ps1"
+    & "$PSScriptRoot/test_app_icon.ps1"
+    & "$PSScriptRoot/build_portable.ps1" -BundleOnly
+    if ($LASTEXITCODE -ne 0) { throw 'Windows bundle build failed' }
+  }
+  $stage = (Get-Content -LiteralPath 'build/installer/stage-path.txt' -Raw).Trim()
   if (!(Test-Path -LiteralPath (Join-Path $stage 'app/aoravpn_update.exe'))) { throw 'Build staging is missing the update helper; rebuild first.' }
   $version = ((Get-Content pubspec.yaml | Where-Object { $_ -match '^version:' }) -replace '^version:\s*', '').Trim()
   if ($version -notmatch '^\d+\.\d+\.\d+\+\d+$') { throw 'Set version to major.minor.patch+build in pubspec.yaml.' }
