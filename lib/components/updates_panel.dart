@@ -128,10 +128,6 @@ class UpdatesPanel extends StatelessWidget {
             const SizedBox(height: 8),
             LinearProgressIndicator(value: updates.progress),
           ],
-          if (updates.release?.notes.isNotEmpty == true) ...[
-            const SizedBox(height: 8),
-            Text(updates.release!.notes),
-          ],
           if (updates.error != null) ...[
             const SizedBox(height: 8),
             Text(
