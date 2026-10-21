@@ -3,6 +3,7 @@ import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import '../l10n/directional_text.dart';
 
 /// Replaces a leading flag emoji or country code with a bundled flag image.
 class ServerNodeLabel extends StatelessWidget {
@@ -85,7 +86,12 @@ class ServerNodeLabel extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(node.label, maxLines: 1, overflow: TextOverflow.ellipsis),
+              Text(
+                node.label,
+                textDirection: textDirectionFor(node.label),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
               Text.rich(
                 TextSpan(
                   children: [
@@ -102,6 +108,7 @@ class ServerNodeLabel extends StatelessWidget {
                       ),
                   ],
                 ),
+                textDirection: TextDirection.ltr,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall

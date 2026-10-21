@@ -19,7 +19,7 @@ class AoraTileService : TileService() {
     override fun onStartListening() {
         super.onStartListening()
         val tile = qsTile ?: return
-        val status = QuickSettingsState.subtitle(VpnRuntime.state, QuickSettings.busy, QuickSettings.activeName)
+        val status = QuickSettingsState.subtitle(VpnRuntime.state, QuickSettings.busy, QuickSettings.activeName, AppLanguage.tileLabels(this))
         tile.icon = Icon.createWithResource(this, R.drawable.ic_quick_settings)
         tile.label = if (Build.VERSION.SDK_INT >= 29) "AORA Connect" else "AORA · $status"
         if (Build.VERSION.SDK_INT >= 29) tile.subtitle = status
@@ -46,7 +46,7 @@ class AoraTileService : TileService() {
                     override fun success(result: Any?) { QuickSettings.refresh() }
                     override fun error(code: String, message: String?, details: Any?) {
                         VpnRuntime.log("Quick Settings connection failed: ${message ?: code}")
-                        Toast.makeText(applicationContext, "Could not connect. Open AORA Connect for diagnostics.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(applicationContext, AppLanguage.text(applicationContext, R.string.vpn_tile_failed), Toast.LENGTH_LONG).show()
                         QuickSettings.refresh()
                     }
                     override fun notImplemented() { QuickSettings.refresh() }

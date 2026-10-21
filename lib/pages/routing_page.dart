@@ -7,10 +7,11 @@ import '../components/app_expansion_card.dart';
 import '../components/app_select.dart';
 import '../components/app_toggle.dart';
 import '../components/connection_edit_notification.dart';
+import '../components/installed_application_picker.dart';
 import '../components/routing_rule_card.dart';
 import '../components/routing_rule_editor.dart';
-import '../components/installed_application_picker.dart';
 import '../controllers/connection_controller.dart';
+import '../l10n/l10n.dart';
 import '../routing/routing_policy.dart';
 import '../theme/app_colors.dart';
 
@@ -38,16 +39,13 @@ class _RoutingPageState extends State<RoutingPage> {
       ? InstalledApplication.load()
       : null;
 
-  bool _allowEdit() => allowConnectionEdit(
-    context,
-    connection,
-    'Disconnect before editing routing rules.',
-  );
+  bool _allowEdit() =>
+      allowConnectionEdit(context, connection, context.l10n.disconnectRouting);
 
   Widget _editControl(Widget child) => DisabledControlNotice(
     disabled: !connection.canEdit,
     onTap: _allowEdit,
-    label: 'Disconnect before editing routing rules.',
+    label: context.l10n.disconnectRouting,
     child: child,
   );
 
@@ -111,15 +109,16 @@ class _RoutingPageState extends State<RoutingPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 AppExpansionCard(
-                  title: 'Routing',
+                  title: context.l10n.routing,
+                  storageId: 'routing',
                   subtitle: policy.enabled
-                      ? 'Applications and addresses'
-                      : 'Off',
+                      ? context.l10n.applicationsAddresses
+                      : context.l10n.off,
                   icon: Icons.alt_route_rounded,
                   initiallyExpanded: true,
                   titleAction: _editControl(
                     AppToggle(
-                      semanticLabel: 'Routing',
+                      semanticLabel: context.l10n.routing,
                       value: policy.enabled,
                       onChanged: connection.canEdit
                           ? (enabled) {
@@ -136,7 +135,7 @@ class _RoutingPageState extends State<RoutingPage> {
                     ),
                   ),
                   children: [
-                    const Text('Route listed applications and addresses'),
+                    Text(context.l10n.routeListedItems),
                     const SizedBox(height: 8),
                     _editControl(
                       AppSelect<RoutingAction>(
@@ -146,7 +145,7 @@ class _RoutingPageState extends State<RoutingPage> {
                           for (final action in RoutingAction.values)
                             DropdownMenuItem(
                               value: action,
-                              child: Text(action.label),
+                              child: Text(action.localizedLabel(context.l10n)),
                             ),
                         ],
                         onChanged: connection.canEdit
@@ -167,11 +166,11 @@ class _RoutingPageState extends State<RoutingPage> {
                     const SizedBox(height: 12),
                     Text(
                       policy.direction == RoutingAction.vpn
-                          ? 'Listed items go through the tunnel. Everything else uses your normal connection.'
-                          : 'Listed items use your normal connection. Everything else goes through the tunnel.',
+                          ? context.l10n.listedThroughTunnel
+                          : context.l10n.listedBypassTunnel,
                     ),
                     const SizedBox(height: 8),
-                    const Text('Use VPN (TUN) mode to route system traffic.'),
+                    Text(context.l10n.useTunRouting),
                   ],
                 ),
                 const SizedBox(height: _sectionGap),
@@ -179,15 +178,13 @@ class _RoutingPageState extends State<RoutingPage> {
                   OutlinedButton.icon(
                     onPressed: connection.canEdit ? () => _edit(context) : null,
                     icon: const Icon(Icons.add_rounded),
-                    label: const Text('Add rule'),
+                    label: Text(context.l10n.addRule),
                   ),
                 ),
                 if (!policy.enabled)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(top: 12),
-                    child: Text(
-                      'Routing rules are off. Traffic uses the selected VPN server.',
-                    ),
+                    child: Text(context.l10n.routingDisabled),
                   ),
                 if (error != null)
                   Padding(
@@ -202,8 +199,8 @@ class _RoutingPageState extends State<RoutingPage> {
                     padding: EdgeInsets.only(top: 16),
                     child: Text(
                       policy.direction == RoutingAction.vpn
-                          ? 'No items yet. Everything uses your normal connection.'
-                          : 'No items yet. Everything goes through the tunnel.',
+                          ? context.l10n.emptyBypassTunnel
+                          : context.l10n.emptyThroughTunnel,
                     ),
                   ),
               ],

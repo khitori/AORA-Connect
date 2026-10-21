@@ -5,9 +5,26 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
+import '../l10n/app_localizations_en.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/directional_text.dart';
+import '../l10n/localized_exception.dart';
 import '../storage/app_paths.dart';
 import 'android_updates.dart';
 import 'update_cache.dart';
+
+enum UpdatePhase {
+  idle,
+  checking,
+  upToDate,
+  available,
+  downloading,
+  ready,
+  verifying,
+  imported,
+  failed,
+  installed,
+}
 
 enum UpdatePlatform { windows, android, unsupported }
 
@@ -51,9 +68,7 @@ Uri updateUrl(String value) {
       uri.host.isEmpty ||
       uri.userInfo.isNotEmpty ||
       uri.hasFragment) {
-    throw const FormatException(
-      'Update sources must be HTTPS URLs without credentials.',
-    );
+    throw LocalizedFormatException((strings) => strings.httpsSourcesOnly);
   }
   return uri;
 }
@@ -98,7 +113,24 @@ class UpdateController extends ChangeNotifier {
   AppRelease? release;
   File? package;
   String? error;
-  String status = 'Check for updates';
+  UpdatePhase _phase = UpdatePhase.idle;
+  String get status => localizedStatus(AppLocalizationsEn());
+  String localizedStatus(AppLocalizations l10n) => switch (_phase) {
+    UpdatePhase.idle => l10n.checkUpdates,
+    UpdatePhase.checking => l10n.checkingUpdates,
+    UpdatePhase.upToDate => l10n.upToDate,
+    UpdatePhase.available => l10n.updateAvailable(
+      isolateTechnicalValue(l10n, release!.version.split('+').first),
+    ),
+    UpdatePhase.downloading => l10n.downloadingUpdate,
+    UpdatePhase.ready => l10n.updateReady,
+    UpdatePhase.verifying => l10n.verifyingUpdate,
+    UpdatePhase.imported => l10n.updateVersionReady(
+      isolateTechnicalValue(l10n, release!.version.split('+').first),
+    ),
+    UpdatePhase.failed => l10n.updateFailed,
+    UpdatePhase.installed => l10n.installationCompleted,
+  };
   double? progress;
   bool _disposed = false;
   HttpClient? _client;
@@ -142,7 +174,7 @@ class UpdateController extends ChangeNotifier {
         await _stageHelper(pending.file.parent);
         package = pending.file;
         release = AppRelease(pending.release);
-        status = 'Update verified and ready to install';
+        _phase = UpdatePhase.ready;
       }
       if (isAndroid && verifier == null) await AndroidUpdates.cleanup();
     } catch (_) {
@@ -262,7 +294,7 @@ class UpdateController extends ChangeNotifier {
       await action();
     } catch (e) {
       error = '$e';
-      status = 'Update could not be completed';
+      _phase = UpdatePhase.failed;
     } finally {
       _client?.close(force: true);
       _client = null;
@@ -303,7 +335,7 @@ class UpdateController extends ChangeNotifier {
   }
 
   Future<void> check() => _perform(() async {
-    status = 'Checking for updates…';
+    _phase = UpdatePhase.checking;
     _changed();
     Object? failure;
     for (final source in [defaultSource, ...additionalSources]) {
@@ -328,11 +360,11 @@ class UpdateController extends ChangeNotifier {
         if (package == null) {
           release = _newer(candidate.version) ? candidate : null;
         }
-        status = release == null
-            ? 'No newer update found'
+        _phase = release == null
+            ? UpdatePhase.upToDate
             : package != null
-            ? 'Update verified and ready to install'
-            : 'Update ${release!.version.split('+').first} available';
+            ? UpdatePhase.ready
+            : UpdatePhase.available;
         return;
       } catch (e) {
         failure = e;
@@ -358,7 +390,7 @@ class UpdateController extends ChangeNotifier {
         updateUrl(source).resolve(packageName).toString(),
     }) {
       try {
-        status = 'Downloading update…';
+        _phase = UpdatePhase.downloading;
         _changed();
         final response = await _get(updateUrl(url));
         final sink = file.openWrite();
@@ -394,7 +426,7 @@ class UpdateController extends ChangeNotifier {
         }
         await _stageHelper(directory);
         package = file;
-        status = 'Update verified and ready to install';
+        _phase = UpdatePhase.ready;
         progress = 1;
         return;
       } catch (e) {
@@ -407,7 +439,7 @@ class UpdateController extends ChangeNotifier {
   });
   Future<void> importFile(String path) => _perform(() async {
     package = null;
-    status = 'Verifying update file…';
+    _phase = UpdatePhase.verifying;
     _changed();
     final source = File(path);
     if (await source.length() > 512 * 1024 * 1024 + 65560) {
@@ -422,8 +454,7 @@ class UpdateController extends ChangeNotifier {
     await _stageHelper(directory);
     release = candidate;
     package = file;
-    status =
-        'Update ${candidate.version.split('+').first} verified and ready to install';
+    _phase = UpdatePhase.imported;
   });
   Future<void> _stageHelper(Directory directory) async {
     if (isAndroid) return;
@@ -475,7 +506,7 @@ class UpdateController extends ChangeNotifier {
       if (isAndroid) {
         await File('${package!.parent.path}/installing.json').delete();
         installing = false;
-        status = 'Installation completed';
+        _phase = UpdatePhase.installed;
         _changed();
       }
     } catch (e) {

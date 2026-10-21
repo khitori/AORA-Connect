@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../controllers/node_ping_controller.dart';
 import '../core/core_kind.dart';
-import '../core/ping_type.dart';
+import '../l10n/l10n.dart';
 import '../profiles/server_profile.dart';
 import '../theme/app_colors.dart';
 import 'server_node_label.dart';
@@ -75,9 +75,11 @@ class ServerNodeDetails extends StatelessWidget {
           : Tooltip(
               message:
                   result.error ??
-                  '${pings.connection.pingType.label} server check',
+                  context.l10n.serverCheck(
+                    pings.connection.pingType.localizedLabel(context.l10n),
+                  ),
               child: Text(
-                result.label,
+                result.localizedLabel(context.l10n),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: result.error == null
                       ? AppColors.muted500

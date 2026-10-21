@@ -3,10 +3,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../routing/routing_policy.dart';
 import 'app_select.dart';
-import 'running_application_picker.dart';
 import 'installed_application_picker.dart';
+import 'running_application_picker.dart';
 
 Future<RoutingRule?> showRoutingRuleEditor(
   BuildContext context, {
@@ -23,7 +24,11 @@ Future<RoutingRule?> showRoutingRuleEditor(
         insetPadding: const EdgeInsets.all(24),
         actionsAlignment: MainAxisAlignment.spaceBetween,
         actionsOverflowButtonSpacing: 8,
-        title: Text(initial == null ? 'Add routing rule' : 'Edit routing rule'),
+        title: Text(
+          initial == null
+              ? context.l10n.addRoutingRule
+              : context.l10n.editRoutingRule,
+        ),
         content: SizedBox(
           width: 400,
           child: SingleChildScrollView(
@@ -31,13 +36,16 @@ Future<RoutingRule?> showRoutingRuleEditor(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text('Match'),
+                Text(context.l10n.match),
                 const SizedBox(height: 8),
                 AppSelect<RoutingMatch>(
                   value: match,
                   items: [
                     for (final type in RoutingMatch.values)
-                      DropdownMenuItem(value: type, child: Text(type.label)),
+                      DropdownMenuItem(
+                        value: type,
+                        child: Text(type.localizedLabel(context.l10n)),
+                      ),
                   ],
                   onChanged: (value) => update(() {
                     if (value != null) match = value;
@@ -48,6 +56,7 @@ Future<RoutingRule?> showRoutingRuleEditor(
                 TextFormField(
                   key: ValueKey(selectionRevision),
                   initialValue: target,
+                  textDirection: TextDirection.ltr,
                   onChanged: (value) => target = value,
                   decoration: InputDecoration(
                     isDense: true,
@@ -55,7 +64,7 @@ Future<RoutingRule?> showRoutingRuleEditor(
                       horizontal: 12,
                       vertical: 8,
                     ),
-                    labelText: 'Value',
+                    labelText: context.l10n.value,
                     hintText:
                         Platform.isAndroid && match == RoutingMatch.application
                         ? 'com.android.chrome'
@@ -74,8 +83,8 @@ Future<RoutingRule?> showRoutingRuleEditor(
                       ),
                     ),
                     icon: const Icon(Icons.apps_rounded),
-                    label: const Text(
-                      'Choose application',
+                    label: Text(
+                      context.l10n.chooseApplication,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -99,7 +108,7 @@ Future<RoutingRule?> showRoutingRuleEditor(
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           OutlinedButton(
             onPressed: () {
@@ -113,12 +122,16 @@ Future<RoutingRule?> showRoutingRuleEditor(
                 enabled: initial?.enabled ?? true,
               );
               if (rule.validationError != null) {
-                update(() => error = rule.validationError);
+                update(
+                  () => error = rule.validationIssue?.localizedLabel(
+                    context.l10n,
+                  ),
+                );
               } else {
                 Navigator.pop(context, rule);
               }
             },
-            child: const Text('Save'),
+            child: Text(context.l10n.save),
           ),
         ],
       ),

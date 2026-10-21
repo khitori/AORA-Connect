@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 
 class CoreLogs extends StatelessWidget {
@@ -20,7 +21,8 @@ class CoreLogs extends StatelessWidget {
           key: const PageStorageKey('core-logs-scroll'),
           padding: const EdgeInsets.all(16),
           child: SelectableText(
-            lines.isEmpty ? 'No logs yet.' : lines.join('\n'),
+            lines.isEmpty ? context.l10n.noLogs : lines.join('\n'),
+            textDirection: lines.isEmpty ? null : TextDirection.ltr,
             style: const TextStyle(fontFamily: 'monospace'),
           ),
         ),

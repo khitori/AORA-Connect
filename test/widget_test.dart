@@ -103,7 +103,7 @@ void main() {
     expect(commands, contains('tray'));
     expect(engine.cleanupStarted, isFalse);
     await _openSettings(tester);
-    expect(find.text('About'), findsOneWidget);
+    expect(find.text('Language'), findsOneWidget);
     await tester.tap(find.byTooltip('Close app'));
     await tester.pumpAndSettle();
     expect(commands, contains('close'));

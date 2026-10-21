@@ -1,0 +1,407 @@
+{
+  "@@locale": "en",
+  "language": "Language",
+  "interfaceLanguage": "Interface language",
+  "systemDefault": "System default",
+  "languageSaveFailed": "Could not save the language preference.",
+  "settings": "Settings",
+  "connection": "Connection",
+  "subscriptions": "Subscriptions",
+  "routing": "Routing",
+  "hideToTray": "Hide to tray",
+  "closeApp": "Close app",
+  "close": "Close",
+  "closeMenu": "Close menu",
+  "openMenu": "Open menu",
+  "menu": "Menu",
+  "connect": "Connect",
+  "disconnect": "Disconnect",
+  "connecting": "Connecting…",
+  "stopping": "Stopping…",
+  "localProxy": "Local proxy",
+  "vpnTun": "VPN (TUN)",
+  "cancel": "Cancel",
+  "save": "Save",
+  "saving": "Saving…",
+  "add": "Add",
+  "edit": "Edit",
+  "refresh": "Refresh",
+  "validate": "Validate",
+  "testConnection": "Test connection",
+  "copyDiagnostics": "Copy diagnostics",
+  "diagnosticsCopied": "Diagnostics copied.",
+  "diagnosticsCopyFailed": "Could not copy diagnostics.",
+  "loadSubscriptionFirst": "Load a subscription on the Subscriptions tab first.",
+  "serverRequiresCore": "This server requires {p0}. Select it in Settings.",
+  "@serverRequiresCore": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "selectedRequiresCore": "Selected server requires {p0}.",
+  "@selectedRequiresCore": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "insecureProfile": "This profile disables TLS certificate verification.",
+  "addSubscription": "Add subscription",
+  "savedSubscriptions": "Saved subscriptions",
+  "noSubscriptions": "No subscriptions yet. Add a link above to get started.",
+  "activeSubscriptionNodes": "Nodes in active subscription",
+  "chooseSubscription": "Choose a subscription",
+  "selectSubscription": "Select a subscription to use",
+  "refreshSubscription": "Refresh selected subscription",
+  "removeSubscription": "Remove selected subscription",
+  "subscriptionLink": "Subscription or server link...",
+  "pasteClipboard": "Paste from clipboard",
+  "copyLinkFirst": "Copy a valid subscription or server link first.",
+  "clipboardReadFailed": "Could not read the clipboard.",
+  "website": "Website",
+  "support": "Support",
+  "description": "Description",
+  "lastUpdated": "Last updated",
+  "expires": "Expires",
+  "notUpdated": "Not updated",
+  "notProvided": "Not provided",
+  "expired": "Expired",
+  "openLink": "Open {p0}",
+  "@openLink": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "linkNotProvided": "{p0} link not provided",
+  "@linkNotProvided": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "openLinkFailed": "Could not open link.",
+  "openNamedLinkFailed": "Could not open {p0} link.",
+  "@openNamedLinkFailed": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "disconnectSubscriptions": "Disconnect before changing subscriptions.",
+  "disconnectServers": "Disconnect before changing servers.",
+  "disconnectRefresh": "Disconnect before refreshing your subscription.",
+  "disconnectRouting": "Disconnect before editing routing rules.",
+  "disconnectInstall": "Disconnect before installing an update.",
+  "waitCurrentOperation": "Wait for the current operation to finish.",
+  "disconnectBeforeAction": "Disconnect before {p0}.",
+  "@disconnectBeforeAction": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "changingCore": "changing the core",
+  "changingMode": "changing connection mode",
+  "changingDns": "changing DNS",
+  "changingKillSwitch": "changing Kill Switch",
+  "core": "Core",
+  "networkingCore": "Networking core",
+  "coreHelp": "Choose the core manually. Each server shows its required core on the Subscriptions page.",
+  "connectionMode": "Connection mode",
+  "connectionModeHelp": "VPN (TUN) routes system traffic automatically. Local proxy requires proxy configuration in your applications.",
+  "killSwitch": "Kill Switch",
+  "killSwitchHelp": "Protects DNS and TUN routing while connected. Normal internet access resumes when disconnected.",
+  "availableTun": "Available in VPN (TUN) mode.",
+  "quickSettings": "Quick Settings",
+  "quickSettingsSubtitle": "Connect from the Android panel",
+  "quickSettingsHelp": "Use the AORA Connect tile to connect to your selected server or disconnect. Hold the tile to open the app.",
+  "addQuickSettings": "Add to Quick Settings",
+  "tileAdded": "AORA Connect added to Quick Settings.",
+  "tileAlreadyAdded": "AORA Connect is already in Quick Settings.",
+  "tileManual": "Open Quick Settings, tap Edit, then drag AORA Connect into your tiles.",
+  "tileDeclined": "Quick Settings tile was not added.",
+  "tileFailed": "Could not add the tile. Open Quick Settings and add AORA Connect using Edit.",
+  "dnsServer": "DNS server",
+  "dnsHelp": "DNS provider for VPN (TUN). System-wide DNS is not configured in local proxy mode.",
+  "serverChecks": "Server checks",
+  "serverPingMethod": "Server ping method",
+  "serverChecksHelp": "Applies to server checks throughout the app. Statistics uses live ICMP. Proxy checks request https://www.gstatic.com/generate_204 through each node.",
+  "diagnostics": "Diagnostics",
+  "diagnosticsSubtitle": "Validation, connection test and logs",
+  "coreLogs": "Core logs",
+  "noLogs": "No logs yet.",
+  "about": "About",
+  "aboutClient": "An open-source, universal VPN client.",
+  "license": "License: GNU GPL version 3 or later.",
+  "coresLicense": "Networking cores: sing-box and Xray. Their binaries and licenses are separate from the app.",
+  "statistics": "Statistics",
+  "off": "Off",
+  "pingMeasuring": "Server ping · measuring…",
+  "pingNoReply": "Server ping · no reply",
+  "pingValue": "Server ping · {p0}",
+  "@pingValue": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "connectStatistics": "Connect to view live ICMP statistics",
+  "target": "Target: {p0}",
+  "@target": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "measuring": "Measuring…",
+  "noReply": "No reply",
+  "waitingSamples": "Waiting for samples",
+  "replies": "{p0}/{p1} replies",
+  "@replies": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      }
+    }
+  },
+  "pingHistory": "Server ping history. ",
+  "successfulChecks": "{p0} of {p1} completed checks succeeded.",
+  "@successfulChecks": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      }
+    }
+  },
+  "pingHistoryHelp": "Server ping every second · last 30 samples. Gaps mean no reply.",
+  "connectCollectStatistics": "Connect to collect live ICMP samples.",
+  "statisticsOff": "Statistics is off.",
+  "lessOneMs": "<1 ms",
+  "milliseconds": "{p0} ms",
+  "@milliseconds": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "notChecked": "Not checked",
+  "noCompletedCheck": "No completed server check yet",
+  "lastCheck": "Last check {p0}:{p1}",
+  "@lastCheck": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      }
+    }
+  },
+  "checkServers": "Checking servers",
+  "cancelChecks": "Cancel server checks",
+  "serverCheck": "{p0} server check",
+  "@serverCheck": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "applicationsAddresses": "Applications and addresses",
+  "routeListedItems": "Route listed applications and addresses",
+  "listedThroughTunnel": "Listed items go through the tunnel. Everything else uses your normal connection.",
+  "listedBypassTunnel": "Listed items use your normal connection. Everything else goes through the tunnel.",
+  "routingDisabled": "Routing rules are off. Traffic uses the selected VPN server.",
+  "useTunRouting": "Use VPN (TUN) mode to route system traffic.",
+  "emptyThroughTunnel": "No items yet. Everything goes through the tunnel.",
+  "emptyBypassTunnel": "No items yet. Everything uses your normal connection.",
+  "addRule": "Add rule",
+  "addRoutingRule": "Add routing rule",
+  "editRoutingRule": "Edit routing rule",
+  "editRule": "Edit rule",
+  "deleteRule": "Delete rule",
+  "moveUp": "Move up",
+  "moveDown": "Move down",
+  "enableTarget": "Enable {p0}",
+  "@enableTarget": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "match": "Match",
+  "value": "Value",
+  "chooseApplication": "Choose application",
+  "installedApplications": "Installed applications",
+  "runningApplications": "Running applications",
+  "searchApplications": "Search applications",
+  "noMatchingApplications": "No matching applications.",
+  "applicationsUnavailable": "Application list unavailable.",
+  "runningSelectionDesktop": "Running application selection is available on desktop.",
+  "runningReadFailed": "Unable to read running applications.",
+  "installedLoadFailed": "Could not load applications. Retry or enter a package name manually.",
+  "runningLoadFailed": "Could not load running applications. Retry or enter a process name manually.",
+  "updates": "Updates",
+  "version": "Version {p0}",
+  "@version": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "automaticUpdates": "Check automatically at startup",
+  "automaticUpdatesSemantics": "Check for updates automatically",
+  "checkUpdates": "Check for updates",
+  "importUpdate": "Update from file",
+  "downloadUpdate": "Download update",
+  "installUpdate": "Install update",
+  "install": "Install",
+  "installVersion": "Install {p0}?",
+  "@installVersion": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "windowsInstallHelp": "AORA Connect will close and reopen after installation. Your settings and subscriptions will be kept.",
+  "androidInstallHelp": "Android will ask you to confirm installation. Your settings, subscriptions and routing rules will be kept.",
+  "androidApk": "AORA Android APK",
+  "windowsInstaller": "AORA update installer",
+  "additionalSources": "Additional sources (optional)",
+  "additionalSourcesCount": "{p0} additional sources",
+  "@additionalSourcesCount": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "updateSources": "Update sources",
+  "updateSourcesHelp": "Optional mirrors. GitHub is tried first.",
+  "metadataUrlPerLine": "One HTTPS metadata URL per line",
+  "updateAvailableNotification": "Update {p0} is available in Settings → Updates.",
+  "@updateAvailableNotification": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "notAvailable": "Not available",
+  "system": "System",
+  "idle": "Idle",
+  "throughTunnel": "Through tunnel",
+  "bypassingTunnel": "Bypassing tunnel",
+  "application": "Application",
+  "domainSubdomains": "Domain + subdomains",
+  "exactDomain": "Exact domain",
+  "ipCidr": "IP / CIDR",
+  "proxyGet": "Via Proxy GET",
+  "proxyHead": "Via Proxy HEAD",
+  "stateStopped": "stopped",
+  "stateStarting": "starting",
+  "stateRunning": "running",
+  "stateStopping": "stopping",
+  "timeout": "Timeout",
+  "failed": "Failed",
+  "unavailable": "N/A",
+  "checkingUpdates": "Checking for updates…",
+  "upToDate": "No newer update found",
+  "updateAvailable": "Update {p0} available",
+  "@updateAvailable": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadingUpdate": "Downloading update…",
+  "updateReady": "Update verified and ready to install",
+  "verifyingUpdate": "Verifying update file…",
+  "updateVersionReady": "Update {p0} verified and ready to install",
+  "@updateVersionReady": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "updateFailed": "Update could not be completed",
+  "installationCompleted": "Installation completed",
+  "trayShow": "Show AORA Connect",
+  "trayExit": "Exit",
+  "daysLeft": "{count, plural, one{{count} day left} other{{count} days left}}",
+  "@daysLeft": {
+    "description": "Whole days until a subscription expires.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "serverCount": "{count, plural, one{{count} server} other{{count} servers}}",
+  "@serverCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notLoaded": "Not loaded",
+  "skippedServers": "{count} skipped",
+  "@skippedServers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "connectionVerified": "Connection verified ({p0} ms).",
+  "httpsSucceeded": "HTTPS through {p0} succeeded ({p1} ms).",
+  "@connectionVerified": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      }
+    }
+  },
+  "@httpsSucceeded": {
+    "placeholders": {
+      "p0": {
+        "type": "String"
+      },
+      "p1": {
+        "type": "String"
+      }
+    }
+  },
+  "routingValidationEmpty": "Enter a value.",
+  "routingValidationControlCharacters": "Control characters are not allowed.",
+  "routingValidationApplication": "Enter an executable path or process name, without wildcards.",
+  "routingValidationDomain": "Enter a domain without a URL scheme, path, or wildcard.",
+  "routingValidationIp": "Enter an IP address or CIDR range.",
+  "routingValidationPrefix": "The CIDR prefix is invalid.",
+  "httpsSourcesOnly": "Update sources must be HTTPS URLs without credentials.",
+  "checkAllServers": "Check all servers",
+  "checkSelectedServer": "Check selected server"
+}

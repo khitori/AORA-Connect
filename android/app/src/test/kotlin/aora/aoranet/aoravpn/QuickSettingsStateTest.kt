@@ -5,6 +5,13 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class QuickSettingsStateTest {
+    @Test fun translatedLabelsPreserveUserServerNames() {
+        val labels = QuickSettingsState.Labels("Подключение…", "Отключение…", "Подключено", "Отключено", "Занято")
+        assertEquals("Подключение…", QuickSettingsState.subtitle("starting", false, null, labels))
+        assertEquals("Отключено", QuickSettingsState.subtitle("stopped", false, null, labels))
+        assertEquals("Подключено", QuickSettingsState.subtitle("running", false, null, labels))
+        assertEquals("My server", QuickSettingsState.subtitle("running", false, "My server", labels))
+    }
     @Test fun connectsOnlyWithSelection() {
         assertEquals(QuickSettingsState.Action.OPEN_APP, QuickSettingsState.action("stopped", false, false))
         assertEquals(QuickSettingsState.Action.CONNECT, QuickSettingsState.action("stopped", false, true))

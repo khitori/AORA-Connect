@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="vpn_channel">VPN 连接</string>
+    <string name="vpn_connecting">正在连接…</string>
+    <string name="vpn_disconnecting">正在断开连接…</string>
+    <string name="vpn_connected">已连接</string>
+    <string name="vpn_disconnected">已断开连接</string>
+    <string name="vpn_busy">忙碌</string>
+    <string name="vpn_disconnect">断开连接</string>
+    <string name="vpn_tile_failed">无法连接。请打开 AORA Connect 查看诊断信息。</string>
+</resources>

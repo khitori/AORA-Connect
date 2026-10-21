@@ -31,7 +31,7 @@ class AoraVpnService : VpnService(), CommandServerHandler {
         super.onCreate()
         VpnRuntime.service = this
         getSystemService(NotificationManager::class.java).createNotificationChannel(
-            NotificationChannel("vpn", "VPN connection", NotificationManager.IMPORTANCE_LOW))
+            NotificationChannel("vpn", AppLanguage.text(this, R.string.vpn_channel), NotificationManager.IMPORTANCE_LOW))
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -46,7 +46,7 @@ class AoraVpnService : VpnService(), CommandServerHandler {
             stopSelf()
             return START_NOT_STICKY
         }
-        startForeground(1, notification("Connecting…"))
+        startForeground(1, notification(AppLanguage.text(this, R.string.vpn_connecting)))
         VpnRuntime.worker.execute {
             closed = false
             var stage = "core initialization"
@@ -102,7 +102,7 @@ class AoraVpnService : VpnService(), CommandServerHandler {
                     QuickSettingsProbe.verify(this)
                 }
                 VpnRuntime.update("running")
-                getSystemService(NotificationManager::class.java).notify(1, notification("Connected"))
+                getSystemService(NotificationManager::class.java).notify(1, notification(AppLanguage.text(this, R.string.vpn_connected)))
                 VpnRuntime.completeStart(token = sessionGeneration)
             } catch (error: Exception) {
                 val failure = IllegalStateException("VPN startup failed during $stage: ${error.javaClass.simpleName}: ${error.message}", error)
@@ -162,8 +162,18 @@ class AoraVpnService : VpnService(), CommandServerHandler {
             .setContentText(status)
             .setContentIntent(open)
             .setOngoing(true)
-            .addAction(Notification.Action.Builder(null, "Disconnect", stop).build())
+            .addAction(Notification.Action.Builder(null, AppLanguage.text(this, R.string.vpn_disconnect), stop).build())
             .build()
+    }
+
+    fun refreshNotification() {
+        if (VpnRuntime.state !in setOf("starting", "running", "stopping")) return
+        val status = when (VpnRuntime.state) {
+            "starting" -> R.string.vpn_connecting
+            "stopping" -> R.string.vpn_disconnecting
+            else -> R.string.vpn_connected
+        }
+        getSystemService(NotificationManager::class.java).notify(1, notification(AppLanguage.text(this, status)))
     }
 
     override fun onRevoke() { if (VpnRuntime.generation == sessionGeneration) VpnRuntime.stop(this) }

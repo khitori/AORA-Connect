@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -56,7 +57,7 @@ class AppNotification extends StatelessWidget {
         width: 36,
         height: 36,
         child: IconButton(
-          tooltip: 'Close',
+          tooltip: context.l10n.close,
           style: IconButton.styleFrom(
             padding: EdgeInsets.zero,
             shape: RoundedRectangleBorder(

@@ -137,82 +137,85 @@ class _AppSelectState<T> extends State<AppSelect<T>>
     setState(() => _open = true);
     widget.onOpenChanged?.call(true);
     _menuEntry = OverlayEntry(
-      builder: (menuContext) => Stack(
-        children: [
-          Positioned(
-            left: anchor.left,
-            top: top,
-            width: anchor.width,
-            child: TapRegion(
-              groupId: _group,
-              onTapOutside: (_) => _hide(),
-              child: FadeTransition(
-                opacity: _menuAnimation,
-                child: SizeTransition(
-                  sizeFactor: _menuAnimation,
-                  alignment: Alignment.topCenter,
-                  child: Material(
-                    key: const ValueKey('app-select-menu'),
-                    elevation: 0,
-                    shadowColor: Colors.transparent,
-                    surfaceTintColor: Colors.transparent,
-                    color: Theme.of(context).colorScheme.surfaceContainer,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppTheme.controlRadius,
+      builder: (menuContext) => Directionality(
+        textDirection: Directionality.of(context),
+        child: Stack(
+          children: [
+            Positioned(
+              left: anchor.left,
+              top: top,
+              width: anchor.width,
+              child: TapRegion(
+                groupId: _group,
+                onTapOutside: (_) => _hide(),
+                child: FadeTransition(
+                  opacity: _menuAnimation,
+                  child: SizeTransition(
+                    sizeFactor: _menuAnimation,
+                    alignment: Alignment.topCenter,
+                    child: Material(
+                      key: const ValueKey('app-select-menu'),
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                      surfaceTintColor: Colors.transparent,
+                      color: Theme.of(context).colorScheme.surfaceContainer,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.controlRadius,
+                        ),
+                        side: BorderSide(color: AppColors.lineStrong),
                       ),
-                      side: BorderSide(color: AppColors.lineStrong),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxHeight: availableHeight),
-                      child: Focus(
-                        autofocus: true,
-                        onKeyEvent: (_, event) {
-                          if (event is KeyDownEvent &&
-                              event.logicalKey == LogicalKeyboardKey.escape) {
-                            _hide();
-                            return KeyEventResult.handled;
-                          }
-                          return KeyEventResult.ignored;
-                        },
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          padding: EdgeInsets.zero,
-                          itemCount: widget.items.length,
-                          itemBuilder: (_, index) {
-                            final item = widget.items[index];
-                            return InkWell(
-                              overlayColor: AppTheme.controlOverlayColor,
-                              onTap: item.enabled
-                                  ? () => _hide(item.value)
-                                  : null,
-                              child: Container(
-                                constraints: const BoxConstraints(
-                                  minHeight: 40,
-                                ),
-                                alignment: Alignment.centerLeft,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                color: item.value == widget.value
-                                    ? AppTheme.selectedSurface
-                                    : null,
-                                child: DefaultTextStyle(
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium!
-                                      .copyWith(
-                                        color: item.enabled
-                                            ? null
-                                            : Theme.of(context).disabledColor,
-                                      ),
-                                  child: item.child,
-                                ),
-                              ),
-                            );
+                      clipBehavior: Clip.antiAlias,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxHeight: availableHeight),
+                        child: Focus(
+                          autofocus: true,
+                          onKeyEvent: (_, event) {
+                            if (event is KeyDownEvent &&
+                                event.logicalKey == LogicalKeyboardKey.escape) {
+                              _hide();
+                              return KeyEventResult.handled;
+                            }
+                            return KeyEventResult.ignored;
                           },
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            padding: EdgeInsets.zero,
+                            itemCount: widget.items.length,
+                            itemBuilder: (_, index) {
+                              final item = widget.items[index];
+                              return InkWell(
+                                overlayColor: AppTheme.controlOverlayColor,
+                                onTap: item.enabled
+                                    ? () => _hide(item.value)
+                                    : null,
+                                child: Container(
+                                  constraints: const BoxConstraints(
+                                    minHeight: 40,
+                                  ),
+                                  alignment: AlignmentDirectional.centerStart,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  color: item.value == widget.value
+                                      ? AppTheme.selectedSurface
+                                      : null,
+                                  child: DefaultTextStyle(
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium!
+                                        .copyWith(
+                                          color: item.enabled
+                                              ? null
+                                              : Theme.of(context).disabledColor,
+                                        ),
+                                    child: item.child,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ),
@@ -220,8 +223,8 @@ class _AppSelectState<T> extends State<AppSelect<T>>
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
     Overlay.of(context, rootOverlay: true).insert(_menuEntry!);

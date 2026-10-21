@@ -8,6 +8,15 @@ const TRAY_MESSAGE: u32 = WM_APP + 40;
 const DRAG_MESSAGE: u32 = WM_APP + 41;
 const DESTROY_MESSAGE: u32 = WM_APP + 42;
 
+#[derive(serde::Deserialize)]
+struct TrayLabels {
+    show: String,
+    disconnect: String,
+    exit: String,
+    #[serde(default)]
+    rtl: bool,
+}
+
 #[derive(Default)]
 pub(super) struct Controls {
     messenger: *mut c_void,
@@ -15,6 +24,7 @@ pub(super) struct Controls {
     tray_added: bool,
     pub ready: bool,
     can_disconnect: bool,
+    labels: Option<TrayLabels>,
 }
 
 impl Controls {
@@ -126,6 +136,16 @@ unsafe extern "C" fn command(
     };
     let hwnd = (*state).hwnd;
     let reply: &[u8] = match bytes {
+        message if message.starts_with(b"localize:") => {
+            match serde_json::from_slice::<TrayLabels>(&message[9..]) {
+                Ok(labels) if [&labels.show, &labels.disconnect, &labels.exit]
+                    .iter().all(|text| !text.is_empty() && text.len() <= 512 && !text.contains('\0')) => {
+                    (*state).controls.labels = Some(labels);
+                    b"ok"
+                }
+                _ => b"Invalid tray labels",
+            }
+        }
         b"ready" => {
             (*state).controls.ready = true;
             b"ok"
@@ -215,7 +235,8 @@ unsafe fn tray_menu(state: *mut Window) {
         show(state);
         return;
     }
-    AppendMenuW(menu, MF_STRING, 1, wide("Show AORA Connect").as_ptr());
+    let labels = (*state).controls.labels.as_ref();
+    AppendMenuW(menu, MF_STRING, 1, wide(labels.map_or("Show AORA Connect", |labels| labels.show.as_str())).as_ptr());
     AppendMenuW(
         menu,
         MF_STRING
@@ -225,16 +246,17 @@ unsafe fn tray_menu(state: *mut Window) {
                 MF_GRAYED
             },
         2,
-        wide("Disconnect").as_ptr(),
+        wide(labels.map_or("Disconnect", |labels| labels.disconnect.as_str())).as_ptr(),
     );
     AppendMenuW(menu, MF_SEPARATOR, 0, null());
-    AppendMenuW(menu, MF_STRING, 3, wide("Exit").as_ptr());
+    AppendMenuW(menu, MF_STRING, 3, wide(labels.map_or("Exit", |labels| labels.exit.as_str())).as_ptr());
     let mut cursor = zeroed();
     GetCursorPos(&mut cursor);
     SetForegroundWindow(hwnd);
     let selected = TrackPopupMenu(
         menu,
-        TPM_RETURNCMD | TPM_NONOTIFY | TPM_RIGHTBUTTON,
+        TPM_RETURNCMD | TPM_NONOTIFY | TPM_RIGHTBUTTON
+            | if labels.is_some_and(|labels| labels.rtl) { TPM_LAYOUTRTL } else { 0 },
         cursor.x,
         cursor.y,
         0,

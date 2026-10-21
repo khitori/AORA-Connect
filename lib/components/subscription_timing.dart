@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
@@ -10,9 +11,9 @@ class SubscriptionTiming extends StatelessWidget {
   final DateTime? updatedAt;
   final DateTime? expiresAt;
 
-  String _date(DateTime date) {
-    final local = date.toLocal();
-    return '${local.day.toString().padLeft(2, '0')}.${local.month.toString().padLeft(2, '0')}.${local.year}';
+  String _date(BuildContext context, DateTime value) {
+    final local = value.toLocal();
+    return MaterialLocalizations.of(context).formatCompactDate(local);
   }
 
   @override
@@ -27,26 +28,35 @@ class SubscriptionTiming extends StatelessWidget {
         Expanded(
           child: _card(
             context,
-            title: 'Last updated',
+            title: context.l10n.lastUpdated,
             icon: Icons.update_rounded,
-            value: updated == null ? 'Not updated' : _date(updated),
+            value: updated == null
+                ? context.l10n.notUpdated
+                : _date(context, updated),
             detail: updated == null
                 ? ''
-                : '${updated.hour.toString().padLeft(2, '0')}:${updated.minute.toString().padLeft(2, '0')}',
+                : MaterialLocalizations.of(context).formatTimeOfDay(
+                    TimeOfDay.fromDateTime(updated),
+                    alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(
+                      context,
+                    ),
+                  ),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: _card(
             context,
-            title: 'Expires',
+            title: context.l10n.expires,
             icon: Icons.event_outlined,
-            value: expiresAt == null ? 'Not provided' : _date(expiresAt!),
+            value: expiresAt == null
+                ? context.l10n.notProvided
+                : _date(context, expiresAt!),
             detail: remaining == null
                 ? ''
                 : remaining <= Duration.zero
-                ? 'Expired'
-                : '$days ${days == 1 ? 'day' : 'days'} left',
+                ? context.l10n.expired
+                : context.l10n.daysLeft(days!),
           ),
         ),
       ],

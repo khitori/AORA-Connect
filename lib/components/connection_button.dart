@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/tunnel_engine.dart';
+import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 
 class ConnectionButton extends StatelessWidget {
@@ -19,12 +20,12 @@ class ConnectionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final running = state == TunnelState.running;
     final label = state == TunnelState.stopping
-        ? 'Stopping…'
+        ? context.l10n.stopping
         : busy || state == TunnelState.starting
-        ? 'Connecting…'
+        ? context.l10n.connecting
         : running
-        ? 'Disconnect'
-        : 'Connect';
+        ? context.l10n.disconnect
+        : context.l10n.connect;
     return SizedBox(
       width: 184,
       height: 184,

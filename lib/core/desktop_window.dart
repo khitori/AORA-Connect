@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+
+import '../l10n/app_localizations.dart';
+import '../l10n/directional_text.dart';
 
 /// Small UTF-8 channel to the Rust window host; no native plugin is required.
 class DesktopWindow {
@@ -14,6 +18,7 @@ class DesktopWindow {
   bool _disposed = false;
   bool? _canDisconnect;
   Future<void>? _exit;
+  String? _labels;
 
   Future<void> initialize({
     required Future<void> Function() onExit,
@@ -57,6 +62,15 @@ class DesktopWindow {
     if (!_ready || _disposed || value == _canDisconnect) return;
     _canDisconnect = value;
     await command(value ? 'connected' : 'disconnected');
+  }
+
+  Future<void> setLabels(AppLocalizations strings) async {
+    if (!_ready || _disposed) return;
+    final labels =
+        'localize:${jsonEncode({'show': strings.trayShow, 'disconnect': strings.disconnect, 'exit': strings.trayExit, 'rtl': isRtlLocale(strings)})}';
+    if (_labels == labels) return;
+    await command(labels);
+    _labels = labels;
   }
 
   void dispose() {

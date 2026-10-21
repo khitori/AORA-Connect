@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="vpn_channel">חיבור VPN</string>
+    <string name="vpn_connecting">מתחבר…</string>
+    <string name="vpn_disconnecting">מתנתק…</string>
+    <string name="vpn_connected">מחובר</string>
+    <string name="vpn_disconnected">מנותק</string>
+    <string name="vpn_busy">עסוק</string>
+    <string name="vpn_disconnect">ניתוק</string>
+    <string name="vpn_tile_failed">לא ניתן להתחבר. יש לפתוח את AORA Connect לאבחון.</string>
+</resources>

@@ -2,8 +2,9 @@
 import 'package:flutter/material.dart';
 
 import '../controllers/connection_controller.dart';
-import 'connection_edit_notification.dart';
+import '../l10n/l10n.dart';
 import 'compact_outline_icon_button.dart';
+import 'connection_edit_notification.dart';
 
 class SubscriptionRefreshButton extends StatelessWidget {
   const SubscriptionRefreshButton({
@@ -19,7 +20,7 @@ class SubscriptionRefreshButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => CompactOutlineIconButton(
-    tooltip: 'Refresh selected subscription',
+    tooltip: context.l10n.refreshSubscription,
     icon: Icons.refresh_rounded,
     onPressed:
         enabled && !connection.busy && connection.activeSubscriptionUrl != null
@@ -27,7 +28,7 @@ class SubscriptionRefreshButton extends StatelessWidget {
             if (!allowConnectionEdit(
               context,
               connection,
-              'Disconnect before refreshing your subscription.',
+              context.l10n.disconnectRefresh,
             )) {
               return;
             }

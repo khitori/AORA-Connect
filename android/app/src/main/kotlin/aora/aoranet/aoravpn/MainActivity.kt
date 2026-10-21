@@ -19,6 +19,19 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         QuickSettings.initialize(applicationContext)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "aora/localization")
+            .setMethodCallHandler { call, result ->
+                if (call.method != "setLanguage") result.notImplemented()
+                else {
+                    val language = call.arguments as? String
+                    if (language != null && language !in AppLanguage.languages) {
+                        result.error("LANGUAGE", "Unsupported language", null)
+                    } else {
+                        AppLanguage.select(applicationContext, language)
+                        result.success(null)
+                    }
+                }
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "aora/quick_settings")
             .setMethodCallHandler { call, result -> QuickSettings.handle(this, call, result) }
         updates = AndroidUpdates(this)

@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'package:flutter/material.dart';
 
-import '../profiles/server_profile.dart';
-import '../controllers/node_ping_controller.dart';
 import '../controllers/connection_controller.dart';
-import '../core/ping_type.dart';
+import '../controllers/node_ping_controller.dart';
+import '../l10n/l10n.dart';
+import '../profiles/server_profile.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'app_select.dart';
 import 'compact_outline_icon_button.dart';
-import 'subscription_refresh_button.dart';
 import 'server_node_details.dart';
+import 'subscription_refresh_button.dart';
 
 class ServerSelector extends StatefulWidget {
   const ServerSelector({
@@ -40,10 +40,10 @@ class _ServerSelectorState extends State<ServerSelector> {
   String get _status {
     if (pings.busy) return '${pings.completed}/${pings.checkingCount}';
     final time = pings.lastCheckedAt;
-    if (time == null) return 'Not checked';
+    if (time == null) return context.l10n.notChecked;
     final hours = time.hour.toString().padLeft(2, '0');
     final minutes = time.minute.toString().padLeft(2, '0');
-    return 'Last check $hours:$minutes';
+    return context.l10n.lastCheck(hours, minutes);
   }
 
   @override
@@ -66,7 +66,7 @@ class _ServerSelectorState extends State<ServerSelector> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 6, 8, 6),
+                  padding: const EdgeInsetsDirectional.fromSTEB(16, 6, 8, 6),
                   child: Row(
                     children: [
                       Expanded(
@@ -83,9 +83,9 @@ class _ServerSelectorState extends State<ServerSelector> {
                       const SizedBox(width: 8),
                       Tooltip(
                         message: pings.busy
-                            ? 'Checking servers'
+                            ? context.l10n.checkServers
                             : pings.lastCheckedAt?.toLocal().toString() ??
-                                  'No completed server check yet',
+                                  context.l10n.noCompletedCheck,
                         child: Text(
                           _status,
                           style: Theme.of(context).textTheme.bodySmall
@@ -104,8 +104,8 @@ class _ServerSelectorState extends State<ServerSelector> {
                       const SizedBox(width: 6),
                       CompactOutlineIconButton(
                         tooltip: pings.busy
-                            ? 'Cancel server checks'
-                            : '${_menuOpen ? 'Check all servers' : 'Check selected server'} · ${pings.connection.pingType.label}',
+                            ? context.l10n.cancelChecks
+                            : '${_menuOpen ? context.l10n.checkAllServers : context.l10n.checkSelectedServer} · ${pings.connection.pingType.localizedLabel(context.l10n)}',
                         icon: pings.busy
                             ? Icons.close_rounded
                             : Icons.network_check_rounded,

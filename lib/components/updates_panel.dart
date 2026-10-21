@@ -3,8 +3,9 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
 import '../controllers/connection_controller.dart';
-import '../updates/update_controller.dart';
+import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
+import '../updates/update_controller.dart';
 import 'app_action_button.dart';
 import 'app_dialog.dart';
 import 'app_expansion_card.dart';
@@ -29,14 +30,14 @@ class UpdatesPanel extends StatelessWidget {
       final file = await openFile(
         acceptedTypeGroups: [
           if (updates.isAndroid)
-            const XTypeGroup(
-              label: 'AORA Android APK',
+            XTypeGroup(
+              label: context.l10n.androidApk,
               extensions: ['apk'],
               mimeTypes: ['application/vnd.android.package-archive'],
             )
           else
-            const XTypeGroup(
-              label: 'AORA update installer',
+            XTypeGroup(
+              label: context.l10n.windowsInstaller,
               extensions: ['exe'],
             ),
         ],
@@ -49,25 +50,30 @@ class UpdatesPanel extends StatelessWidget {
 
   Future<void> _confirmInstall(BuildContext context) async {
     if (!connection.canEdit) {
-      AppNotification.show(context, 'Disconnect before installing an update.');
+      AppNotification.show(context, context.l10n.disconnectInstall);
       return;
     }
     final approved = await showDialog<bool>(
       context: context,
       builder: (context) => AppDialog(
-        title: 'Install ${updates.release!.version.split('+').first}?',
+        title: context.l10n.installVersion(
+          isolateTechnicalValue(
+            context.l10n,
+            updates.release!.version.split('+').first,
+          ),
+        ),
         content: Text(
           updates.isAndroid
-              ? 'Android will ask you to confirm installation. Your settings, subscriptions and routing rules will be kept.'
-              : 'AORA Connect will close and reopen after installation. Your settings and subscriptions will be kept.',
+              ? context.l10n.androidInstallHelp
+              : context.l10n.windowsInstallHelp,
         ),
         actions: [
           AppActionButton(
-            label: 'Cancel',
+            label: context.l10n.cancel,
             onPressed: () => Navigator.pop(context, false),
           ),
           AppActionButton(
-            label: 'Install',
+            label: context.l10n.install,
             onPressed: () => Navigator.pop(context, true),
           ),
         ],
@@ -82,8 +88,11 @@ class UpdatesPanel extends StatelessWidget {
     builder: (context, _) {
       final disabled = updates.busy || updates.installing;
       return AppExpansionCard(
-        title: 'Updates',
-        subtitle: 'Version ${updates.displayVersion}',
+        title: context.l10n.updates,
+        storageId: 'updates',
+        subtitle: context.l10n.version(
+          isolateTechnicalValue(context.l10n, updates.displayVersion),
+        ),
         icon: Icons.system_update_alt_rounded,
         // The toggle's transparent hit-area padding counts toward the gap.
         contentTopPadding:
@@ -98,16 +107,16 @@ class UpdatesPanel extends StatelessWidget {
                   constraints: const BoxConstraints(
                     minHeight: AppTheme.controlHeight,
                   ),
-                  child: const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('Check automatically at startup'),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(context.l10n.automaticUpdates),
                   ),
                 ),
               ),
               AppToggle(
                 compact: true,
                 value: updates.automaticChecks,
-                semanticLabel: 'Check for updates automatically',
+                semanticLabel: context.l10n.automaticUpdatesSemantics,
                 onChanged: disabled
                     ? null
                     : (value) async {
@@ -123,7 +132,7 @@ class UpdatesPanel extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(updates.status),
+          Text(updates.localizedStatus(context.l10n)),
           if (updates.busy) ...[
             const SizedBox(height: 8),
             LinearProgressIndicator(value: updates.progress),
@@ -141,7 +150,7 @@ class UpdatesPanel extends StatelessWidget {
               Expanded(
                 child: AppActionButton(
                   key: const ValueKey('check-updates'),
-                  label: 'Check for updates',
+                  label: context.l10n.checkUpdates,
                   icon: Icons.refresh_rounded,
                   onPressed: disabled ? null : updates.check,
                 ),
@@ -150,7 +159,7 @@ class UpdatesPanel extends StatelessWidget {
               Expanded(
                 child: AppActionButton(
                   key: const ValueKey('update-from-file'),
-                  label: 'Update from file',
+                  label: context.l10n.importUpdate,
                   icon: Icons.folder_open_rounded,
                   onPressed: disabled ? null : () => _import(context),
                 ),
@@ -162,7 +171,7 @@ class UpdatesPanel extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: AppActionButton(
-                label: 'Download update',
+                label: context.l10n.downloadUpdate,
                 icon: Icons.download_rounded,
                 onPressed: disabled ? null : updates.download,
               ),
@@ -173,7 +182,7 @@ class UpdatesPanel extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: AppActionButton(
-                label: 'Install update',
+                label: context.l10n.installUpdate,
                 icon: updates.isAndroid
                     ? Icons.install_mobile_rounded
                     : Icons.install_desktop_rounded,
@@ -186,8 +195,10 @@ class UpdatesPanel extends StatelessWidget {
             width: double.infinity,
             child: AppActionButton(
               label: updates.additionalSources.isEmpty
-                  ? 'Additional sources (optional)'
-                  : '${updates.additionalSources.length} additional sources',
+                  ? context.l10n.additionalSources
+                  : context.l10n.additionalSourcesCount(
+                      updates.additionalSources.length.toString(),
+                    ),
               icon: Icons.language_rounded,
               onPressed: disabled
                   ? null

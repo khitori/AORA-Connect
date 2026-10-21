@@ -79,8 +79,8 @@ class _AppToggleState extends State<AppToggle> {
                   duration: const Duration(milliseconds: 180),
                   curve: Curves.easeOutCubic,
                   alignment: widget.value
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
+                      ? AlignmentDirectional.centerEnd
+                      : AlignmentDirectional.centerStart,
                   child: Container(
                     width: 20,
                     height: 20,

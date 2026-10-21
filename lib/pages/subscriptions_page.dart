@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../components/app_select.dart';
-import '../components/connection_edit_notification.dart';
 import '../components/compact_outline_icon_button.dart';
+import '../components/connection_edit_notification.dart';
+import '../components/server_node_details.dart';
+import '../components/subscription_input.dart';
 import '../components/subscription_refresh_button.dart';
 import '../components/subscription_timing.dart';
-import '../components/subscription_input.dart';
-import '../components/server_node_details.dart';
-import '../controllers/node_ping_controller.dart';
 import '../controllers/connection_controller.dart';
+import '../controllers/node_ping_controller.dart';
+import '../l10n/l10n.dart';
 import '../storage/app_settings_store.dart';
 import '../theme/app_colors.dart';
 
@@ -36,16 +37,17 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
   bool _allowEdit() => allowConnectionEdit(
     context,
     widget.connection,
-    'Disconnect before changing subscriptions.',
+    context.l10n.disconnectSubscriptions,
   );
 
-  Widget _editControl(
-    Widget child, {
-    String message = 'Disconnect before changing subscriptions.',
-  }) => DisabledControlNotice(
+  Widget _editControl(Widget child, {String? message}) => DisabledControlNotice(
     disabled: !widget.connection.canEdit,
-    onTap: () => allowConnectionEdit(context, widget.connection, message),
-    label: message,
+    onTap: () => allowConnectionEdit(
+      context,
+      widget.connection,
+      message ?? context.l10n.disconnectSubscriptions,
+    ),
+    label: message ?? context.l10n.disconnectSubscriptions,
     child: child,
   );
 
@@ -85,7 +87,7 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
                   child: OutlinedButton(
                     key: const ValueKey('add-subscription-toggle'),
                     style: OutlinedButton.styleFrom(
-                      alignment: Alignment.centerLeft,
+                      alignment: AlignmentDirectional.centerStart,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                     ),
                     onPressed: () {
@@ -101,7 +103,16 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
                               : Icons.add_rounded,
                         ),
                         const SizedBox(width: 8),
-                        const Text('Add subscription'),
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(
+                              context.l10n.addSubscription,
+                              maxLines: 1,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -127,20 +138,18 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Saved subscriptions',
+                  context.l10n.savedSubscriptions,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
                 if (subscriptions.isEmpty)
-                  const Text(
-                    'No subscriptions yet. Add a link above to get started.',
-                  )
+                  Text(context.l10n.noSubscriptions)
                 else
                   _SavedSubscriptionSelector(connection: connection),
                 if (profiles.isNotEmpty) ...[
                   const SizedBox(height: 20),
                   Text(
-                    'Nodes in active subscription',
+                    context.l10n.activeSubscriptionNodes,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
@@ -188,14 +197,14 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
                                 if (allowConnectionEdit(
                                   context,
                                   connection,
-                                  'Disconnect before changing servers.',
+                                  context.l10n.disconnectServers,
                                 )) {
                                   connection.selectProfile(profile);
                                 }
                               }
                             : null,
                       ),
-                      message: 'Disconnect before changing servers.',
+                      message: context.l10n.disconnectServers,
                     ),
                   ),
                 );
@@ -239,7 +248,7 @@ class _SavedSubscriptionSelector extends StatelessWidget {
   bool _allowEdit(BuildContext context) => allowConnectionEdit(
     context,
     connection,
-    'Disconnect before changing subscriptions.',
+    context.l10n.disconnectSubscriptions,
   );
 
   Widget _editControl(
@@ -249,7 +258,7 @@ class _SavedSubscriptionSelector extends StatelessWidget {
   }) => DisabledControlNotice(
     disabled: !connection.canEdit && available,
     onTap: () => _allowEdit(context),
-    label: 'Disconnect before changing subscriptions.',
+    label: context.l10n.disconnectSubscriptions,
     child: child,
   );
 
@@ -270,8 +279,8 @@ class _SavedSubscriptionSelector extends StatelessWidget {
         ? null
         : connection.subscriptionDetailsFor(active.url);
     final summary = active == null
-        ? 'Select a subscription to use'
-        : '${count == null ? 'Not loaded' : '$count servers'}${skipped > 0 ? ' · $skipped skipped' : ''}';
+        ? context.l10n.selectSubscription
+        : '${count == null ? context.l10n.notLoaded : context.l10n.serverCount(count)}${skipped > 0 ? ' · ${context.l10n.skippedServers(skipped)}' : ''}';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -281,13 +290,14 @@ class _SavedSubscriptionSelector extends StatelessWidget {
             onBeforeOpen: () => _allowEdit(context),
             key: const ValueKey('saved-subscription-select'),
             value: activeUrl,
-            hint: const Text('Choose a subscription'),
+            hint: Text(context.l10n.chooseSubscription),
             items: [
               for (final subscription in connection.subscriptions)
                 DropdownMenuItem(
                   value: subscription.url,
                   child: Text(
                     subscription.label,
+                    textDirection: textDirectionFor(subscription.label),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -324,7 +334,7 @@ class _SavedSubscriptionSelector extends StatelessWidget {
             _editControl(
               context,
               CompactOutlineIconButton(
-                tooltip: 'Remove selected subscription',
+                tooltip: context.l10n.removeSubscription,
                 onPressed: active != null && connection.canEdit
                     ? () {
                         if (_allowEdit(context)) {
@@ -369,7 +379,7 @@ class _SavedSubscriptionSelector extends StatelessWidget {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          'Description',
+                          context.l10n.description,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: AppColors.muted500),
                         ),
@@ -390,12 +400,12 @@ class _SavedSubscriptionSelector extends StatelessWidget {
             spacing: 8,
             children: [
               _SubscriptionLinkButton(
-                label: 'Website',
+                label: context.l10n.website,
                 icon: Icons.language_rounded,
                 url: details?.webPageUrl,
               ),
               _SubscriptionLinkButton(
-                label: 'Support',
+                label: context.l10n.support,
                 icon: Icons.support_agent_rounded,
                 url: details?.supportUrl,
               ),
@@ -419,7 +429,9 @@ class _SubscriptionLinkButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Tooltip(
-    message: url == null ? '$label link not provided' : 'Open $label',
+    message: url == null
+        ? context.l10n.linkNotProvided(label)
+        : context.l10n.openLink(label),
     child: OutlinedButton.icon(
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -437,7 +449,9 @@ class _SubscriptionLinkButton extends StatelessWidget {
               } catch (_) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Could not open $label link.')),
+                    SnackBar(
+                      content: Text(context.l10n.openNamedLinkFailed(label)),
+                    ),
                   );
                 }
               }

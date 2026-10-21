@@ -5,24 +5,27 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
+import '../core/android_quick_settings.dart';
+import '../core/android_tunnel_engine.dart';
 import '../core/connection_mode.dart';
-import '../core/core_kind.dart';
-import '../core/dns_provider.dart';
 import '../core/connection_probe.dart';
+import '../core/core_kind.dart';
 import '../core/development_paths.dart';
+import '../core/dns_provider.dart';
 import '../core/kill_switch.dart';
 import '../core/ping_type.dart';
 import '../core/tunnel_engine.dart';
-import '../core/android_tunnel_engine.dart';
-import '../core/android_quick_settings.dart';
 import '../core/unavailable_tunnel_engine.dart';
 import '../core/windows_core_engine.dart';
-import '../profiles/server_profile.dart';
+import '../l10n/app_localizations_en.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/directional_text.dart';
 import '../profiles/hysteria_profile.dart';
+import '../profiles/server_profile.dart';
 import '../profiles/subscription_loader.dart';
-import '../storage/app_settings_store.dart';
-import '../storage/app_paths.dart';
 import '../routing/routing_policy.dart';
+import '../storage/app_paths.dart';
+import '../storage/app_settings_store.dart';
 
 typedef SubscriptionLoader = Future<SubscriptionLoadResult> Function(
   String url,
@@ -117,7 +120,8 @@ class ConnectionController extends ChangeNotifier {
   bool _disposed = false;
   String? _error;
   ConnectionErrorScope? _errorScope;
-  String? _probeResult;
+  int? _probeMilliseconds;
+  String? _probeProtocol;
   String? _importedConfigPath;
   String? _tileConfig;
   bool get _hasAndroidTile => _engine is AndroidTunnelEngine;
@@ -139,7 +143,16 @@ class ConnectionController extends ChangeNotifier {
   String? get error => _error;
   String? errorFor(ConnectionErrorScope scope) =>
       _errorScope == scope ? _error : null;
-  String? get probeResult => _probeResult;
+  String? get probeResult => localizedProbeResult(AppLocalizationsEn());
+  String? localizedProbeResult(AppLocalizations l10n) =>
+      _probeMilliseconds == null
+      ? null
+      : _probeProtocol == null
+      ? l10n.connectionVerified(_probeMilliseconds.toString())
+      : l10n.httpsSucceeded(
+          isolateTechnicalValue(l10n, _probeProtocol!),
+          _probeMilliseconds.toString(),
+        );
   ServerProfile? get selected => _selected;
   List<ServerProfile> get profiles => List.unmodifiable(_profiles);
   List<SavedSubscription> get subscriptions =>
@@ -220,7 +233,7 @@ class ConnectionController extends ChangeNotifier {
   ) => engine.states.listen((state) {
     if (kind != activeCore) return;
     _state = state;
-    if (state != TunnelState.running) _probeResult = null;
+    if (state != TunnelState.running) _probeMilliseconds = null;
     _changed();
   });
 
@@ -239,7 +252,7 @@ class ConnectionController extends ChangeNotifier {
     _busy = true;
     _error = null;
     _errorScope = errorScope;
-    _probeResult = null;
+    _probeMilliseconds = null;
     _changed();
     final operation = _run(action, restoring: restoring);
     _pending = operation;
@@ -665,7 +678,8 @@ class ConnectionController extends ChangeNotifier {
         port: _mode == ConnectionMode.tun ? null : 17890,
         onStage: _appendLog,
       );
-      _probeResult = 'Connection verified (${elapsed.inMilliseconds} ms).';
+      _probeMilliseconds = elapsed.inMilliseconds;
+      _probeProtocol = null;
     } catch (error) {
       if (_activeEngine case final AndroidTunnelEngine android) {
         await android.captureDiagnostics();
@@ -686,9 +700,9 @@ class ConnectionController extends ChangeNotifier {
         port: _mode == ConnectionMode.tun ? null : 17890,
         onStage: _appendLog,
       );
-      _probeResult =
-          'HTTPS through ${_selected?.protocol ?? 'proxy'} succeeded (${elapsed.inMilliseconds} ms).';
-      _appendLog(_probeResult!);
+      _probeMilliseconds = elapsed.inMilliseconds;
+      _probeProtocol = _selected?.protocol ?? 'proxy';
+      _appendLog(probeResult!);
     } catch (error) {
       if (_activeEngine case final AndroidTunnelEngine android) {
         await android.captureDiagnostics();

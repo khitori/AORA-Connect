@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="vpn_channel">VPN-Verbindung</string>
+    <string name="vpn_connecting">Verbindung wird hergestellt…</string>
+    <string name="vpn_disconnecting">Verbindung wird getrennt…</string>
+    <string name="vpn_connected">Verbunden</string>
+    <string name="vpn_disconnected">Getrennt</string>
+    <string name="vpn_busy">Beschäftigt</string>
+    <string name="vpn_disconnect">Trennen</string>
+    <string name="vpn_tile_failed">Verbindung fehlgeschlagen. Öffnen Sie AORA Connect zur Diagnose.</string>
+</resources>

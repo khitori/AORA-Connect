@@ -68,11 +68,17 @@ class FloatingBottomNavigation<T> extends StatelessWidget {
 }
 
 class FloatingNavigationDestination<T> {
-  const FloatingNavigationDestination(this.value, this.label, this.icon);
+  const FloatingNavigationDestination(
+    this.value,
+    this.label,
+    this.icon, {
+    this.id,
+  });
 
   final T value;
   final String label;
   final IconData icon;
+  final String? id;
 }
 
 class _NavigationItem<T> extends StatelessWidget {
@@ -88,7 +94,9 @@ class _NavigationItem<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-    key: ValueKey('bottom-nav-${destination.label.toLowerCase()}'),
+    key: ValueKey(
+      'bottom-nav-${destination.id ?? destination.label.toLowerCase()}',
+    ),
     color: selected ? AppTheme.selectedSurface : Colors.transparent,
     borderRadius: BorderRadius.circular(18),
     clipBehavior: Clip.antiAlias,

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 
 class InstalledApplication {
@@ -64,17 +65,17 @@ class _InstalledApplicationPickerState
     insetPadding: const EdgeInsets.all(24),
     actionsAlignment: MainAxisAlignment.spaceBetween,
     actionsOverflowButtonSpacing: 8,
-    title: const Text('Installed applications'),
+    title: Text(context.l10n.installedApplications),
     content: SizedBox(
       width: 400,
       height: 360,
       child: Column(
         children: [
           TextField(
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               isDense: true,
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              hintText: 'Search applications',
+              hintText: context.l10n.searchApplications,
               prefixIcon: Icon(Icons.search_rounded, size: 20),
               prefixIconConstraints: BoxConstraints(
                 minWidth: 40,
@@ -90,11 +91,7 @@ class _InstalledApplicationPickerState
               future: applications,
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
-                  return const Center(
-                    child: Text(
-                      'Could not load applications. Retry or enter a package name manually.',
-                    ),
-                  );
+                  return Center(child: Text(context.l10n.installedLoadFailed));
                 }
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
@@ -107,7 +104,9 @@ class _InstalledApplicationPickerState
                     )
                     .toList();
                 if (visible.isEmpty) {
-                  return const Center(child: Text('No matching applications.'));
+                  return Center(
+                    child: Text(context.l10n.noMatchingApplications),
+                  );
                 }
                 return ListView.builder(
                   itemCount: visible.length,
@@ -140,6 +139,7 @@ class _InstalledApplicationPickerState
                         ),
                         subtitle: Text(
                           app.packageName,
+                          textDirection: TextDirection.ltr,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -155,10 +155,10 @@ class _InstalledApplicationPickerState
       ),
     ),
     actions: [
-      TextButton(onPressed: reload, child: const Text('Refresh')),
+      TextButton(onPressed: reload, child: Text(context.l10n.refresh)),
       TextButton(
         onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
+        child: Text(context.l10n.cancel),
       ),
     ],
   );

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="vpn_channel">اتصال VPN</string>
+    <string name="vpn_connecting">جارٍ الاتصال…</string>
+    <string name="vpn_disconnecting">جارٍ قطع الاتصال…</string>
+    <string name="vpn_connected">متصل</string>
+    <string name="vpn_disconnected">غير متصل</string>
+    <string name="vpn_busy">مشغول</string>
+    <string name="vpn_disconnect">قطع الاتصال</string>
+    <string name="vpn_tile_failed">تعذّر الاتصال. افتح AORA Connect للاطلاع على التشخيص.</string>
+</resources>

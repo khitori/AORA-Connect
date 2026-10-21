@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 
 Future<List<String>> loadRunningApplications() async {
@@ -67,17 +68,17 @@ class _RunningApplicationPickerState extends State<_RunningApplicationPicker> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Running applications'),
+    title: Text(context.l10n.runningApplications),
     content: SizedBox(
       width: 320,
       height: 360,
       child: Column(
         children: [
           TextField(
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               isDense: true,
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              hintText: 'Search applications',
+              hintText: context.l10n.searchApplications,
               prefixIcon: Icon(Icons.search_rounded, size: 20),
               prefixIconConstraints: BoxConstraints(
                 minWidth: 40,
@@ -92,11 +93,7 @@ class _RunningApplicationPickerState extends State<_RunningApplicationPicker> {
               future: applications,
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
-                  return const Center(
-                    child: Text(
-                      'Could not load running applications. Retry or enter a process name manually.',
-                    ),
-                  );
+                  return Center(child: Text(context.l10n.runningLoadFailed));
                 }
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
@@ -105,7 +102,9 @@ class _RunningApplicationPickerState extends State<_RunningApplicationPicker> {
                     .where((name) => name.toLowerCase().contains(query))
                     .toList();
                 if (visible.isEmpty) {
-                  return const Center(child: Text('No matching applications.'));
+                  return Center(
+                    child: Text(context.l10n.noMatchingApplications),
+                  );
                 }
                 return ListView.builder(
                   itemCount: visible.length,
@@ -135,11 +134,11 @@ class _RunningApplicationPickerState extends State<_RunningApplicationPicker> {
       TextButton(
         onPressed: () =>
             setState(() => applications = loadRunningApplications()),
-        child: const Text('Refresh'),
+        child: Text(context.l10n.refresh),
       ),
       TextButton(
         onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
+        child: Text(context.l10n.cancel),
       ),
     ],
   );

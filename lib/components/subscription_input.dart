@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/l10n.dart';
 import '../profiles/subscription_loader.dart';
 import '../theme/app_theme.dart';
 import 'app_notification.dart';
@@ -39,10 +40,7 @@ class _SubscriptionInputState extends State<SubscriptionInput> {
         return;
       }
       if (value == null || !isSupportedSubscriptionInput(value)) {
-        AppNotification.show(
-          context,
-          'Copy a valid subscription or server link first.',
-        );
+        AppNotification.show(context, context.l10n.copyLinkFirst);
         return;
       }
       widget.controller.value = TextEditingValue(
@@ -51,7 +49,7 @@ class _SubscriptionInputState extends State<SubscriptionInput> {
       );
     } catch (_) {
       if (mounted) {
-        AppNotification.show(context, 'Could not read the clipboard.');
+        AppNotification.show(context, context.l10n.clipboardReadFailed);
       }
     } finally {
       if (mounted) setState(() => _reading = false);
@@ -65,7 +63,7 @@ class _SubscriptionInputState extends State<SubscriptionInput> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Tooltip(
-          message: 'Paste from clipboard',
+          message: context.l10n.pasteClipboard,
           child: SizedBox(
             width: AppTheme.controlHeight,
             child: OutlinedButton(
@@ -84,17 +82,18 @@ class _SubscriptionInputState extends State<SubscriptionInput> {
         Expanded(
           child: TextField(
             controller: widget.controller,
+            textDirection: TextDirection.ltr,
             obscureText: true,
             autocorrect: false,
             enableSuggestions: false,
             enabled: widget.enabled,
-            decoration: const InputDecoration(
-              labelText: 'Subscription or server link...',
+            decoration: InputDecoration(
+              labelText: context.l10n.subscriptionLink,
             ),
           ),
         ),
         const SizedBox(width: 8),
-        OutlinedButton(onPressed: widget.onLoad, child: const Text('Add')),
+        OutlinedButton(onPressed: widget.onLoad, child: Text(context.l10n.add)),
       ],
     ),
   );

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import 'app_action_button.dart';
 
 class ConnectionControls extends StatelessWidget {
@@ -25,7 +26,7 @@ class ConnectionControls extends StatelessWidget {
             child: AppActionButton(
               onPressed: onValidate,
               icon: Icons.fact_check_outlined,
-              label: 'Validate',
+              label: context.l10n.validate,
             ),
           ),
           const SizedBox(width: 8),
@@ -33,7 +34,7 @@ class ConnectionControls extends StatelessWidget {
             child: AppActionButton(
               onPressed: onTest,
               icon: Icons.network_check_rounded,
-              label: 'Test connection',
+              label: context.l10n.testConnection,
             ),
           ),
         ],
@@ -42,7 +43,7 @@ class ConnectionControls extends StatelessWidget {
       AppActionButton(
         onPressed: onCopy,
         icon: Icons.copy_rounded,
-        label: 'Copy diagnostics',
+        label: context.l10n.copyDiagnostics,
       ),
     ],
   );

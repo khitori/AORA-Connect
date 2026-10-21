@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../controllers/statistics_controller.dart';
+import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'app_expansion_card.dart';
@@ -14,19 +15,21 @@ class StatisticsPanel extends StatelessWidget {
 
   final StatisticsController statistics;
 
-  String _pingText(Duration duration) =>
-      duration.inMilliseconds == 0 ? '<1 ms' : '${duration.inMilliseconds} ms';
+  String _pingText(BuildContext context, Duration duration) =>
+      duration.inMilliseconds == 0
+      ? context.l10n.lessOneMs
+      : context.l10n.milliseconds(duration.inMilliseconds.toString());
 
-  String _subtitle() {
-    if (!statistics.connection.statisticsEnabled) return 'Off';
+  String _subtitle(BuildContext context) {
+    if (!statistics.connection.statisticsEnabled) return context.l10n.off;
     if (statistics.active) {
-      if (statistics.completedSamples == 0) return 'Server ping · measuring…';
+      if (statistics.completedSamples == 0) return context.l10n.pingMeasuring;
       final latest = statistics.latest;
       return latest == null
-          ? 'Server ping · no reply'
-          : 'Server ping · ${_pingText(latest)}';
+          ? context.l10n.pingNoReply
+          : context.l10n.pingValue(_pingText(context, latest));
     }
-    return 'Connect to view live ICMP statistics';
+    return context.l10n.connectStatistics;
   }
 
   @override
@@ -37,10 +40,11 @@ class StatisticsPanel extends StatelessWidget {
       final latest = statistics.latest;
       final samples = statistics.samples;
       return AppExpansionCard(
-        title: 'Statistics',
+        title: context.l10n.statistics,
+        storageId: 'statistics',
         titleAction: AppToggle(
           key: const ValueKey('statistics-toggle'),
-          semanticLabel: 'Statistics',
+          semanticLabel: context.l10n.statistics,
           value: statistics.connection.statisticsEnabled,
           onChanged:
               statistics.connection.busy ||
@@ -48,12 +52,17 @@ class StatisticsPanel extends StatelessWidget {
               ? null
               : statistics.connection.setStatisticsEnabled,
         ),
-        subtitle: _subtitle(),
+        subtitle: _subtitle(context),
         icon: Icons.show_chart_rounded,
         children: [
           if (statistics.connection.selectedServerAddress != null) ...[
             Text(
-              'Target: ${statistics.connection.selectedServerAddress}',
+              context.l10n.target(
+                isolateTechnicalValue(
+                  context.l10n,
+                  statistics.connection.selectedServerAddress!,
+                ),
+              ),
               style: Theme.of(context).textTheme.bodySmall
                   ?.copyWith(color: AppColors.muted500),
             ),
@@ -68,9 +77,9 @@ class StatisticsPanel extends StatelessWidget {
                   child: Text(
                     latest == null
                         ? statistics.completedSamples == 0
-                              ? 'Measuring…'
-                              : 'No reply'
-                        : _pingText(latest),
+                              ? context.l10n.measuring
+                              : context.l10n.noReply
+                        : _pingText(context, latest),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
@@ -78,9 +87,12 @@ class StatisticsPanel extends StatelessWidget {
                 Flexible(
                   child: Text(
                     statistics.completedSamples == 0
-                        ? 'Waiting for samples'
-                        : '${statistics.successfulSamples}/${statistics.completedSamples} replies',
-                    textAlign: TextAlign.right,
+                        ? context.l10n.waitingSamples
+                        : context.l10n.replies(
+                            statistics.successfulSamples.toString(),
+                            statistics.completedSamples.toString(),
+                          ),
+                    textAlign: TextAlign.end,
                     style: Theme.of(context).textTheme.bodySmall
                         ?.copyWith(color: AppColors.muted500),
                   ),
@@ -90,8 +102,7 @@ class StatisticsPanel extends StatelessWidget {
             const SizedBox(height: 12),
             Semantics(
               label:
-                  'Server ping history. '
-                  '${statistics.successfulSamples} of ${statistics.completedSamples} completed checks succeeded.',
+                  '${context.l10n.pingHistory}${context.l10n.successfulChecks(statistics.successfulSamples.toString(), statistics.completedSamples.toString())}',
               child: SizedBox(
                 height: 124,
                 width: double.infinity,
@@ -109,7 +120,7 @@ class StatisticsPanel extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Server ping every second · last 30 samples. Gaps mean no reply.',
+              context.l10n.pingHistoryHelp,
               style: Theme.of(context).textTheme.bodySmall
                   ?.copyWith(color: AppColors.muted500),
             ),
@@ -121,8 +132,8 @@ class StatisticsPanel extends StatelessWidget {
           ] else ...[
             Text(
               statistics.connection.statisticsEnabled
-                  ? 'Connect to collect live ICMP samples.'
-                  : 'Statistics is off.',
+                  ? context.l10n.connectCollectStatistics
+                  : context.l10n.statisticsOff,
               style: Theme.of(context).textTheme.bodySmall
                   ?.copyWith(color: AppColors.muted500),
             ),

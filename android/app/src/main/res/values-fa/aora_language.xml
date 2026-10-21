@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="vpn_channel">اتصال VPN</string>
+    <string name="vpn_connecting">در حال اتصال…</string>
+    <string name="vpn_disconnecting">در حال قطع اتصال…</string>
+    <string name="vpn_connected">متصل</string>
+    <string name="vpn_disconnected">قطع شده</string>
+    <string name="vpn_busy">مشغول</string>
+    <string name="vpn_disconnect">قطع اتصال</string>
+    <string name="vpn_tile_failed">اتصال برقرار نشد. برای عیب‌یابی، AORA Connect را باز کنید.</string>
+</resources>

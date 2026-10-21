@@ -12,6 +12,7 @@ class AppExpansionCard extends StatelessWidget {
     required this.icon,
     required this.children,
     this.titleAction,
+    this.storageId,
     this.initiallyExpanded = false,
     this.contentTopPadding = AppTheme.sectionContentTopPadding,
   });
@@ -21,6 +22,7 @@ class AppExpansionCard extends StatelessWidget {
   final IconData icon;
   final List<Widget> children;
   final Widget? titleAction;
+  final String? storageId;
   final bool initiallyExpanded;
   final double contentTopPadding;
 
@@ -37,7 +39,7 @@ class AppExpansionCard extends StatelessWidget {
     child: Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
-        key: PageStorageKey('section-$title'),
+        key: PageStorageKey('section-${storageId ?? title}'),
         initiallyExpanded: initiallyExpanded,
         minTileHeight: 64,
         tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

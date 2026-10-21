@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../controllers/connection_controller.dart';
 import '../core/tunnel_engine.dart';
+import '../l10n/l10n.dart';
 import 'app_notification.dart';
 
 /// Check at the time of the action, without changing the control's appearance.
@@ -15,7 +16,7 @@ bool allowConnectionEdit(
   AppNotification.show(
     context,
     connection.state == TunnelState.stopped
-        ? 'Wait for the current operation to finish.'
+        ? context.l10n.waitCurrentOperation
         : message,
   );
   return false;

@@ -4,40 +4,82 @@ import 'dart:io';
 import 'dart:ui' show AppExitResponse;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-import 'components/floating_bottom_navigation.dart';
-import 'components/compact_outline_icon_button.dart';
 import 'components/app_notification.dart';
-import 'updates/update_controller.dart';
-import 'updates/android_updates.dart';
+import 'components/compact_outline_icon_button.dart';
+import 'components/floating_bottom_navigation.dart';
 import 'controllers/connection_controller.dart';
-import 'controllers/statistics_controller.dart';
 import 'controllers/node_ping_controller.dart';
-import 'core/tunnel_engine.dart';
+import 'controllers/statistics_controller.dart';
 import 'core/desktop_window.dart';
+import 'core/tunnel_engine.dart';
+import 'l10n/l10n.dart';
+import 'l10n/locale_controller.dart';
 import 'pages/connection_page.dart';
-import 'pages/settings_page.dart';
 import 'pages/routing_page.dart';
+import 'pages/settings_page.dart';
 import 'pages/subscriptions_page.dart';
 import 'storage/app_settings_store.dart';
 import 'theme/app_theme.dart';
+import 'updates/android_updates.dart';
+import 'updates/update_controller.dart';
 
 enum _AppPage { connection, subscriptions, routing, settings }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key, this.engine, this.configPath, this.settingsStore});
+class MyApp extends StatefulWidget {
+  const MyApp({
+    super.key,
+    this.engine,
+    this.configPath,
+    this.settingsStore,
+    this.localeController,
+  });
   final TunnelEngine? engine;
   final String? configPath;
   final AppSettingsStore? settingsStore;
+  final LocaleController? localeController;
 
   @override
-  Widget build(BuildContext context) => MaterialApp(
-    title: 'AORA Connect',
-    theme: AppTheme.light,
-    home: _AppShell(
-      engine: engine,
-      configPath: configPath,
-      settingsStore: settingsStore,
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final LocaleController _locale =
+      widget.localeController ??
+      LocaleController(
+        store: widget.engine == null ? FileLanguageStore() : null,
+      );
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_locale.initialize());
+  }
+
+  @override
+  void dispose() {
+    if (widget.localeController == null) _locale.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => LocaleScope(
+    controller: _locale,
+    child: ListenableBuilder(
+      listenable: _locale,
+      builder: (context, _) => MaterialApp(
+        title: 'AORA Connect',
+        theme: AppTheme.light,
+        locale: _locale.locale,
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        home: _AppShell(
+          engine: widget.engine,
+          configPath: widget.configPath,
+          settingsStore: widget.settingsStore,
+        ),
+      ),
     ),
   );
 }
@@ -64,6 +106,22 @@ class _AppShellState extends State<_AppShell> {
   Future<void>? _exitCleanup;
   final _subscriptionUrl = TextEditingController();
   _AppPage _page = _AppPage.connection;
+  AppLocalizations? _strings;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _strings = context.l10n;
+    _syncTray();
+    if (Platform.isAndroid) {
+      final language = LocaleScope.maybeOf(context)?.language;
+      unawaited(
+        const MethodChannel('aora/localization')
+            .invokeMethod<void>('setLanguage', language)
+            .catchError(_showWindowError),
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -123,7 +181,9 @@ class _AppShellState extends State<_AppShell> {
       _announcedUpdate = version;
       AppNotification.show(
         _scaffoldKey.currentContext!,
-        'Update ${version.split('+').first} is available in Settings → Updates.',
+        context.l10n.updateAvailableNotification(
+          isolateTechnicalValue(context.l10n, version.split('+').first),
+        ),
       );
     }
   }
@@ -133,7 +193,7 @@ class _AppShellState extends State<_AppShell> {
       canInstall: () => _connection.canEdit && !_pings.busy,
       launch: (path) async {
         if (!_connection.beginMaintenance()) {
-          throw StateError('Disconnect before installing an update.');
+          throw StateError(context.l10n.disconnectInstall);
         }
         try {
           if (Platform.isAndroid) {
@@ -164,6 +224,10 @@ class _AppShellState extends State<_AppShell> {
   }
 
   void _syncTray() {
+    final strings = _strings;
+    if (strings != null) {
+      unawaited(_window.setLabels(strings).catchError(_showWindowError));
+    }
     unawaited(
       _window
           .setCanDisconnect(_connection.canStop)
@@ -181,7 +245,7 @@ class _AppShellState extends State<_AppShell> {
 
   Widget _settingsButton() => CompactOutlineIconButton(
     key: const ValueKey('open-settings'),
-    tooltip: 'Settings',
+    tooltip: context.l10n.settings,
     icon: Icons.settings_outlined,
     onPressed: () => setState(() => _page = _AppPage.settings),
   );
@@ -219,13 +283,13 @@ class _AppShellState extends State<_AppShell> {
               _settingsButton(),
               const SizedBox(width: 6),
               CompactOutlineIconButton(
-                tooltip: 'Hide to tray',
+                tooltip: context.l10n.hideToTray,
                 icon: Icons.minimize_rounded,
                 onPressed: () => _windowAction('tray'),
               ),
               const SizedBox(width: 6),
               CompactOutlineIconButton(
-                tooltip: 'Close app',
+                tooltip: context.l10n.closeApp,
                 icon: Icons.close_rounded,
                 onPressed: () => _windowAction('close'),
               ),
@@ -238,7 +302,7 @@ class _AppShellState extends State<_AppShell> {
         child: SizedBox(
           height: kToolbarHeight,
           child: Align(
-            alignment: Alignment.centerLeft,
+            alignment: AlignmentDirectional.centerStart,
             child: Row(
               children: [
                 ClipOval(
@@ -256,9 +320,9 @@ class _AppShellState extends State<_AppShell> {
                   child: Text(
                     switch (_page) {
                       _AppPage.connection => 'AORA Connect',
-                      _AppPage.subscriptions => 'Subscriptions',
-                      _AppPage.routing => 'Routing',
-                      _AppPage.settings => 'Settings',
+                      _AppPage.subscriptions => context.l10n.subscriptions,
+                      _AppPage.routing => context.l10n.routing,
+                      _AppPage.settings => context.l10n.settings,
                     },
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -300,21 +364,24 @@ class _AppShellState extends State<_AppShell> {
           child: FloatingBottomNavigation<_AppPage>(
             selected: _page,
             onSelected: (page) => setState(() => _page = page),
-            destinations: const [
+            destinations: [
               FloatingNavigationDestination(
                 _AppPage.connection,
-                'Connection',
+                context.l10n.connection,
                 Icons.power_settings_new_rounded,
+                id: 'connection',
               ),
               FloatingNavigationDestination(
                 _AppPage.subscriptions,
-                'Subscriptions',
+                context.l10n.subscriptions,
                 Icons.link_rounded,
+                id: 'subscriptions',
               ),
               FloatingNavigationDestination(
                 _AppPage.routing,
-                'Routing',
+                context.l10n.routing,
                 Icons.alt_route_rounded,
+                id: 'routing',
               ),
             ],
           ),

@@ -38,7 +38,7 @@ class TilePermissionActivity : Activity() {
             override fun success(result: Any?) { finish() }
             override fun error(code: String, message: String?, details: Any?) {
                 VpnRuntime.log("Quick Settings connection failed: ${message ?: code}")
-                Toast.makeText(applicationContext, "Could not connect. Open AORA Connect for diagnostics.", Toast.LENGTH_LONG).show()
+                Toast.makeText(applicationContext, AppLanguage.text(applicationContext, R.string.vpn_tile_failed), Toast.LENGTH_LONG).show()
                 finish()
             }
             override fun notImplemented() { finish() }

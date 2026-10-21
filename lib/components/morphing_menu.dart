@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show OverflowBoxFit;
 import 'package:flutter/services.dart';
 
+import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 
 class MorphingMenuEntry<T> {
@@ -99,7 +100,7 @@ class _MorphingMenuShellState<T> extends State<MorphingMenuShell<T>>
                     widget.onSelected(entry.value);
                   },
                   style: TextButton.styleFrom(
-                    alignment: Alignment.centerLeft,
+                    alignment: AlignmentDirectional.centerStart,
                     foregroundColor: colors.onSecondaryContainer,
                     backgroundColor: entry.value == widget.selected
                         ? AppTheme.selectedSurface
@@ -155,12 +156,12 @@ class _MorphingMenuShellState<T> extends State<MorphingMenuShell<T>>
                   color: Colors.transparent,
                   dismissible: true,
                   onDismiss: _close,
-                  semanticsLabel: 'Close menu',
+                  semanticsLabel: context.l10n.closeMenu,
                 ),
               ),
-            Positioned(
+            PositionedDirectional(
               top: MediaQuery.paddingOf(context).top + widget.topInset,
-              right: widget.rightInset,
+              end: widget.rightInset,
               child: FocusScope(
                 node: _menuFocus,
                 onKeyEvent: (_, event) {
@@ -194,9 +195,11 @@ class _MorphingMenuShellState<T> extends State<MorphingMenuShell<T>>
                                 child: Opacity(
                                   opacity: reveal,
                                   child: Padding(
-                                    padding: const EdgeInsets.only(left: 16),
+                                    padding: const EdgeInsetsDirectional.only(
+                                      start: 16,
+                                    ),
                                     child: Text(
-                                      'Menu',
+                                      context.l10n.menu,
                                       maxLines: 1,
                                       overflow: TextOverflow.clip,
                                       style: Theme.of(context)
@@ -213,7 +216,9 @@ class _MorphingMenuShellState<T> extends State<MorphingMenuShell<T>>
                               // --- Menu Button ---
                               child: IconButton(
                                 focusNode: _buttonFocus,
-                                tooltip: _open ? 'Close menu' : 'Open menu',
+                                tooltip: _open
+                                    ? context.l10n.closeMenu
+                                    : context.l10n.openMenu,
                                 onPressed: _toggle,
                                 icon: AnimatedSwitcher(
                                   duration: const Duration(milliseconds: 180),

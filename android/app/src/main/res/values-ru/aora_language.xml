@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="vpn_channel">VPN-подключение</string>
+    <string name="vpn_connecting">Подключение…</string>
+    <string name="vpn_disconnecting">Отключение…</string>
+    <string name="vpn_connected">Подключено</string>
+    <string name="vpn_disconnected">Отключено</string>
+    <string name="vpn_busy">Занято</string>
+    <string name="vpn_disconnect">Отключить</string>
+    <string name="vpn_tile_failed">Не удалось подключиться. Откройте AORA Connect для диагностики.</string>
+</resources>

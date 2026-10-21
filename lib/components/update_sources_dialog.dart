@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
+import '../l10n/localized_exception.dart';
 import '../updates/update_controller.dart';
 import 'app_action_button.dart';
 import 'app_dialog.dart';
@@ -46,7 +48,7 @@ class _UpdateSourcesDialogState extends State<UpdateSourcesDialog> {
       if (!mounted) return;
       setState(() {
         _saving = false;
-        _error = error is FormatException ? error.message : '$error';
+        _error = localizedException(error, context.l10n);
       });
     }
   }
@@ -55,15 +57,16 @@ class _UpdateSourcesDialogState extends State<UpdateSourcesDialog> {
   Widget build(BuildContext context) => PopScope(
     canPop: !_saving,
     child: AppDialog(
-      title: 'Update sources',
+      title: context.l10n.updateSources,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Optional mirrors. GitHub is tried first.'),
+          Text(context.l10n.updateSourcesHelp),
           const SizedBox(height: 12),
           TextField(
             controller: _input,
+            textDirection: TextDirection.ltr,
             minLines: 2,
             maxLines: 4,
             enabled: !_saving,
@@ -76,7 +79,7 @@ class _UpdateSourcesDialogState extends State<UpdateSourcesDialog> {
                 horizontal: 12,
                 vertical: 8,
               ),
-              hintText: 'One HTTPS metadata URL per line',
+              hintText: context.l10n.metadataUrlPerLine,
               errorText: _error,
               errorMaxLines: 3,
             ),
@@ -85,11 +88,11 @@ class _UpdateSourcesDialogState extends State<UpdateSourcesDialog> {
       ),
       actions: [
         AppActionButton(
-          label: 'Cancel',
+          label: context.l10n.cancel,
           onPressed: _saving ? null : () => Navigator.of(context).pop(),
         ),
         AppActionButton(
-          label: _saving ? 'Saving…' : 'Save',
+          label: _saving ? context.l10n.saving : context.l10n.save,
           onPressed: _saving ? null : _save,
         ),
       ],

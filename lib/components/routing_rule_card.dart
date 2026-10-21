@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../routing/routing_policy.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'app_toggle.dart';
-import 'installed_application_picker.dart';
 import 'connection_edit_notification.dart';
+import 'installed_application_picker.dart';
 
 class RoutingRuleCard extends StatelessWidget {
   const RoutingRuleCard({
@@ -32,13 +33,16 @@ class RoutingRuleCard extends StatelessWidget {
   final bool editingEnabled;
   final VoidCallback? onEditingBlocked;
 
-  Widget _editControl(Widget child, {bool available = true}) =>
-      DisabledControlNotice(
-        disabled: !editingEnabled && available && onEditingBlocked != null,
-        onTap: () => onEditingBlocked?.call(),
-        label: 'Disconnect before editing routing rules.',
-        child: child,
-      );
+  Widget _editControl(
+    BuildContext context,
+    Widget child, {
+    bool available = true,
+  }) => DisabledControlNotice(
+    disabled: !editingEnabled && available && onEditingBlocked != null,
+    onTap: () => onEditingBlocked?.call(),
+    label: context.l10n.disconnectRouting,
+    child: child,
+  );
 
   IconData get _fallbackIcon => switch (rule.match) {
     RoutingMatch.application => Icons.apps_rounded,
@@ -46,11 +50,13 @@ class RoutingRuleCard extends StatelessWidget {
     _ => Icons.language_rounded,
   };
 
-  Widget _action({
+  Widget _action(
+    BuildContext context, {
     required String tooltip,
     required IconData icon,
     required VoidCallback? onPressed,
   }) => _editControl(
+    context,
     IconButton(
       tooltip: tooltip,
       onPressed: editingEnabled ? onPressed : null,
@@ -71,7 +77,9 @@ class RoutingRuleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = application?.label ?? rule.target;
-    final subtitle = application != null ? rule.target : rule.match.label;
+    final subtitle = application != null
+        ? rule.target
+        : rule.match.localizedLabel(context.l10n);
     return Material(
       color: AppColors.card,
       shape: RoundedRectangleBorder(
@@ -84,7 +92,7 @@ class RoutingRuleCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
+            padding: const EdgeInsetsDirectional.fromSTEB(14, 10, 12, 10),
             child: Row(
               children: [
                 Container(
@@ -118,6 +126,7 @@ class RoutingRuleCard extends StatelessWidget {
                         message: title,
                         child: Text(
                           title,
+                          textDirection: textDirectionFor(title),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodyMedium
@@ -134,6 +143,9 @@ class RoutingRuleCard extends StatelessWidget {
                         message: subtitle,
                         child: Text(
                           subtitle,
+                          textDirection: application != null
+                              ? TextDirection.ltr
+                              : null,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodySmall
@@ -148,9 +160,10 @@ class RoutingRuleCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 _editControl(
+                  context,
                   AppToggle(
                     value: rule.enabled,
-                    semanticLabel: 'Enable ${rule.target}',
+                    semanticLabel: context.l10n.enableTarget(rule.target),
                     onChanged: editingEnabled ? onEnabledChanged : null,
                   ),
                   available: onEnabledChanged != null,
@@ -166,23 +179,26 @@ class RoutingRuleCard extends StatelessWidget {
               child: Row(
                 children: [
                   _action(
-                    tooltip: 'Move up',
+                    context,
+                    tooltip: context.l10n.moveUp,
                     icon: Icons.keyboard_arrow_up_rounded,
                     onPressed: onMoveUp,
                   ),
                   _action(
-                    tooltip: 'Move down',
+                    context,
+                    tooltip: context.l10n.moveDown,
                     icon: Icons.keyboard_arrow_down_rounded,
                     onPressed: onMoveDown,
                   ),
                   const Spacer(),
                   _editControl(
+                    context,
                     Tooltip(
-                      message: 'Edit rule',
+                      message: context.l10n.editRule,
                       child: TextButton.icon(
                         onPressed: editingEnabled ? onEdit : null,
                         icon: const Icon(Icons.edit_outlined, size: 16),
-                        label: const Text('Edit'),
+                        label: Text(context.l10n.edit),
                         style: TextButton.styleFrom(
                           foregroundColor: AppColors.muted500,
                           minimumSize: const Size(0, 36),
@@ -195,7 +211,8 @@ class RoutingRuleCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   _action(
-                    tooltip: 'Delete rule',
+                    context,
+                    tooltip: context.l10n.deleteRule,
                     icon: Icons.delete_outline_rounded,
                     onPressed: onDelete,
                   ),

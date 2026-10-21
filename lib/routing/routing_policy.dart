@@ -23,6 +23,27 @@ enum RoutingMatch {
   final String hint;
 }
 
+enum RoutingValidationIssue {
+  empty,
+  controlCharacters,
+  application,
+  domain,
+  ip,
+  prefix;
+
+  String get message => switch (this) {
+    RoutingValidationIssue.empty => "Enter a value.",
+    RoutingValidationIssue.controlCharacters =>
+      "Control characters are not allowed.",
+    RoutingValidationIssue.application =>
+      "Enter an executable path or process name, without wildcards.",
+    RoutingValidationIssue.domain =>
+      "Enter a domain without a URL scheme, path, or wildcard.",
+    RoutingValidationIssue.ip => "Enter an IP address or CIDR range.",
+    RoutingValidationIssue.prefix => "The CIDR prefix is invalid.",
+  };
+}
+
 class RoutingRule {
   const RoutingRule({
     required this.match,
@@ -33,36 +54,38 @@ class RoutingRule {
   final String target;
   final bool enabled;
 
-  String? get validationError {
-    if (target.trim().isEmpty) return 'Enter a value.';
+  String? get validationError => validationIssue?.message;
+
+  RoutingValidationIssue? get validationIssue {
+    if (target.trim().isEmpty) return RoutingValidationIssue.empty;
     if (RegExp(r'[\x00-\x1f\x7f]').hasMatch(target)) {
-      return 'Control characters are not allowed.';
+      return RoutingValidationIssue.controlCharacters;
     }
     if (match == RoutingMatch.application &&
         (target.endsWith('/') ||
             target.endsWith('\\') ||
             target.contains('*') ||
             target.contains('?'))) {
-      return 'Enter an executable path or process name, without wildcards.';
+      return RoutingValidationIssue.application;
     }
     if (match == RoutingMatch.domain || match == RoutingMatch.exactDomain) {
       if (!RegExp(r'^[a-zA-Z0-9][a-zA-Z0-9.-]*$').hasMatch(target) ||
           target.contains('..') ||
           target.length > 253) {
-        return 'Enter a domain without a URL scheme, path, or wildcard.';
+        return RoutingValidationIssue.domain;
       }
     }
     if (match == RoutingMatch.ip) {
       final parts = target.split('/');
       final address = InternetAddress.tryParse(parts.first);
       if (address == null || parts.length > 2) {
-        return 'Enter an IP address or CIDR range.';
+        return RoutingValidationIssue.ip;
       }
       if (parts.length == 2) {
         final prefix = int.tryParse(parts.last);
         final maximum = address.type == InternetAddressType.IPv4 ? 32 : 128;
         if (prefix == null || prefix < 0 || prefix > maximum) {
-          return 'The CIDR prefix is invalid.';
+          return RoutingValidationIssue.prefix;
         }
       }
     }

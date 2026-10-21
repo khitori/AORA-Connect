@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'package:flutter/material.dart';
 
-import '../components/server_selector.dart';
 import '../components/connection_button.dart';
+import '../components/server_selector.dart';
 import '../controllers/connection_controller.dart';
 import '../controllers/node_ping_controller.dart';
 import '../core/connection_mode.dart';
 import '../core/core_kind.dart';
+import '../l10n/l10n.dart';
 
 class ConnectionPage extends StatelessWidget {
   const ConnectionPage({
@@ -27,8 +28,13 @@ class ConnectionPage extends StatelessWidget {
         SnackBar(
           content: Text(
             connection.selectedRequiresDifferentCore
-                ? 'This server requires ${connection.selected!.coreKind.label}. Select it in Settings.'
-                : 'Load a subscription on the Subscriptions tab first.',
+                ? context.l10n.serverRequiresCore(
+                    isolateTechnicalValue(
+                      context.l10n,
+                      connection.selected!.coreKind.label,
+                    ),
+                  )
+                : context.l10n.loadSubscriptionFirst,
           ),
         ),
       );
@@ -65,12 +71,15 @@ class ConnectionPage extends StatelessWidget {
                   ),
                 ),
                 if (connection.selected?.insecure == true)
-                  const Text(
-                    'This profile disables TLS certificate verification.',
-                  ),
+                  Text(context.l10n.insecureProfile),
                 if (connection.selectedRequiresDifferentCore)
                   Text(
-                    'This server requires ${connection.selected!.coreKind.label}. Select it in Settings.',
+                    context.l10n.serverRequiresCore(
+                      isolateTechnicalValue(
+                        context.l10n,
+                        connection.selected!.coreKind.label,
+                      ),
+                    ),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.error,
@@ -92,13 +101,13 @@ class ConnectionPage extends StatelessWidget {
                 ),
                 Text(
                   connection.mode == ConnectionMode.tun
-                      ? 'VPN (TUN)'
-                      : 'Local proxy',
+                      ? context.l10n.vpnTun
+                      : context.l10n.localProxy,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${connection.core.displayName}: ${connection.state.name}',
+                  '${connection.core.displayName}: ${connection.state.localizedLabel(context.l10n)}',
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -106,9 +115,9 @@ class ConnectionPage extends StatelessWidget {
                 // Reserve this line while connecting so a successful check
                 // does not change the space centering the connection button.
                 Tooltip(
-                  message: connection.probeResult ?? '',
+                  message: connection.localizedProbeResult(context.l10n) ?? '',
                   child: Text(
-                    connection.probeResult ?? '',
+                    connection.localizedProbeResult(context.l10n) ?? '',
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

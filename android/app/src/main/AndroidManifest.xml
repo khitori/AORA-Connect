@@ -9,6 +9,7 @@
     <application
         android:label="${aoraAppLabel}"
         android:allowBackup="false"
+        android:supportsRtl="true"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher">
