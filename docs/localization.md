@@ -1,13 +1,15 @@
 # Client languages
 
+[← Back to AORA Connect](../README.md#languages)
+
 The Flutter interface uses the SDK's `gen-l10n` workflow. English is the source
 catalog (`lib/l10n/app_en.arb`). Russian, German, French, Spanish, and Simplified
 Chinese use `app_ru.arb`, `app_de.arb`, `app_fr.arb`, `app_es.arb`, and `app_zh.arb`.
 Modern Standard Arabic (`app_ar.arb`), Persian (`app_fa.arb`), and Hebrew
-(`app_he.arb`) are separate
-language options. Chinese currently uses Simplified characters; Traditional Chinese is not a
-separate option. Generated
-`app_localizations*.dart` files must not be edited manually.
+(`app_he.arb`) are separate language options. Chinese currently uses Simplified
+characters; Traditional Chinese is not a separate option.
+
+Generated `app_localizations*.dart` files must not be edited manually.
 
 Settings → Language provides System default and each language's native name. The choice
 is saved separately in `settings/language.json`; connection settings and

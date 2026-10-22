@@ -1,5 +1,24 @@
 # Installation and updates
 
+[← Back to AORA Connect](../README.md)
+
+## Release files at a glance
+
+Build both platforms from the same version in `pubspec.yaml`, then attach these
+four files to the matching GitHub release:
+
+| Platform | Application package | Signed update metadata | Output folder |
+| --- | --- | --- | --- |
+| Windows x64 | `AORAConnect-Setup.exe` | `aora-update.json` | `build/installer/` |
+| Android ARM64 | `AORAConnect.apk` | `aora-update-android.json` | `build/android-release/` |
+
+For example, `1.1.6+10` uses release tag `v1.1.6` and internal build counter `10`.
+Increase both the public version and build counter for each new release. Rebuild
+both packages after changing the version; never edit signed metadata by hand.
+Portable executables are not part of the current release workflow.
+
+## Update sources
+
 The default update source is the `khitori/AORA-Connect` GitHub repository.
 Users may add optional HTTPS metadata mirrors in **Settings → Updates**.
 No mirror is required or configured by default.
@@ -68,14 +87,14 @@ Use `-SigningKey C:/Private/AORA/release-private.json` for a custom key location
 after changing source or the version; the script verifies the finished package.
 
 4. Create a GitHub release with tag **`v<major.minor.patch>`**, for example
-   `v1.0.4`, and attach both files from `build/installer/`:
+   `v1.1.6`, and attach both files from `build/installer/`:
 
    - `AORAConnect-Setup.exe`
    - `aora-update.json`
 
 The build script generates and signs the JSON automatically, including the
 version, installer URL, SHA-256, byte length, and release notes. No JSON editing
-is needed. The public version is `1.0.4`; `+1` in `pubspec.yaml` is an internal
+is needed. The public version is `1.1.6`; `+10` in `pubspec.yaml` is an internal
 build number used for update ordering. The installer and app display the public
 version, while Windows file-version resources retain a numeric build component.
 GitHub's `releases/latest/download/aora-update.json` endpoint serves
@@ -88,8 +107,8 @@ is limited to 64 KiB, installer payloads to 512 MiB, redirects to HTTPS, and
 downloads are staged before installation. The helper rechecks the staged file
 after app shutdown. Download/verification failure never launches an installer.
 
-The portable executable remains a separate distribution option. Prefer the
-Setup EXE for future updates after creating an installed copy.
+Use the Setup EXE for the Windows release workflow. Older portable installations
+can migrate through the installer while retaining the existing storage root.
 
 ## Verification
 

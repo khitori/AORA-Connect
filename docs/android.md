@@ -1,8 +1,10 @@
 # Android development
 
+[← Back to AORA Connect](../README.md) · [Release signing and updates](updates.md#android-signing-and-updates)
+
 The ARM64 Android app includes sing-box 1.14.2 and Xray 26.9.30 through a shared
-native library and Android's `VpnService`. This is a development build, not a
-public Android release. It uses the existing subscription interface and
+native library and Android's `VpnService`. Android ARM64 is a beta target with
+signed APK packaging. It uses the shared subscription interface and
 DNS/routing settings. One-time server checks and optional live ICMP statistics
 are available. Android supports verified in-app and offline APK updates;
 local-proxy connection mode is not implemented.

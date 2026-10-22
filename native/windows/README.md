@@ -1,5 +1,7 @@
 # Windows native helpers
 
+[← Back to AORA Connect](../../README.md) · [Windows build guide](../../docs/development.md)
+
 This Cargo package contains all application-owned Windows native code: the
 window runner, helpers, and portable launcher. UI and application state remain
 in Dart. The networking cores remain separate Go executables. Upstream Flutter
