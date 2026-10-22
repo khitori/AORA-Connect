@@ -11,7 +11,6 @@ import java.net.InetSocketAddress
 import java.net.NetworkInterface as JavaNetworkInterface
 import io.nekohasekai.libbox.NetworkInterface as BoxNetworkInterface
 
-/** Android owns routing and the TUN FD; libbox owns the packet-processing stack. */
 internal class AndroidPlatform(private val context: Context, private val service: AoraVpnService? = context as? AoraVpnService) : PlatformInterface {
     private val connectivity = context.getSystemService(ConnectivityManager::class.java)
     private val physicalNetwork = AndroidNetwork(context)
@@ -36,7 +35,6 @@ internal class AndroidPlatform(private val context: Context, private val service
     private fun changed() {
         if (closed) return
         val selected = monitor.current()
-        // Empty means no underlying network; null would ask Android to choose again.
         service?.setUnderlyingNetworks(selected?.let { arrayOf(it.network) } ?: emptyArray())
         val name = selected?.links?.interfaceName
         val iface = name?.let { JavaNetworkInterface.getByName(it) }
@@ -71,8 +69,6 @@ internal class AndroidPlatform(private val context: Context, private val service
         while (include.hasNext()) builder.addAllowedApplication(include.next())
         val exclude = options.excludePackage
         while (exclude.hasNext()) builder.addDisallowedApplication(exclude.next())
-        // Do not exclude AORA itself: its connection probe must also traverse the tunnel.
-        // Only the core's protected sockets bypass it.
         return (builder.establish() ?: error("VPN permission was revoked."))
             .also { service.tunnel = it }.fd
     }

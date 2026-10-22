@@ -12,10 +12,6 @@ import android.os.SystemClock
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 
-/** One process-owned request shared by the service, both cores and server checks.
- * Android selects the best INTERNET/NOT_VPN network. Never infer preference from
- * allNetworks ordering, and never query synchronous network state in callbacks.
- */
 internal class PhysicalNetworkMonitor private constructor(context: Context) {
     data class Snapshot(val network: Network, val capabilities: NetworkCapabilities, val links: LinkProperties) {
         fun description(): String {
@@ -32,14 +28,12 @@ internal class PhysicalNetworkMonitor private constructor(context: Context) {
     }
 
     private val connectivity = context.getSystemService(ConnectivityManager::class.java)
-    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN") // wait/notify wake bounded worker waits.
+    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     private val lock = Object()
     private val selection = PhysicalNetworkSelection<Network>(Build.VERSION.SDK_INT >= 29)
     private var capabilities: NetworkCapabilities? = null
     private var links: LinkProperties? = null
     private val observers = CopyOnWriteArrayList<() -> Unit>()
-    // Core interface updates can block or open sockets. Never run them on the
-    // connectivity thread needed to deliver the next network's ready events.
     private val notifications = Executors.newSingleThreadExecutor { Thread(it, "aora-network") }
     private var lastSnapshot: Snapshot? = null
     private var lastDescription: String? = null
@@ -51,9 +45,6 @@ internal class PhysicalNetworkMonitor private constructor(context: Context) {
                 capabilities = null
                 links = null
             }
-            // API 24/25 do not guarantee initial capability/link callbacks. Read
-            // missing snapshots off the connectivity thread for that exact
-            // requested network only, never by enumerating available networks.
             if (Build.VERSION.SDK_INT < 26) notifications.execute {
                 val initialCaps = connectivity.getNetworkCapabilities(network)
                 val initialLinks = connectivity.getLinkProperties(network)
@@ -81,7 +72,6 @@ internal class PhysicalNetworkMonitor private constructor(context: Context) {
 
         override fun onLinkPropertiesChanged(network: Network, value: LinkProperties) = change {
             if (selection.preferred == network) {
-                // Callback values are framework snapshots; never mutate them.
                 links = value
                 selection.links(network, linked(value))
             }
@@ -120,7 +110,6 @@ internal class PhysicalNetworkMonitor private constructor(context: Context) {
 
     fun current(): Snapshot? = synchronized(lock) { snapshotLocked() }
 
-    /** Called on workers, never on the UI or connectivity callback thread. */
     fun awaitReady(): Snapshot = synchronized(lock) {
         val deadline = SystemClock.elapsedRealtime() + 10_000
         var snapshot = snapshotLocked()

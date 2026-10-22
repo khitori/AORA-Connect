@@ -12,7 +12,6 @@ class ServerPingException implements Exception {
   String toString() => message;
 }
 
-/// ICMP round-trip time to the selected server's resolved address.
 Future<Duration> pingServer(String address) async {
   if (Platform.isAndroid) return androidPing(address);
   final output = await runPingHelper(address);

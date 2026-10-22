@@ -51,8 +51,6 @@ typedef PingEngineFactory = TunnelEngine Function(
   CoreKind kind,
 );
 
-/// One temporary proxy session per core, with a dedicated loopback inbound
-/// routed to each node. No TUN or system proxy changes are made.
 class NodePingService {
   NodePingService({
     this.helperPath,
@@ -302,8 +300,6 @@ class NodePingService {
               )) {
                 rethrow;
               }
-              // Quarantine malformed outbounds without discarding the whole
-              // core group. Bisect only after a configuration rejection.
               Future<List<_PreparedNode>> accepted(
                 List<_PreparedNode> candidates,
               ) async {
@@ -517,8 +513,6 @@ class NodePingBatch {
     void abort() => client.close(force: true);
     cancellation.add(abort);
     try {
-      // Startup is excluded. Each request uses its node's inbound/outbound
-      // mapping; the HTTP client has no direct fallback.
       final watch = Stopwatch()..start();
       final request = await client
           .openUrl(type == PingType.proxyHead ? 'HEAD' : 'GET', targetUrl)

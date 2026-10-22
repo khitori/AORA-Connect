@@ -6,7 +6,6 @@ import '../core/tunnel_engine.dart';
 import '../l10n/l10n.dart';
 import 'app_notification.dart';
 
-/// Check at the time of the action, without changing the control's appearance.
 bool allowConnectionEdit(
   BuildContext context,
   ConnectionController connection,
@@ -22,8 +21,6 @@ bool allowConnectionEdit(
   return false;
 }
 
-/// Keep the child genuinely disabled (and styled by its normal disabled theme),
-/// while allowing a tap on its existing bounds to explain the restriction.
 class DisabledControlNotice extends StatelessWidget {
   const DisabledControlNotice({
     super.key,

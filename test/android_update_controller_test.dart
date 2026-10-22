@@ -95,7 +95,6 @@ void main() {
   });
   tearDown(() async {
     updates.dispose();
-    // Dispose removes tracked staging directories asynchronously.
     await Future<void>.delayed(const Duration(milliseconds: 30));
     if (await root.exists()) await root.delete(recursive: true);
   });

@@ -8,7 +8,6 @@ import java.net.URL
 import javax.net.ssl.HttpsURLConnection
 
 internal object QuickSettingsProbe {
-    /** Match the in-app HTTPS check, explicitly bound to VPN, with no direct fallback. */
     fun verify(context: Context) {
         val connectivity = context.getSystemService(ConnectivityManager::class.java)
         val network = connectivity.activeNetwork ?: error("VPN network is unavailable")

@@ -13,10 +13,6 @@ import io.flutter.plugin.common.MethodChannel
 import org.json.JSONObject
 import java.io.File
 
-/** Private, durable selected configuration; never depend on a Flutter session file.
- * All entry points and state transitions run on the main thread. Core work stays
- * on VpnRuntime.worker. The saved config is never put in an exported intent.
- */
 internal object QuickSettings {
     data class Selection(val config: String, val core: String, val name: String, val host: String)
     private var context: Context? = null
@@ -91,7 +87,6 @@ internal object QuickSettings {
                     refresh()
                     result.success(null)
                 } catch (_: Exception) {
-                    // Never retain a stale server or stale routing rules after a failed save.
                     selection = null
                     file(activity).delete()
                     refresh()

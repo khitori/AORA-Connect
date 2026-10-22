@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 package aora.aoranet.aoravpn
 
-/** Keep policy independent of TileService so transitions can be unit tested. */
 internal object QuickSettingsState {
     data class Labels(
         val connecting: String = "Connecting…",

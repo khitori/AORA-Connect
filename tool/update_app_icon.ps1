@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Deterministic multi-resolution icon generation; source artwork is never modified.
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $project = Split-Path $PSScriptRoot -Parent
@@ -7,8 +6,6 @@ $source = [System.Drawing.Image]::FromFile((Join-Path $project 'lib/assets/logo.
 $images = @()
 try {
   foreach ($size in @(16,20,24,32,40,48,64,72,96,128,192,256)) {
-    # Leave breathing room around the circle, including at desktop icon sizes.
-    # Render artwork at 4x resolution, then apply a symmetric circle to the frame.
     $supersampling = 4
     $renderSize = $size * $supersampling
     $inset = [single]([Math]::Max(1.0, $size * 0.04) * $supersampling)
@@ -34,16 +31,11 @@ try {
       $graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
       $graphics.DrawImage($render, 0, 0, $size, $size)
       $graphics.Flush()
-      # Pixel-centred geometry keeps all four sides identical. A final alpha
-      # mask avoids GDI's asymmetric ellipse clipping. A two-pixel smooth ramp
-      # blends the rim with the desktop instead of leaving a hard pixel staircase.
       $center = $size / 2.0
       $radius = $diameter / (2.0 * $supersampling)
       for ($y = 0; $y -lt $size; $y++) {
         for ($x = 0; $x -lt $size; $x++) {
           $distance = [Math]::Sqrt([Math]::Pow($x + 0.5 - $center, 2) + [Math]::Pow($y + 0.5 - $center, 2))
-          # Double bounds are required: integer bounds select integer overloads
-          # in Windows PowerShell and discard all partial edge transparency.
           $coverage = [Math]::Max(0.0, [Math]::Min(1.0, 0.5 + ($radius - $distance) / 2.0))
           $coverage = $coverage * $coverage * (3.0 - 2.0 * $coverage)
           if ($coverage -lt 1) {
@@ -56,8 +48,6 @@ try {
       if ($size -eq 256) {
         $bitmap.Save($stream, [System.Drawing.Imaging.ImageFormat]::Png)
       } else {
-        # Native 32-bit icon bitmaps retain partial edge alpha for the shell and
-        # legacy icon readers. Keep the 256px frame PNG-compressed.
         $frameWriter = [System.IO.BinaryWriter]::new($stream, [System.Text.Encoding]::UTF8, $true)
         try {
           $maskStride = [int]([Math]::Ceiling($size / 32.0) * 4)

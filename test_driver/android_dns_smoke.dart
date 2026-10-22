@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Device-only diagnostic: copies the most recent generated sing-box profile,
-// never edits saved settings or prints the profile's credentials.
 // ignore_for_file: avoid_print
 import 'dart:convert';
 import 'dart:io';

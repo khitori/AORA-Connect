@@ -11,7 +11,6 @@ import io.flutter.plugin.common.MethodChannel
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.Executors
 
-/** Only launcher-visible apps in this Android profile; no broad package permission. */
 internal object InstalledApplications {
     private val worker = Executors.newSingleThreadExecutor { Thread(it, "aora-app-picker") }
     private val main = Handler(Looper.getMainLooper())

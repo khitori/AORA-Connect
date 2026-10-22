@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Controlled loopback-only gateway for the Android device smoke test.
 // ignore_for_file: avoid_print
 import 'dart:convert';
 import 'dart:io';

@@ -52,9 +52,6 @@ class ConnectionPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Measure the real selector even before subscriptions restore,
-                // so its arrival cannot recenter the Connect button. Keeping the
-                // actual widget also respects theme and text scaling naturally.
                 Visibility(
                   key: const ValueKey('connection-server-selector-slot'),
                   visible: connection.profiles.isNotEmpty,
@@ -112,8 +109,6 @@ class ConnectionPage extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                // Reserve this line while connecting so a successful check
-                // does not change the space centering the connection button.
                 Tooltip(
                   message: connection.localizedProbeResult(context.l10n) ?? '',
                   child: Text(

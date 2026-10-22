@@ -42,8 +42,6 @@ class _Engine implements TunnelEngine {
   }
 }
 
-// A local direct outbound exercises the real core/proxy plumbing without
-// depending on provider credentials or external server availability.
 class _LocalProfile extends ServerProfile {
   const _LocalProfile(
     this.kind,
@@ -297,7 +295,6 @@ void main() {
         try {
           await request.response.close();
         } on IOException {
-          /* cancelled check */
         }
       });
       final engines = <WindowsCoreEngine>[];

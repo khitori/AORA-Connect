@@ -33,7 +33,6 @@ typedef SubscriptionLoader = Future<SubscriptionLoadResult> Function(
 
 enum ConnectionErrorScope { connection, subscriptions, settings, routing }
 
-/// Owns the core session and its state; pages only display it and invoke actions.
 class ConnectionController extends ChangeNotifier {
   ConnectionController({
     TunnelEngine? engine,
@@ -287,7 +286,6 @@ class ConnectionController extends ChangeNotifier {
             host: _selected?.server,
           );
         } catch (_) {
-          // Tile failure must not hide the result of a connection operation.
           _lines.add('Quick Settings configuration could not be saved.');
         } finally {
           try {
@@ -354,8 +352,6 @@ class ConnectionController extends ChangeNotifier {
         if (_xrayEngine case final AndroidTunnelEngine android) {
           await android.ready;
         }
-        // Recovery for the previous persistent firewall implementation. Perform
-        // this before any network requests, even if saved preferences are invalid.
         await _killSwitch?.disarm();
         final saved = await settingsStore?.read() ?? const AppSettingsData();
         _subscriptions = saved.subscriptions;
@@ -663,8 +659,6 @@ class ConnectionController extends ChangeNotifier {
       throw StateError('Select ${_selected!.coreKind.label} in Settings.');
     }
     await _killSwitch?.disarm();
-    // A profile selected on Wi-Fi must not retain an address resolved on that
-    // network when the user connects later using mobile data (or vice versa).
     if (Platform.isAndroid && _selected != null) {
       await _selectProfile(_selected!);
     }
@@ -712,7 +706,6 @@ class ConnectionController extends ChangeNotifier {
     }
   }, errorScope: ConnectionErrorScope.settings);
 
-  /// Await this before accepting an application exit request.
   Future<void> shutdown() => _cleanup ??= _shutdown();
   Future<void> _shutdown() async {
     await _pending;

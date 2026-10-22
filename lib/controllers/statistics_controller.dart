@@ -17,7 +17,6 @@ class LatencySample {
   final bool pending;
 }
 
-/// ICMP round-trip samples to the currently selected server.
 class StatisticsController extends ChangeNotifier {
   StatisticsController(this.connection, {LatencyProbe? probe})
     : _probe = probe ?? pingServer {
@@ -92,7 +91,6 @@ class StatisticsController extends ChangeNotifier {
       duration = await _probe(_address!).timeout(const Duration(seconds: 5));
     } catch (error) {
       errorMessage = _message(error);
-      // A failed sample is retained as a gap in the stability chart.
     } finally {
       if (!_disposed && _active && generation == _generation) {
         final index = _samples.indexOf(sample);

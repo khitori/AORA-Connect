@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Isolated aora.aoranet.aoravpn.updatetest package only. No real credentials.
 // ignore_for_file: avoid_print
 import 'dart:convert';
 import 'dart:io';

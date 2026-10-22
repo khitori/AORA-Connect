@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'package:flutter/material.dart';
 
-/// Website palette. HSL saturation/lightness are percentages, just like CSS.
-/// Edit these values to change the client globally.
 abstract final class AppColors {
   static Color hsl(
     double hue,

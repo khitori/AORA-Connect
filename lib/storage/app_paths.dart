@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 
-/// One writable root for settings and credential-bearing session files.
 class AppPaths {
   static Directory get windowsRoot {
     final base = Platform.environment['LOCALAPPDATA'];

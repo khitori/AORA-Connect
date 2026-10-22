@@ -6,7 +6,6 @@ import android.content.res.Configuration
 import android.os.LocaleList
 import java.util.Locale
 
-/** Native services also honor the saved choice when Flutter is not running. */
 internal object AppLanguage {
     val languages = setOf("en", "ru", "zh", "de", "fr", "es", "ar", "fa", "he")
     private fun preferences(context: Context) = context.getSharedPreferences("aora-language", Context.MODE_PRIVATE)

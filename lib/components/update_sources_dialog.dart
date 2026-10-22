@@ -17,7 +17,6 @@ class UpdateSourcesDialog extends StatefulWidget {
 }
 
 class _UpdateSourcesDialogState extends State<UpdateSourcesDialog> {
-  // Keep the controller alive through the route's closing animation.
   late final _input = TextEditingController(
     text: widget.updates.additionalSources.join('\n'),
   );

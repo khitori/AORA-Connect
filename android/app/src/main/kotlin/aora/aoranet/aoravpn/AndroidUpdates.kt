@@ -19,7 +19,6 @@ import java.io.File
 import java.security.MessageDigest
 import java.util.concurrent.Executors
 
-/** APK authenticity is checked against the installed app, not the download host. */
 internal class AndroidUpdates(private val activity: MainActivity) {
     companion object {
         const val PERMISSION_REQUEST = 703
@@ -59,7 +58,6 @@ internal class AndroidUpdates(private val activity: MainActivity) {
                         val target = File.createTempFile("aora-update-", ".apk", directory)
                         installerFile = target
                         handedToInstaller = false
-                        // Zero means not handed off: an interrupted copy is disposable.
                         File(target.path + ".installing").writeText("0")
                         source.copyTo(target, overwrite = true)
                         verify(target)
@@ -134,8 +132,6 @@ internal class AndroidUpdates(private val activity: MainActivity) {
                 check(VpnRuntime.state == "stopped") { "Disconnect before installing an update." }
                 val file = installerFile ?: error("No verified APK is ready.")
                 val release = verify(file)
-                // Written before granting access: if Android kills our process
-                // during installation, the next launch must not unlink this APK.
                 File(file.path + ".installing").writeText(
                     (release["version"] as String).substringAfterLast('+'))
                 main.post {
@@ -180,12 +176,9 @@ internal class AndroidUpdates(private val activity: MainActivity) {
     }
 
     fun close() {
-        // Destroying/recreating an Activity does not mean the system installer
-        // has finished reading the content URI. Leave its marked copy intact.
         closed = true
         pending?.error("INSTALL", "Installation interrupted.", null)
         pending = null
-        // Queue behind copying/verification instead of deleting under active I/O.
         worker.execute {
             if (!handedToInstaller) installerFile?.let { file ->
                 file.delete()

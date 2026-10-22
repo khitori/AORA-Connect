@@ -104,7 +104,6 @@ func TestBatchesDoNotOwnVPNLifetime(t *testing.T) {
 	if _, err := second.Check(0, "HEAD", server.URL); err != nil {
 		t.Fatal(err)
 	}
-	// Simulate a service-owned instance: removing its test handlers must not close it.
 	vpn = true
 	owned := instance
 	second.Close()

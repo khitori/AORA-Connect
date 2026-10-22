@@ -10,7 +10,6 @@ enum DnsProvider {
   final String address;
   final String tlsServerName;
 
-  // Dial the IP directly, so reaching the DoH resolver needs no DNS bootstrap.
   Map<String, Object?> singBoxServer({required String tag, String? detour}) => {
     'type': 'https',
     'tag': tag,

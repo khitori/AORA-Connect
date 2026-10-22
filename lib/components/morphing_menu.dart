@@ -16,7 +16,6 @@ class MorphingMenuEntry<T> {
   final IconData icon;
 }
 
-/// One surface grows from the toolbar button into its naturally sized content.
 class MorphingMenuShell<T> extends StatefulWidget {
   const MorphingMenuShell({
     super.key,
@@ -179,7 +178,6 @@ class _MorphingMenuShellState<T> extends State<MorphingMenuShell<T>>
                     key: const ValueKey('morphing-menu-surface'),
                     color: colors.secondaryContainer,
                     elevation: lerpDouble(0, 6, progress)!,
-                    // --- Dropdown Rounded ---
                     borderRadius: BorderRadius.circular(
                       lerpDouble(22, 24, progress)!,
                     ),
@@ -213,7 +211,6 @@ class _MorphingMenuShellState<T> extends State<MorphingMenuShell<T>>
                             SizedBox(
                               width: 44,
                               height: 44,
-                              // --- Menu Button ---
                               child: IconButton(
                                 focusNode: _buttonFocus,
                                 tooltip: _open
@@ -236,8 +233,6 @@ class _MorphingMenuShellState<T> extends State<MorphingMenuShell<T>>
                           ClipRect(
                             child: Align(
                               alignment: Alignment.topRight,
-                              // Reveal a fraction of the actual content height.
-                              // Padding, spacing and button sizes participate in layout.
                               heightFactor: progress,
                               child: OverflowBox(
                                 alignment: Alignment.topRight,

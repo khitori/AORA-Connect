@@ -143,8 +143,6 @@ void main() {
     await lock.writeAsString('lease');
     final handle = await lock.open(mode: FileMode.append);
     await handle.lock(FileLock.exclusive);
-    // Dart uses a byte-range lock, unlike Rust's no-sharing open. This covers
-    // deletion failure, while native helper no-sharing rejects the initial open.
     await cache.sweep('1.1.1+2');
     await handle.close();
     await cache.sweep('1.1.1+2');

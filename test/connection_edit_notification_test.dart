@@ -122,7 +122,6 @@ void main() {
   Future<void> tap(WidgetTester tester, Finder finder, String message) async {
     await tester.ensureVisible(finder);
     await tester.pumpAndSettle();
-    // The disabled child deliberately doesn't receive the pointer; its notice does.
     await tester.tapAt(tester.getCenter(finder));
     await tester.pumpAndSettle();
     expect(
@@ -392,7 +391,7 @@ void main() {
         () => connection.addSubscription('https://test.invalid/sub'),
       );
       input.text =
-          'https://new.invalid/sub'; // Form already open before connecting.
+          'https://new.invalid/sub';
       var clipboardReads = 0;
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(SystemChannels.platform, (call) async {

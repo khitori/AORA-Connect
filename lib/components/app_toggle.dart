@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 
-/// Shared borderless toggle with an equally sized thumb in both states.
 class AppToggle extends StatefulWidget {
   static const compactVerticalPadding = 5.0;
 
@@ -51,14 +50,12 @@ class _AppToggleState extends State<AppToggle> {
           child: InkWell(
             onTap: enabled ? toggle : null,
             customBorder: const StadiumBorder(),
-            // The hit target is square; paint feedback on the pill only.
             overlayColor: const WidgetStatePropertyAll(Colors.transparent),
             splashFactory: NoSplash.splashFactory,
             onHover: (value) => setState(() => _hovered = value),
             onFocusChange: (value) => setState(() => _focused = value),
             onHighlightChanged: (value) => setState(() => _pressed = value),
             child: Padding(
-              // Keep the visible track unchanged in compact desktop rows.
               padding: EdgeInsets.symmetric(
                 horizontal: 2,
                 vertical: widget.compact

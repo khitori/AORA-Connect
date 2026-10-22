@@ -4,7 +4,6 @@ package aora.aoranet.aoravpn
 import org.json.JSONObject
 
 internal object QuickSettingsConfiguration {
-    /** Refresh only the VPN endpoint, never DNS addresses, SNI or routing targets. */
     fun withAddress(configuration: String, core: String, address: String): String {
         val config = JSONObject(configuration)
         val outbounds = config.getJSONArray("outbounds")

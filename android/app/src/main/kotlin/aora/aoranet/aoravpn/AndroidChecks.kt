@@ -23,7 +23,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicLong
 import java.io.File
 
-/** Bounded parallel probes; none can create or replace Android's VPN interface. */
 internal object AndroidChecks {
     private val probes = Executors.newFixedThreadPool(32)
     private val batches = ConcurrentHashMap<Long, CheckBatch>()
@@ -72,7 +71,6 @@ internal object AndroidChecks {
     }
 
     private fun direct(context: Context, address: String, type: String, port: Int): Long {
-        // Flutter supplies a resolved numeric IP. Never run shell commands with it.
         require(address.matches(Regex("[0-9a-fA-F:.%]+"))) { "Invalid server address." }
         val destination = InetAddress.getByName(address)
         val network = AndroidNetwork(context)
@@ -150,8 +148,6 @@ internal object AndroidChecks {
                 try {
                     try { Libbox.checkConfig(config.toString()) }
                     catch (_: Exception) {
-                        // Quarantine malformed profiles without losing healthy
-                        // nodes in the same subscription/core group.
                         val acceptedIn = JSONArray(); val acceptedOut = JSONArray(); val acceptedRules = JSONArray()
                         for (position in singNodes.indices) {
                             val single = JSONObject(config.toString()).put("inbounds", JSONArray().put(inbounds.get(position)))
@@ -169,7 +165,6 @@ internal object AndroidChecks {
                         config.getJSONObject("route").put("rules", acceptedRules)
                     }
                     batch.platform = AndroidPlatform(context).also { it.start() }
-                    // No Start(): do not bind or replace the VPN's command socket.
                     batch.core = CommandServer(CheckHandler, batch.platform)
                     batch.core!!.startOrReloadService(config.toString(), OverrideOptions())
                 } catch (error: Exception) {

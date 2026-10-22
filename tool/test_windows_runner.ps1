@@ -15,8 +15,6 @@ $bundle = Join-Path $build "runner/$Configuration"
 Copy-Item -LiteralPath (Join-Path $build "runner-tests/$Configuration/aora_runner_smoke.exe") -Destination $testRoot
 Get-ChildItem -LiteralPath $bundle -File -Filter '*.dll' | Copy-Item -Destination $testRoot
 Copy-Item -LiteralPath (Join-Path $bundle 'data') -Destination $testRoot -Recurse
-# Explicitly omit all core, ping and firewall helpers. The Dart shell can render
-# but cannot start a core or remove firewall rules, even if this test is elevated.
 $startup = [Diagnostics.ProcessStartInfo]::new((Join-Path $testRoot 'aora_runner_smoke.exe'), '--runner-smoke-test')
 $startup.UseShellExecute = $false
 $startup.CreateNoWindow = $true

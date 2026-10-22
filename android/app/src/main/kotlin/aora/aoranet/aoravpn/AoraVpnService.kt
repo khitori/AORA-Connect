@@ -114,7 +114,6 @@ class AoraVpnService : VpnService(), CommandServerHandler {
         return START_NOT_STICKY
     }
 
-    /** Runs on the serial worker; release both the core and Android's original FD. */
     internal fun closeTunnel(token: Long = sessionGeneration) {
         if (token != sessionGeneration) return
         if (closed) return
@@ -122,8 +121,6 @@ class AoraVpnService : VpnService(), CommandServerHandler {
         val closingStartId = latestStartId
         try {
             if (xray) Mobile.stopXray()
-            // Closing the command server alone does not stop its Box instance.
-            // CloseService releases the TUN duplicate, sockets and cache lock first.
             try {
                 core?.closeService()
             } finally {

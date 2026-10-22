@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'dart:io';
 
-/// Legacy firewall helper, retained only to remove rules left by older builds.
-/// Connection protection is now configured in the cores' TUN settings.
 abstract interface class KillSwitch {
   Future<bool> isArmed();
   Future<void> arm({

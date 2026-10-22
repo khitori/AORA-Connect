@@ -100,7 +100,7 @@ void main() {
         await _expectClosed(tester);
       }
       await _openSources(tester);
-      await tester.tapAt(const Offset(4, 4)); // Outside the dialog.
+      await tester.tapAt(const Offset(4, 4));
       await _expectClosed(tester);
       await _openSources(tester);
       Navigator.of(tester.element(find.byType(TextField))).pop();
@@ -126,7 +126,6 @@ void main() {
       find.byType(TextField),
       ' https://mirror.example/aora-update.json \n\n',
     );
-    // Real filesystem I/O must run outside the widget test's fake clock.
     await tester.runAsync(() async {
       await tester.tap(find.text('Save'));
       for (var i = 0; i < 100 && updates.additionalSources.isEmpty; i++) {

@@ -30,7 +30,6 @@ impl Drop for Winsock {
 }
 
 pub fn socket_address(ip: IpAddr) -> SOCKADDR_INET {
-    // All unassigned sockaddr fields remain zero (port, flow info, scope).
     unsafe {
         let mut address: SOCKADDR_INET = zeroed();
         match ip {
@@ -69,8 +68,6 @@ pub fn sockaddr_len(address: &SOCKADDR_INET) -> i32 {
     }
 }
 
-/// The u64 allocation provides the alignment required by adapter structures.
-/// It remains alive while Windows' internal linked-list pointers are traversed.
 pub struct Adapters(Vec<u64>);
 impl Adapters {
     pub fn load() -> io::Result<Self> {
@@ -124,8 +121,6 @@ unsafe fn is_aora_name(name: *const u16) -> bool {
     String::from_utf16_lossy(std::slice::from_raw_parts(name, length)).contains("AORA")
 }
 
-/// Match the old native helper: prefer the lowest-metric Ethernet/Wi-Fi route
-/// with a gateway, explicitly excluding our TUN interface.
 pub fn physical_source(target: &SOCKADDR_INET) -> io::Result<Option<SOCKADDR_INET>> {
     let adapters = Adapters::load()?;
     let mut best = u64::MAX;

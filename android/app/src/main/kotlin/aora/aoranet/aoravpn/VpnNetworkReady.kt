@@ -10,7 +10,6 @@ import android.os.Build
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-/** establish() returns before Android switches the app's default network to VPN. */
 internal object VpnNetworkReady {
     fun await(context: Context) {
         val connectivity = context.getSystemService(ConnectivityManager::class.java)

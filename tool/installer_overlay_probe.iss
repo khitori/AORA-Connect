@@ -1,5 +1,4 @@
 ; SPDX-License-Identifier: GPL-3.0-or-later
-; Isolated compatibility probe; never installs the real application.
 [Setup]
 AppName=AORA installer overlay probe
 AppVersion=1.0

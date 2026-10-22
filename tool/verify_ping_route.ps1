@@ -1,5 +1,3 @@
-# Compare Windows default-route ICMP with the physical-source helper.
-# This test owns its core process and closes it in finally.
 param([Parameter(Mandatory=$true)][string]$ConfigPath)
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot

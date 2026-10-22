@@ -4,7 +4,6 @@ import 'dart:io';
 
 import 'core_kind.dart';
 
-/// An allowlist, not a redacted dump: never include URLs, names, SNI or secrets.
 String connectionConfigurationSummary(String configuration, CoreKind core) {
   try {
     final config = jsonDecode(configuration) as Map;

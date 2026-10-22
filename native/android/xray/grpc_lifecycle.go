@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MPL-2.0
-// Android integration extension to the pinned Xray gRPC transport.
 package grpc
 
 import (
@@ -8,7 +7,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-// Protected by globalDialerAccess, including calls from getGrpcClient.
 var aoraClients = make(map[string]map[*grpc.ClientConn]struct{})
 
 func aoraTrackClient(ctx context.Context, client *grpc.ClientConn) {
@@ -26,9 +24,6 @@ func aoraTrackClient(ctx context.Context, client *grpc.ClientConn) {
 	aoraClients[tag][client] = struct{}{}
 }
 
-// CloseClientConnections releases a test handler's transport, or all transports
-// after the sole managed Xray instance stops. Never call with an empty tag just
-// to end a scan while the VPN is running.
 func CloseClientConnections(tag string) {
 	globalDialerAccess.Lock()
 	defer globalDialerAccess.Unlock()

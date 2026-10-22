@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Device-only integration harness. Never part of lib/main.dart or release builds.
 // ignore_for_file: avoid_print
 import 'dart:convert';
 import 'dart:io';
@@ -77,8 +76,6 @@ Future<void> main() async {
           throw StateError('Ping checks stopped the VPN.');
         }
         await _probe('198.18.0.2');
-        // A second Flutter client must restore the active core, and disposing it
-        // must leave the service-owned connection intact.
         final reopened = AndroidTunnelEngine(core: engine.core);
         await reopened.ready;
         if (reopened.state != TunnelState.running) {
@@ -117,8 +114,6 @@ Future<void> _checks(List<ServerProfile> profiles, String phase) async {
   if (icmp6.inMicroseconds <= 0) throw StateError('IPv6 ICMP returned zero.');
   print('AORA_PING_ICMP_OK_$phase');
   final cancellation = PingCancellation();
-  // Deterministic gateway-only target: the PC need not have public IPv6 access.
-  // HTTPS and DNS are verified separately through example.com above.
   final service = NodePingService(
     targetUrl: Uri.parse('http://198.18.0.2:18080/'),
   );
@@ -148,8 +143,6 @@ Future<void> _checks(List<ServerProfile> profiles, String phase) async {
     ),
     const _MalformedXray(),
   ];
-  // Match the real controller: one global method per scan and one request per
-  // node, with 32 distinct nodes in flight. GET and HEAD are separate scans.
   for (final type in [PingType.proxyGet, PingType.proxyHead]) {
     final batch = await service.openBatch([
       ...healthy,
@@ -167,7 +160,6 @@ Future<void> _checks(List<ServerProfile> profiles, String phase) async {
             }
           })(),
       ]);
-      // A failed proxy must not succeed using a direct HTTP fallback.
       await Future.wait(
         [...failed, ...malformed].map((profile) async {
           try {

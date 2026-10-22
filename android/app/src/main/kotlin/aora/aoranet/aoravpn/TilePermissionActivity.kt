@@ -11,11 +11,10 @@ import android.os.Build
 import android.widget.Toast
 import io.flutter.plugin.common.MethodChannel
 
-/** Non-exported permission bridge: another app cannot trigger a VPN connection. */
 class TilePermissionActivity : Activity() {
     override fun onCreate(state: Bundle?) {
         super.onCreate(state)
-        if (state != null) return // Android restores the outstanding permission activity.
+        if (state != null) return
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 701)
         } else prepareVpn()
@@ -43,7 +42,6 @@ class TilePermissionActivity : Activity() {
             }
             override fun notImplemented() { finish() }
         })
-        // The service owns startup. Do not leave an empty activity covering the screen.
         finish()
     }
 }

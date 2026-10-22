@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Run elevated when Developer Mode is unavailable. Creates only generated plugin links.
 $ErrorActionPreference = 'Stop'
 $project = Split-Path $PSScriptRoot -Parent
 $links = [IO.Path]::GetFullPath((Join-Path $project 'windows/flutter/ephemeral/.plugin_symlinks'))

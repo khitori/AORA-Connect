@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../l10n/directional_text.dart';
 
-/// Replaces a leading flag emoji or country code with a bundled flag image.
 class ServerNodeLabel extends StatelessWidget {
   const ServerNodeLabel({
     super.key,

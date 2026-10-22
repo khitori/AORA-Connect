@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 package aora.aoranet.aoravpn
 
-/** Only requestNetwork's latest preferred network may become the socket route. */
 internal class PhysicalNetworkSelection<T>(private val initiallyBlocked: Boolean) {
     var preferred: T? = null
         private set

@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Creates a movable signing folder. Never prints or embeds its passwords.
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';

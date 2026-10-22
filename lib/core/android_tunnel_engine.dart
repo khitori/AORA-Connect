@@ -8,7 +8,6 @@ import 'tunnel_engine.dart';
 import 'core_kind.dart';
 import 'connection_diagnostics.dart';
 
-/// Flutter is a client of the foreground service, not the VPN's lifetime owner.
 class AndroidTunnelEngine implements TunnelEngine {
   AndroidTunnelEngine({this.core = CoreKind.singBox}) {
     _subscription = _nativeEvents.listen(
@@ -103,7 +102,6 @@ class AndroidTunnelEngine implements TunnelEngine {
           );
       _update('running');
     } catch (error) {
-      // A rejected duplicate start does not own the already-running session.
       if (error is! PlatformException || error.code != 'BUSY') {
         await captureDiagnostics();
         await stop();
@@ -112,7 +110,6 @@ class AndroidTunnelEngine implements TunnelEngine {
     }
   }
 
-  /// Repeat concise context at failure, after noisy core traffic logs.
   Future<void> captureDiagnostics() async {
     if (_connectionSummary != null) _logs.add(_connectionSummary!);
     try {
@@ -144,6 +141,5 @@ class AndroidTunnelEngine implements TunnelEngine {
     await _subscription.cancel();
     await _states.close();
     await _logs.close();
-    // Only explicit Disconnect stops the native service.
   }
 }

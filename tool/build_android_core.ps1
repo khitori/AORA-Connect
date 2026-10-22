@@ -69,7 +69,6 @@ try {
       if ($LASTEXITCODE -ne 0) { throw "Failed to build $tool." }
     }
   }
-  # Match upstream's mobile build tags and its pinned gomobile fork.
   $tags = 'with_gvisor,with_quic,with_wireguard,with_utls,with_naive_outbound,with_clash_api,with_usbip,with_openvpn,with_openconnect,badlinkname,tfogo_checklinkname0,with_tailscale,ts_omit_logtail,ts_omit_ssh,ts_omit_drive,ts_omit_taildrop,ts_omit_webclient,ts_omit_doctor,ts_omit_capture,ts_omit_kube,ts_omit_aws,ts_omit_synology,ts_omit_bird'
   $flags = "-s -w -checklinkname=0 -X github.com/sagernet/sing-box/constant.Version=$version -X runtime.godebugDefault=multipathtcp=0,tlssha1=1"
   $env:PATH = "$env:GOBIN;" + $env:PATH

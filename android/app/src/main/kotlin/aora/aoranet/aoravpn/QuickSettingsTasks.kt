@@ -8,9 +8,6 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
-/** DNS and HTTPS must not indefinitely occupy the serial VPN lifecycle worker.
- * At most two blocked system calls may outlive cancellation; there is no queue.
- */
 internal object QuickSettingsTasks {
     private val io = ThreadPoolExecutor(0, 2, 30L, TimeUnit.SECONDS, SynchronousQueue<Runnable>()) {
         Thread(it, "aora-tile-check")
@@ -25,7 +22,7 @@ internal object QuickSettingsTasks {
                 val remaining = deadline - System.nanoTime()
                 check(remaining > 0) { "$stage timed out after $milliseconds ms" }
                 try { return task.get(minOf(remaining, TimeUnit.MILLISECONDS.toNanos(100)), TimeUnit.NANOSECONDS) }
-                catch (_: TimeoutException) { /* Recheck deadline and cancellation. */ }
+                catch (_: TimeoutException) {                                          }
                 catch (error: ExecutionException) { throw error.cause ?: error }
             }
         } finally { task.cancel(true) }

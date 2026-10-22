@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'tunnel_engine.dart';
 
-/// Keeps the UI usable without pretending that a VPN backend is installed.
 class UnavailableTunnelEngine implements TunnelEngine {
   const UnavailableTunnelEngine();
 

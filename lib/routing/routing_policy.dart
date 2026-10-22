@@ -136,7 +136,6 @@ class RoutingPolicy {
 
   factory RoutingPolicy.fromJson(Map<String, dynamic> json) => RoutingPolicy(
     enabled: json['enabled'] != false,
-    // Old per-rule actions (including block) are deliberately ignored.
     direction: (json['direction'] ?? json['defaultAction']) == 'direct'
         ? RoutingAction.direct
         : RoutingAction.vpn,
@@ -147,7 +146,6 @@ class RoutingPolicy {
   );
 }
 
-/// Adds one shared policy to either core's generated configuration.
 Map<String, Object?> applyRouting(
   Map<String, Object?> config,
   CoreKind core,
@@ -194,9 +192,6 @@ Map<String, Object?> applyRouting(
     for (final tag in ['direct', 'proxy']) {
       final dnsTag = tag == 'proxy' ? 'vpn-dns' : 'direct-dns';
       if (!servers.any((server) => server['tag'] == dnsTag)) {
-        // HTTPS DNS uses its own direct dialer when no detour is specified.
-        // sing-box rejects a detour to an unconfigured direct outbound at
-        // startup, even though `check` accepts that configuration.
         servers.add(
           dnsProvider.singBoxServer(
             tag: dnsTag,

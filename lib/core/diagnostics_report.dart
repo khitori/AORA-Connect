@@ -2,8 +2,6 @@
 import '../controllers/connection_controller.dart';
 import 'core_kind.dart';
 
-/// Export an allowlisted summary, never raw configs, URLs, names or log lines.
-/// Unstructured core errors can contain authentication data, even in URLs.
 String diagnosticsSignals(Iterable<String> messages) {
   final signals = <String>{};
   const patterns = <String, String>{

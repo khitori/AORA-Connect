@@ -67,7 +67,6 @@ class HysteriaProfile extends ServerProfile {
         obfsPassword: parameters['obfs-password'],
       );
     } on FormatException catch (error) {
-      // Never include the original URI, which contains credentials.
       throw FormatException(
         error.message.isEmpty
             ? 'Invalid Hysteria2 link; this importer supports single-port links.'

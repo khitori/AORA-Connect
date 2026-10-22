@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Inspect encoded ICO bytes, so a rounded-but-aliased mask cannot pass unnoticed.
 param([string]$Icon = '')
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing

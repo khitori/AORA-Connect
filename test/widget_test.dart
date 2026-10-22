@@ -107,8 +107,6 @@ void main() {
     await tester.tap(find.byTooltip('Close app'));
     await tester.pumpAndSettle();
     expect(commands, contains('close'));
-    // The host's awaited exit round trip is covered by desktop_window_test
-    // and the real hidden native smoke test, outside the fake frame clock.
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
     await engine.changes.close();

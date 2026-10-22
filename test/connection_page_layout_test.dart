@@ -13,7 +13,6 @@ import 'package:aoravpn/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Deliver restored profiles on a later frame without DNS, files or a VPN.
 class _RestoringConnection extends ConnectionController {
   _RestoringConnection()
     : super(
@@ -92,7 +91,6 @@ void main() {
           expect(initialSlot.height, greaterThan(0));
           expect(find.byType(ServerSelector).hitTestable(), findsNothing);
 
-          // A delayed subscription must not shift the initial/loading layout.
           await tester.pump(const Duration(milliseconds: 500));
           expect(tester.getRect(button), initialButton);
           savedProfiles.complete([
@@ -111,7 +109,6 @@ void main() {
           expect(tester.getRect(button), initialButton);
           expect(tester.takeException(), isNull);
 
-          // Removing the last subscription must not move the button either.
           connection.clearProfiles();
           await tester.pumpAndSettle();
           expect(find.byType(ServerSelector).hitTestable(), findsNothing);

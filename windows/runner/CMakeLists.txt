@@ -1,22 +1,14 @@
 cmake_minimum_required(VERSION 3.14)
 project(runner LANGUAGES CXX)
 
-# Define the application target. To change its name, change BINARY_NAME in the
-# top-level CMakeLists.txt, not the value here, or `flutter run` will no longer
-# work.
-#
 add_executable(${BINARY_NAME} WIN32
   "Runner.rc"
   "runner.exe.manifest"
 )
 set_target_properties(${BINARY_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
-# Apply the standard set of build settings. This can be removed for applications
-# that need different build settings.
 apply_standard_settings(${BINARY_NAME})
 
-# Application-owned runner and helpers are Rust. RC resources and upstream
-# Flutter/plugin libraries continue to use the normal Windows build tooling.
 find_program(CARGO_EXECUTABLE NAMES cargo HINTS "$ENV{USERPROFILE}/.cargo/bin")
 if(NOT CARGO_EXECUTABLE)
   message(FATAL_ERROR "Rust/Cargo is required for the Windows helpers. Install the Rust MSVC toolchain, then rebuild.")
@@ -66,27 +58,21 @@ target_link_libraries(${BINARY_NAME} PRIVATE "${RUST_RUNNER_LIBRARY}"
   shell32 ole32 oleaut32 rpcrt4 crypt32 gdi32 dwmapi
   libcmt libvcruntime libucrt)
 
-# Match the linker-generated UAC fragment to the application manifest.
 target_link_options(${BINARY_NAME} PRIVATE
   "/MANIFESTUAC:level='requireAdministrator' uiAccess='false'"
   "/ENTRY:wWinMainCRTStartup" "/INCLUDE:wWinMain"
 )
 
-# Add preprocessor definitions for the build version.
 target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION=\"${FLUTTER_VERSION}\"")
 target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION_MAJOR=${FLUTTER_VERSION_MAJOR}")
 target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION_MINOR=${FLUTTER_VERSION_MINOR}")
 target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION_PATCH=${FLUTTER_VERSION_PATCH}")
 target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION_BUILD=${FLUTTER_VERSION_BUILD}")
 
-# Disable Windows macros that collide with C++ standard library functions.
 target_compile_definitions(${BINARY_NAME} PRIVATE "NOMINMAX")
 
-# Add dependency libraries and include directories. Add any application-specific
-# dependencies here.
 target_link_libraries(${BINARY_NAME} PRIVATE flutter)
 target_link_libraries(${BINARY_NAME} PRIVATE "dwmapi.lib")
 target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
 
-# Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)

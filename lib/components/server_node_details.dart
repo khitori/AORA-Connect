@@ -8,7 +8,6 @@ import '../profiles/server_profile.dart';
 import '../theme/app_colors.dart';
 import 'server_node_label.dart';
 
-/// Shared node identity, required core, and last check result across pages.
 class ServerNodeDetails extends StatelessWidget {
   const ServerNodeDetails({
     super.key,

@@ -94,7 +94,6 @@ class UpdatesPanel extends StatelessWidget {
           isolateTechnicalValue(context.l10n, updates.displayVersion),
         ),
         icon: Icons.system_update_alt_rounded,
-        // The toggle's transparent hit-area padding counts toward the gap.
         contentTopPadding:
             AppTheme.sectionContentTopPadding -
             AppToggle.compactVerticalPadding,

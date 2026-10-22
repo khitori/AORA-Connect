@@ -135,8 +135,6 @@ class AppSettingsData {
         (value) => value.name == json['pingType'],
         orElse: () => PingType.proxyGet,
       ),
-      // The old persistent Kill Switch was forcibly disabled during recovery.
-      // Start the new connection-scoped protection with its own saved setting.
       killSwitchEnabled: json['connectionLeakProtectionEnabled'] is bool
           ? json['connectionLeakProtectionEnabled'] as bool
           : true,
@@ -219,7 +217,6 @@ class FileAppSettingsStore implements AppSettingsStore {
       }
       final data = AppSettingsData.fromJson(json);
       await write(data);
-      // Remove only this validated legacy file after verifying its replacement.
       if (await file.readAsString() == jsonEncode(data.toJson())) {
         await legacy.delete();
       }

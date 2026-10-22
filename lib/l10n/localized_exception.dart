@@ -2,7 +2,6 @@
 import 'app_localizations.dart';
 import 'app_localizations_en.dart';
 
-/// Preserve an error's meaning until presentation, including after a locale change.
 class LocalizedFormatException extends FormatException {
   LocalizedFormatException(this.localize)
     : super(localize(AppLocalizationsEn()));

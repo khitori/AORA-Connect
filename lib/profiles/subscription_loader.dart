@@ -26,8 +26,6 @@ class SubscriptionLoadResult {
   final DateTime? expiresAt;
 }
 
-/// Providers commonly publish expiry as Unix seconds in subscription-userinfo.
-/// Missing, zero, or malformed values do not establish an expiry date.
 DateTime? subscriptionExpiry(String? userInfo) {
   if (userInfo == null) return null;
   final match = RegExp(
@@ -107,7 +105,6 @@ SubscriptionLoadResult parseSubscriptionDetailed(String body) {
 List<ServerProfile> parseSubscription(String body) =>
     parseSubscriptionDetailed(body).profiles;
 
-/// Local validation only: pasting must never fetch or import a subscription.
 bool isSupportedSubscriptionInput(String value) {
   if (value.length > 65536 || RegExp(r'\s').hasMatch(value)) return false;
   final uri = Uri.tryParse(value);
@@ -201,7 +198,6 @@ Future<SubscriptionLoadResult> loadSubscriptionDetailed(String url) async {
 Future<List<ServerProfile>> loadSubscription(String url) async =>
     (await loadSubscriptionDetailed(url)).profiles;
 
-/// Optional provider title; rendering always uses plain text.
 String? subscriptionTitle(String? header) {
   if (header == null) return null;
   var title = header.trim();

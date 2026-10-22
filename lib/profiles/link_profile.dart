@@ -25,7 +25,6 @@ ServerProfile parseServerLink(String link) {
       _ => throw FormatException('Unsupported server protocol: $scheme.'),
     };
   } on FormatException catch (error) {
-    // Links may contain credentials; expose only controlled error messages.
     if (error.message.startsWith('Unsupported') ||
         error.message.startsWith('Missing') ||
         error.message.startsWith('Invalid')) {
@@ -309,7 +308,6 @@ String _name(Uri uri) =>
 void _checkKeys(Map<String, String> values, Set<String> allowed) {
   for (final key in values.keys) {
     if (!allowed.contains(key)) {
-      // A query key is untrusted input too: only show a short, plain name.
       final safeName = RegExp(r'^[A-Za-z][A-Za-z0-9_-]{0,39}$').hasMatch(key);
       throw FormatException(
         safeName

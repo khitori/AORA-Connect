@@ -27,7 +27,6 @@ import (
 	xgrpc "github.com/xtls/xray-core/transport/internet/grpc"
 )
 
-// Platform sockets must use a physical Android network, never the active TUN.
 type Platform interface {
 	Protect(fd int32) error
 	Resolve(host string) (string, error)
@@ -46,8 +45,6 @@ func Configure(value Platform) {
 	lifecycle.Lock()
 	defer lifecycle.Unlock()
 	platform = value
-	// One immutable adapter, not an accumulating list of per-session controllers.
-	// Unlike Xray's optional controllers, protection failures abort the dial.
 	internet.UseAlternativeSystemDialer(internet.WithAdapter(physicalDialer{}))
 	registerProcessFinder(value)
 }
@@ -82,7 +79,7 @@ func (physicalDialer) Dial(network, address string) (net.Conn, error) {
 
 func ValidateXray(config string) error {
 	_, err := serial.LoadJSONConfig(strings.NewReader(config))
-	return err // Build only: constructing a second instance mutates Xray globals.
+	return err
 }
 
 func start(config string) error {
@@ -124,7 +121,6 @@ func StartXray(config string, tunFD int32) error {
 	if platform == nil || tunFD < 3 {
 		return errors.New("missing Android VPN platform or TUN")
 	}
-	// Ping-only instances may be replaced, but an active VPN is never replaced by a check.
 	closeInstance()
 	if err := os.Setenv("XRAY_TUN_FD", strconv.Itoa(int(tunFD))); err != nil {
 		return err
@@ -144,7 +140,6 @@ func StopXray() {
 	}
 }
 
-// Batch owns only its uniquely tagged test outbounds, never the VPN instance.
 type Batch struct {
 	id     int64
 	epoch  int64
@@ -230,8 +225,6 @@ func (b *Batch) Check(index int32, method, target string) (int64, error) {
 	defer cancel()
 	failure := &outboundFailure{errors: make(chan error, 1)}
 	ctx = session.TrackedConnectionError(ctx, failure)
-	// A fresh transport excludes HTTP reuse between checks. Do not request
-	// Connection: close: premature gRPC EOF can otherwise discard a valid reply.
 	transport := &http.Transport{DialContext: func(ctx context.Context, _, address string) (net.Conn, error) {
 		destination, err := xnet.ParseDestination("tcp:" + address)
 		if err != nil {

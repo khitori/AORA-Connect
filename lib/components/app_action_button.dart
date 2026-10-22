@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
-/// A compact action that centers its content within the available width.
 class AppActionButton extends StatelessWidget {
   const AppActionButton({
     super.key,

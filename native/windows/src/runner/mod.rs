@@ -64,8 +64,6 @@ unsafe fn update_icons(window: &mut Window, dpi: u32) -> io::Result<()> {
         (&mut icons.large, SM_CXICON, SM_CYICON),
         (&mut icons.small, SM_CXSMICON, SM_CYSMICON),
     ] {
-        // Request each frame at its native DPI size instead of letting Windows
-        // reduce the class's large icon for small taskbar buttons.
         *target = LoadImageW(
             instance,
             101usize as *const u16,
@@ -80,7 +78,6 @@ unsafe fn update_icons(window: &mut Window, dpi: u32) -> io::Result<()> {
     }
     SendMessageW(window.hwnd, WM_SETICON, ICON_BIG as usize, icons.large as isize);
     SendMessageW(window.hwnd, WM_SETICON, ICON_SMALL as usize, icons.small as isize);
-    // Both old handles remain alive until the window has switched to the pair.
     window.icons = Some(icons);
     Ok(())
 }
@@ -128,8 +125,6 @@ unsafe extern "C" fn first_frame(data: *mut c_void) {
     let state = data.cast::<Window>();
     (*state).first_frame = true;
     if (*state).smoke {
-        // Smoke mode never shows a window or connects a VPN. It allows the first
-        // Flutter frame and event dispatch to complete before closing normally.
         SetTimer((*state).hwnd, 1, 250, None);
     } else {
         ShowWindow((*state).hwnd, SW_SHOWNORMAL);
@@ -212,8 +207,6 @@ unsafe extern "system" fn window_proc(
             }
             WM_TIMER if (*state).smoke && wparam == 1 => {
                 KillTimer(hwnd, 1);
-                // Exercise native small-frame selection and replacing both
-                // window icons at common display scales, without showing UI.
                 for dpi in [96, 120, 144, 192] {
                     if let Err(error) = update_icons(&mut *state, dpi) {
                         eprintln!("Rust runner smoke: icon loading failed: {error}");
@@ -251,8 +244,6 @@ unsafe extern "system" fn window_proc(
                     (*state).first_frame = false;
                 }
                 (*state).controls.remove_tray(hwnd);
-                // Exercise the real native -> Dart cleanup -> native destroy
-                // round trip. The fixture contains no core or firewall helpers.
                 PostMessageW(hwnd, WM_CLOSE, 0, 0);
                 return 0;
             }
@@ -283,8 +274,6 @@ fn run(instance: HINSTANCE) -> Result<i32, Box<dyn std::error::Error>> {
         if GetLastError() == ERROR_ALREADY_EXISTS && !smoke {
             return Err("AORA Connect is already running. Open it from the tray.".into());
         }
-        // Keep Flutter debug output on the parent's terminal without creating a
-        // visible console when launched from Explorer.
         if !smoke {
             AttachConsole(ATTACH_PARENT_PROCESS);
         }
@@ -370,7 +359,7 @@ fn run(instance: HINSTANCE) -> Result<i32, Box<dyn std::error::Error>> {
         }
         update_icons(&mut state, GetDpiForWindow(hwnd).max(96))?;
         update_theme(hwnd);
-        let corners: i32 = 2; // DWMWCP_ROUND; ignored on older Windows versions.
+        let corners: i32 = 2;
         DwmSetWindowAttribute(
             hwnd,
             DWMWA_WINDOW_CORNER_PREFERENCE as u32,
@@ -407,7 +396,6 @@ fn run(instance: HINSTANCE) -> Result<i32, Box<dyn std::error::Error>> {
         let mut client: RECT = zeroed();
         GetClientRect(hwnd, &mut client);
         state.controller = FlutterDesktopViewControllerCreate(client.right, client.bottom, engine);
-        // The view controller takes engine ownership even when creation fails.
         if state.controller.is_null() {
             return Err("Could not create Flutter view".into());
         }
@@ -449,15 +437,12 @@ fn run(instance: HINSTANCE) -> Result<i32, Box<dyn std::error::Error>> {
         }
         drop(state);
         UnregisterClassW(class.as_ptr(), instance);
-        // The job handle remains owned until process exit, matching the old
-        // runner. Closing it while this process is alive would terminate us too.
         std::mem::forget(job);
         std::mem::forget(app_mutex);
         Ok(0)
     }
 }
 
-/// Entry point called by the Windows CRT. No application-owned C++ shim is used.
 #[no_mangle]
 pub extern "system" fn wWinMain(instance: HINSTANCE, _: HINSTANCE, _: *mut u16, _: i32) -> i32 {
     match std::panic::catch_unwind(|| run(instance)) {

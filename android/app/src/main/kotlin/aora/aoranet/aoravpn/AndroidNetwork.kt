@@ -10,7 +10,6 @@ import android.system.OsConstants
 import io.nekohasekai.mobile.Platform
 import java.net.InetSocketAddress
 
-/** Physical-network operations shared by both cores and direct server checks. */
 internal class AndroidNetwork(private val context: Context) : Platform {
     private val connectivity = context.getSystemService(ConnectivityManager::class.java)
     private val monitor = PhysicalNetworkMonitor.get(context)
@@ -18,8 +17,6 @@ internal class AndroidNetwork(private val context: Context) : Platform {
 
     override fun protect(fd: Int) {
         val selected = monitor.awaitReady()
-        // Duplicate only to get a Java FileDescriptor; socket marks apply to both
-        // descriptors. Closing this duplicate must never close the core's FD.
         try {
             ParcelFileDescriptor.fromFd(fd).use { duplicate ->
                 VpnRuntime.service?.let {

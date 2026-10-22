@@ -21,7 +21,6 @@ pub fn wide(value: impl AsRef<OsStr>) -> Vec<u16> {
     value.as_ref().encode_wide().chain(Some(0)).collect()
 }
 
-/// Quote one argument using the Windows CRT command-line parsing rules.
 pub fn quote(value: &OsStr) -> Vec<u16> {
     let mut result = vec![b'"' as u16];
     let mut slashes = 0;
@@ -64,11 +63,6 @@ impl Process {
     }
 }
 
-/// The returned handles are exclusively owned; no raw HANDLE escapes the owner.
-///
-/// # Safety
-/// `handle` must be an exclusively owned, valid kernel handle returned by a
-/// Windows creation API, and must not be closed elsewhere after this call.
 pub unsafe fn owned(handle: HANDLE) -> io::Result<OwnedHandle> {
     if handle.is_null() || handle == INVALID_HANDLE_VALUE {
         Err(io::Error::last_os_error())
@@ -77,7 +71,6 @@ pub unsafe fn owned(handle: HANDLE) -> io::Result<OwnedHandle> {
     }
 }
 
-/// Launch either a hidden console or a process inside the existing hidden one.
 pub fn spawn(
     executable: &Path,
     args: &[&OsStr],

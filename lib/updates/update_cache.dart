@@ -2,8 +2,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-/// Only direct update-* children and explicitly owned files may be removed.
-/// Never follows links or recursively deletes runtime/profile directories.
 class UpdateCache {
   UpdateCache(
     this.runtime, {
@@ -93,8 +91,6 @@ class UpdateCache {
     return true;
   }
 
-  /// Caller must hold the session lease. Also used for rejected downloads:
-  /// even an authentic but wrong release must not become a pending update.
   Future<void> discardLocked(Directory directory) async {
     if (!await _safe(directory)) return;
     await for (final child in directory.list(followLinks: false)) {
@@ -113,11 +109,9 @@ class UpdateCache {
         await directory.delete();
       }
     } on FileSystemException {
-      /* Retry on a subsequent sweep. */
     }
   }
 
-  /// Returns one authenticated newer package for an explicit user retry.
   Future<({File file, Map<String, dynamic> release})?> sweep(
     String current, {
     String? preferredPackage,
@@ -144,7 +138,6 @@ class UpdateCache {
           if (!await _safe(child)) continue;
           lock = await acquire(child);
           if (lock == null) continue;
-          // Windows helper holds this file without sharing while installing.
           final installer = File('${child.path}/.installer.lock');
           if (await installer.exists()) {
             final handle = await installer.open(mode: FileMode.append);
@@ -155,7 +148,6 @@ class UpdateCache {
             final value = await inspect('${child.path}/$packageName');
             if (newer(value['version'] as String, current)) release = value;
           } catch (_) {
-            /* Invalid, incomplete or obsolete package. */
           }
           var installing = false;
           if (release != null) {
@@ -168,7 +160,6 @@ class UpdateCache {
                     release['version'];
               }
             } catch (_) {
-              /* No valid handoff marker. */
             }
             final path = File('${child.path}/$packageName').absolute.uri;
             if (pending == null ||
@@ -192,7 +183,6 @@ class UpdateCache {
           ));
           lock = null;
         } on FileSystemException {
-          /* In use or inaccessible: retry later. */
         } finally {
           if (lock != null) await release(child, lock);
         }
@@ -204,7 +194,6 @@ class UpdateCache {
         try {
           await discardLocked(entry.dir);
         } on FileSystemException {
-          /* File locks are not cleanup failures. */
         }
       }
     } finally {
@@ -213,7 +202,6 @@ class UpdateCache {
         if (entry.installing || entry.dir.uri == pending?.file.parent.uri) {
           continue;
         }
-        // Non-recursive deletion preserves unexpected/concurrently added files.
         await removeEmptySession(entry.dir);
       }
     }

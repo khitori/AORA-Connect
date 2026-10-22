@@ -6,7 +6,6 @@ $fixture = Join-Path ([IO.Path]::GetTempPath()) ('aora-installer-test-' + [guid]
 $stage = Join-Path $fixture 'stage'
 $installation = Join-Path $fixture 'installed'
 New-Item -ItemType Directory -Path (Join-Path $stage 'app'),(Join-Path $stage 'cores/windows'),(Join-Path $installation 'settings') -Force | Out-Null
-# Inert fixture files; no app or VPN core is executed.
 Copy-Item -LiteralPath (Join-Path $project 'LICENSE') -Destination (Join-Path $stage 'app/fixture.txt')
 Copy-Item -LiteralPath (Join-Path $project 'LICENSE') -Destination (Join-Path $stage 'cores/windows/fixture.txt')
 $saved = Join-Path $installation 'settings/app-state.json'

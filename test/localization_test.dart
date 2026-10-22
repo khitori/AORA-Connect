@@ -206,7 +206,6 @@ void main() {
             isTrue,
           );
         }
-        // Check the content and translated labels of the principal settings cards.
         await tester.tap(find.text('Ядро'));
         await tester.pumpAndSettle();
         expect(find.text('Сетевое ядро'), findsOneWidget);

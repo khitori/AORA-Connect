@@ -130,8 +130,6 @@ class _ServerSelectorState extends State<ServerSelector> {
                   height: 56,
                   readOnly: onChanged == null,
                   showOutline: false,
-                  // Leave room for the enclosing card's 1px outline so the
-                  // selector's bottom curve aligns with the card's inner edge.
                   borderRadius: BorderRadius.vertical(
                     bottom: Radius.circular(AppTheme.controlRadius - 1),
                   ),

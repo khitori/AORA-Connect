@@ -15,7 +15,6 @@ import java.io.File
 import java.util.UUID
 import java.util.concurrent.Executors
 
-/** Service-owned state; destroying or hot-restarting Flutter must not stop the VPN. */
 internal object VpnRuntime {
     val worker = Executors.newSingleThreadExecutor { Thread(it, "aora-vpn") }
     val main = Handler(Looper.getMainLooper())
@@ -104,7 +103,6 @@ internal object VpnRuntime {
         "coreError" to lastCoreError,
     )
 
-    /** A passive snapshot only: copying diagnostics must not initiate network work. */
     @Suppress("DEPRECATION")
     fun reportDetails(context: Context): Map<String, String?> {
         val info = context.packageManager.getPackageInfo(context.packageName, 0)

@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Generate a private key outside the checkout, or append a signed update footer.
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -83,7 +82,6 @@ Future<void> main(List<String> args) async {
     throw StateError('Release metadata exceeds 64 KiB.');
   }
   if (android) {
-    // APK v2/v3 signatures cover the complete ZIP layout. Never append a footer.
     await File('${installer.parent.path}/aora-update-android.json')
         .writeAsBytes(envelope, flush: true);
     stdout.writeln(

@@ -102,7 +102,6 @@ class NodePingController extends ChangeNotifier {
     for (final profile in profiles) {
       _results[profile] = const NodePingResult(pending: true);
     }
-    // Start asynchronously so busy is already true when listeners rebuild.
     final operation = Future<void>(() async {
       NodePingBatch? batch;
       try {

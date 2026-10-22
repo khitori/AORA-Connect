@@ -7,7 +7,6 @@ import '../core/core_kind.dart';
 import '../core/dns_provider.dart';
 import 'server_profile.dart';
 
-/// VLESS links requiring Xray's full-certificate SHA-256 pinning.
 class XrayVlessProfile extends ServerProfile {
   const XrayVlessProfile({
     required super.name,

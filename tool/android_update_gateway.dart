@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Loopback-only fixtures for the isolated Android updater harness.
 // ignore_for_file: avoid_print
 import 'dart:io';
 

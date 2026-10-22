@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
-/// Shared selector. Its popup is anchored below the field and scrolls there.
 class AppSelect<T> extends StatefulWidget {
   const AppSelect({
     super.key,
@@ -102,7 +101,6 @@ class _AppSelectState<T> extends State<AppSelect<T>>
     widget.onOpenChanged?.call(false);
     _focusNode.requestFocus();
     if (selected != null) {
-      // An already-open menu may outlive the connection becoming locked.
       if (widget.onBeforeOpen?.call() == false) return;
       widget.onChanged?.call(selected);
     }
@@ -111,7 +109,6 @@ class _AppSelectState<T> extends State<AppSelect<T>>
   Future<void> _show() async {
     if (_open || !_enabled || widget.items.isEmpty) return;
     if (widget.onBeforeOpen?.call() == false) return;
-    // If the field is near the bottom of a scrolled page, first bring it up.
     final initialBox = context.findRenderObject()! as RenderBox;
     final initialBottom =
         initialBox.localToGlobal(Offset.zero).dy + initialBox.size.height;

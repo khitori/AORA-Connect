@@ -8,7 +8,6 @@ import 'package:aoravpn/core/windows_core_engine.dart';
 import 'package:aoravpn/profiles/subscription_loader.dart';
 import 'package:aoravpn/storage/app_paths.dart';
 
-// Read the secret URL from stdin instead of storing it in the repository.
 Future<void> main(List<String> arguments) async {
   final mode = arguments.contains('--tun')
       ? ConnectionMode.tun
@@ -62,7 +61,6 @@ Future<void> main(List<String> arguments) async {
     );
     stdout.writeln('HTTPS probe succeeded (${elapsed.inMilliseconds} ms).');
   } catch (error) {
-    // Errors from network and URI parsing are sanitized by the helpers.
     stderr.writeln(error);
     exitCode = 1;
   } finally {

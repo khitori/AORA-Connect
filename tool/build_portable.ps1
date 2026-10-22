@@ -15,15 +15,12 @@ if (!$SkipFlutterBuild) {
 }
 $release = Join-Path $project 'build/windows/x64/runner/Release'
 $output = Join-Path $project $(if ($BundleOnly) { 'build/installer' } else { 'build/portable' })
-# Each build has its own staging directory; no recursive cleanup of existing builds.
 $stage = Join-Path $output ('stage-' + [guid]::NewGuid().ToString('N'))
 $app = Join-Path $stage 'app'
 $cores = Join-Path $stage 'cores/windows'
 New-Item -ItemType Directory -Force -Path $app,$cores | Out-Null
 if (!(Test-Path -LiteralPath (Join-Path $release 'aoravpn.exe'))) { throw 'Release application missing' }
 Get-ChildItem -LiteralPath $release | Copy-Item -Destination $app -Recurse -Force
-# Rebuild native helpers even when reusing the Flutter release bundle, so a
-# source-only migration cannot accidentally package old C++ helper binaries.
 $rustProject = Join-Path $project 'native/windows'
 $helperBuild = Join-Path $project 'build/windows/x64/rust'
 Push-Location $rustProject
@@ -53,7 +50,6 @@ foreach ($folder in @('sing-box-1.14.2-windows-amd64','xray-v26.9.30-windows-64'
 Copy-Item -LiteralPath (Join-Path $project 'LICENSE') -Destination (Join-Path $app 'LICENSE-AORAConnect')
 $cache = Get-Content -LiteralPath (Join-Path $project 'build/windows/x64/CMakeCache.txt')
 $vs = ($cache | Where-Object { $_ -like 'CMAKE_GENERATOR_INSTANCE:INTERNAL=*' }) -replace '^.*?=', ''
-# App-local C++ runtime avoids requiring a separate redistributable installer.
 $crt = Get-ChildItem -LiteralPath (Join-Path $vs 'VC/Redist/MSVC') -Recurse -Directory |
   Where-Object { $_.Name -like 'Microsoft.VC*.CRT' -and $_.FullName -match '[\\/]x64[\\/]' } |
   Sort-Object FullName -Descending | Select-Object -First 1
@@ -65,8 +61,6 @@ if ($BundleOnly) {
   return
 }
 $archive = Join-Path $output 'payload.zip'
-# Some crate archives preserve pre-1980 license timestamps; ZIP cannot store
-# those dates. Normalize only generated staging files, never the source files.
 $zipMinimum = [DateTime]::new(1980, 1, 1)
 $zipMaximum = [DateTime]::new(2107, 12, 31)
 Get-ChildItem -LiteralPath $stage -Recurse -File | ForEach-Object {

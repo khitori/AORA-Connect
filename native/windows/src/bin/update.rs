@@ -54,9 +54,6 @@ fn run(args: &[String]) -> Result<()> {
             {
                 return Err("Update must be staged in application storage".into());
             }
-            // No sharing: startup cleanup cannot open/delete this session while
-            // the helper or the installer is using it. The persistent handoff
-            // marker also protects the gap before this process acquires it.
             let _installer_lease =
                 installer_lease(package.parent().ok_or("Missing update directory")?)?;
             let release = verify_package(&package)?;
@@ -74,7 +71,6 @@ fn run(args: &[String]) -> Result<()> {
                     return Err(std::io::Error::last_os_error().into());
                 }
             }
-            // The portable launcher may retain its mutex briefly after the app exits.
             let deadline = Instant::now() + Duration::from_secs(10);
             loop {
                 let handle = unsafe {
@@ -93,7 +89,6 @@ fn run(args: &[String]) -> Result<()> {
                 }
                 std::thread::sleep(Duration::from_millis(100));
             }
-            // Recheck after shutdown; never run a package swapped since staging.
             verify_package(&package)?;
             let status = Command::new(&package)
                 .args(["/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART"])

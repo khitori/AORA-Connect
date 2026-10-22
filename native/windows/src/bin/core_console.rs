@@ -65,9 +65,6 @@ fn run() -> io::Result<u32> {
                     break;
                 }
             }
-            // Xray reports "started" before GC and signal.Notify in main/run.go.
-            // Give a very early stop a brief startup grace period instead of
-            // delivering CTRL_BREAK while its default console handler is active.
             if xray {
                 let remaining =
                     std::time::Duration::from_millis(500).saturating_sub(started.elapsed());
@@ -95,6 +92,5 @@ fn main() {
             1
         }
     };
-    // The control thread can still be blocked on stdin; process exit ends it.
     std::process::exit(code as i32);
 }

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 
-/// Global widget defaults. Individual components can override these styles.
 abstract final class AppTheme {
   static const controlRadius = 12.0;
   static const controlHeight = 36.0;

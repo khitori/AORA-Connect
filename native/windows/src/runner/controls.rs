@@ -93,8 +93,6 @@ pub(super) unsafe fn install(state: *mut Window, engine: *mut c_void) {
     let controls = &mut (*state).controls;
     controls.messenger = FlutterDesktopEngineGetMessenger(engine);
     controls.taskbar_created = RegisterWindowMessageW(wide("TaskbarCreated").as_ptr());
-    // The runner is elevated; Explorer must still be able to deliver tray and
-    // taskbar-restart notifications. No arbitrary channel commands are exposed.
     ChangeWindowMessageFilterEx((*state).hwnd, TRAY_MESSAGE, MSGFLT_ALLOW, null_mut());
     if controls.taskbar_created != 0 {
         ChangeWindowMessageFilterEx(
@@ -159,8 +157,6 @@ unsafe extern "C" fn command(
             b"ok"
         }
         b"tray" => {
-            // Never hide the user's only way back into the app if the shell
-            // rejects the icon (for example when Explorer is unavailable).
             if (*state).controls.add_tray(hwnd) {
                 ShowWindow(hwnd, SW_HIDE);
                 b"ok"
@@ -293,8 +289,6 @@ pub(super) unsafe fn handle(state: *mut Window, message: u32, lparam: LPARAM) ->
     }
     match message {
         WM_CLOSE if !(*state).controls.messenger.is_null() => {
-            // Dart performs the same awaited core/ping cleanup for the custom
-            // button, Alt+F4 and tray Exit, then sends "destroy" back.
             if !(*state).controls.event(b"exit") {
                 show(state);
             }

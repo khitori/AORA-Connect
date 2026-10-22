@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #![windows_subsystem = "windows"]
-// Compatibility/recovery only. Never install persistent blocking filters.
 use aora_windows_helpers::{network::tun_luid, wide};
 use std::mem::zeroed;
 use std::ptr::{null, null_mut};
@@ -90,8 +89,6 @@ impl Engine {
         }
         Ok(())
     }
-    // Retains the old permit-only command for compatibility with recovery tools.
-    // This does not create a sublayer or any blocking policy.
     fn allow_tun(&self) -> Result<()> {
         let mut luid = tun_luid()?;
         self.transaction(|| {

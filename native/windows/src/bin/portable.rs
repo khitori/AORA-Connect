@@ -51,7 +51,6 @@ fn unpack(root: &Path) -> Result<()> {
     .replace(['[', ']', ',', ' '], "");
     let session = root.join("runtime").join(name);
     fs::create_dir_all(session.parent().ok_or("Invalid runtime directory")?)?;
-    // create_dir fails rather than reusing a previous or unrelated directory.
     fs::create_dir(&session)?;
     let result = (|| -> Result<()> {
         fs::write(session.join("payload.zip"), PAYLOAD)?;
@@ -69,8 +68,6 @@ fn unpack(root: &Path) -> Result<()> {
              New-Item -ItemType Directory -Force -Path $destination | Out-Null; \
              Get-ChildItem -LiteralPath $source -Force | Copy-Item -Destination $destination -Recurse -Force }}",
             literal(root_text), literal(session_text));
-        // A private UTF-8-BOM script avoids shell-quoting paths and command-length
-        // limits. No commands from subscriptions or other external inputs enter it.
         let script_path = session.join("unpack.ps1");
         let mut script_bytes = vec![0xef, 0xbb, 0xbf];
         script_bytes.extend(script.as_bytes());
@@ -97,7 +94,6 @@ fn unpack(root: &Path) -> Result<()> {
         fs::write(root.join("app/package-id.txt"), PACKAGE_ID)?;
         Ok(())
     })();
-    // Delete only the fresh directory created above, never the application root.
     let cleanup = fs::remove_dir_all(&session);
     result?;
     cleanup?;

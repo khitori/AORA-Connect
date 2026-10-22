@@ -152,10 +152,7 @@ class WindowsCoreEngine implements TunnelEngine {
         );
       }
       _processCompletion = process.exitCode.then((code) async {
-        // Process exit can arrive before its final stderr lines. Read both
-        // pipes to completion before reporting the reason for a failed start.
         await Future.wait(outputFinished);
-        // Both pipes are drained; release their listeners.
         for (final subscription in subscriptions) {
           await subscription.cancel();
         }
@@ -197,7 +194,6 @@ class WindowsCoreEngine implements TunnelEngine {
       _logs.add('Core stopped (exit $code).');
       if (code != 0) _logs.add('Core shutdown returned exit $code.');
     } else {
-      // Used only for local proxy tests without the native host.
       process.kill();
       await process.exitCode.timeout(const Duration(seconds: 5));
     }
@@ -218,7 +214,6 @@ class WindowsCoreEngine implements TunnelEngine {
       try {
         await _operation;
       } catch (_) {
-        /* Startup may have failed. */
       }
     }
     await _stop();

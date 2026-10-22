@@ -56,8 +56,6 @@ fn main() {
         PathBuf::from(&plugins).display()
     );
     let header = fs::read_to_string(header).expect("Read Flutter Windows API header");
-    // Generate the properties layout from the installed SDK instead of silently
-    // assuming that Flutter's ABI never adds or changes a field.
     let end = header
         .find("} FlutterDesktopEngineProperties;")
         .expect("Missing engine properties");
@@ -95,8 +93,6 @@ fn main() {
     output.push_str("}\n");
     let registrant = fs::read_to_string(plugins).expect("Read generated plugin registrant");
     let mut calls = String::new();
-    // Flutter generates C-exported registration calls even when the plugin's
-    // implementation is C++. Refuse unknown forms rather than skip a plugin.
     let mut remaining = registrant.as_str();
     while let Some((before, after)) = remaining.split_once("RegisterWithRegistrar(") {
         let prefix: String = before

@@ -3,7 +3,6 @@ package aora.aoranet.aoravpn
 
 import java.io.File
 
-/** Bounded to our private installer copies; no recursive deletion or link following. */
 internal object AndroidUpdateCache {
     private val apkName = Regex("aora-update-[a-zA-Z0-9_-]+\\.apk")
 
@@ -21,13 +20,11 @@ internal object AndroidUpdateCache {
                     if (marker.length() > 32) continue
                     marker.readText().toLongOrNull() ?: continue
                 } else {
-                    // Legacy copies may have been handed to Android before
-                    // handoff records existed. Only delete authenticated old APKs.
                     inspectBuild(file)
                 }
                 if (build < 0 || build > installedBuild) continue
                 if (file.delete()) marker.delete()
-            } catch (_: Exception) { /* Unknown or inaccessible: preserve and retry. */ }
+            } catch (_: Exception) {                                                    }
         }
         for (marker in directory.listFiles().orEmpty()) {
             if (!marker.name.endsWith(".installing")) continue

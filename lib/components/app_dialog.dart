@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
-/// App-styled dialog with compact spacing and equal-width actions.
 class AppDialog extends StatelessWidget {
   const AppDialog({
     super.key,

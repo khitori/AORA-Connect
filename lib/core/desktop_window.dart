@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/directional_text.dart';
 
-/// Small UTF-8 channel to the Rust window host; no native plugin is required.
 class DesktopWindow {
   static const channel = BasicMessageChannel<String>(
     'aora/window',
@@ -39,7 +38,6 @@ class DesktopWindow {
         return 'ok';
       } catch (error) {
         _exit = null;
-        // Make failures visible instead of leaving an inaccessible hidden app.
         try {
           await command('show');
         } catch (_) {}

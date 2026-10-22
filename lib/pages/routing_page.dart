@@ -31,7 +31,6 @@ class RoutingPage extends StatefulWidget {
 class _RoutingPageState extends State<RoutingPage> {
   static const _sectionGap = 16.0;
   ConnectionController get connection => widget.connection;
-  // Resolve display metadata once per page, not once for every rule/rebuild.
   late final Future<List<InstalledApplication>>? _applications =
       widget.applicationLoader != null
       ? widget.applicationLoader!()

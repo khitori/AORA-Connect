@@ -178,7 +178,6 @@ class UpdateController extends ChangeNotifier {
       }
       if (isAndroid && verifier == null) await AndroidUpdates.cleanup();
     } catch (_) {
-      // Cleanup is best effort: file locks/permissions must not block updates.
     }
   }
 
@@ -198,7 +197,6 @@ class UpdateController extends ChangeNotifier {
           await cache.discardLocked(entry.key);
         }
       } on FileSystemException {
-        // A locked file is retried by the next startup sweep.
       } finally {
         await UpdateCache.release(entry.key, entry.value);
         if (!ready) await UpdateCache.removeEmptySession(entry.key);
@@ -224,7 +222,6 @@ class UpdateController extends ChangeNotifier {
     if (!supported) return;
     try {
       currentVersion = (await _verify('info', ''))['version'] as String;
-      // Injected test/custom storage must never scan the real application's data.
       final runtime =
           runtimeDirectory ??
           (preferencesDirectory == null && sessionCreator == null
@@ -240,7 +237,6 @@ class UpdateController extends ChangeNotifier {
               : newerRelease(a, b),
         );
         await _cleanup(recover: true);
-        // An installer/helper may still be exiting during the first sweep.
         _cleanupRetry = Timer(const Duration(seconds: 30), () async {
           if (!_disposed && !busy && !installing) await _cleanup();
         });
@@ -356,7 +352,6 @@ class UpdateController extends ChangeNotifier {
         final candidate = AppRelease(
           await _verify('verify-manifest', metadata.path),
         );
-        // A metadata check must not discard a verified package awaiting retry.
         if (package == null) {
           release = _newer(candidate.version) ? candidate : null;
         }
@@ -528,8 +523,6 @@ class UpdateController extends ChangeNotifier {
     _disposed = true;
     _cleanupRetry?.cancel();
     _client?.close(force: true);
-    // In-flight work owns its leases until its finally block. Verified pending
-    // files survive exit for retry; startup sweeps all obsolete versions.
     super.dispose();
   }
 }
