@@ -253,6 +253,7 @@ class _AppSelectState<T> extends State<AppSelect<T>>
                   }
                 : null,
             child: Ink(
+              height: widget.height,
               decoration: BoxDecoration(
                 color: AppColors.card,
                 borderRadius: widget.borderRadius,
@@ -261,7 +262,6 @@ class _AppSelectState<T> extends State<AppSelect<T>>
                     : null,
               ),
               child: SizedBox(
-                height: widget.height,
                 child: Padding(
                   padding: EdgeInsets.symmetric(
                     horizontal: widget.horizontalPadding,

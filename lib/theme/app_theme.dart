@@ -86,6 +86,10 @@ abstract final class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
+          minimumSize: const Size(64, controlHeight),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          visualDensity: VisualDensity.standard,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           foregroundColor: AppColors.ink,
           side: BorderSide(color: AppColors.lineStrong),
           shape: shape,
@@ -93,6 +97,10 @@ abstract final class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
+          minimumSize: const Size(64, controlHeight),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          visualDensity: VisualDensity.standard,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           backgroundColor: AppColors.accent,
           foregroundColor: AppColors.card,
           disabledBackgroundColor: AppColors.paperDark,
@@ -102,6 +110,10 @@ abstract final class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
+          minimumSize: const Size(64, controlHeight),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          visualDensity: VisualDensity.standard,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           foregroundColor: AppColors.accent,
           shape: shape,
         ).copyWith(overlayColor: controlOverlayColor),

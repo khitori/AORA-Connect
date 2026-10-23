@@ -201,9 +201,14 @@ class RoutingRuleCard extends StatelessWidget {
                         label: Text(context.l10n.edit),
                         style: TextButton.styleFrom(
                           foregroundColor: AppColors.muted500,
+                          disabledForegroundColor: AppColors.lineStrong,
                           minimumSize: const Size(0, 36),
+                          visualDensity: VisualDensity.standard,
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       ),
                     ),
