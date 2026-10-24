@@ -13,7 +13,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get language => 'Sprache';
 
   @override
-  String get interfaceLanguage => 'Sprache der Benutzeroberfläche';
+  String get interfaceLanguage => 'Oberflächensprache';
 
   @override
   String get systemDefault => 'Systemsprache';
@@ -89,10 +89,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get refresh => 'Aktualisieren';
 
   @override
-  String get validate => 'Validieren';
+  String get validate => 'Prüfen';
 
   @override
-  String get testConnection => 'Verbindung testen';
+  String get testConnection => 'Verbindung';
 
   @override
   String get copyDiagnostics => 'Diagnose kopieren';
@@ -110,7 +110,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String serverRequiresCore(String p0) {
-    return 'Dieser Server benötigt $p0. Wählen Sie diesen Kern in den Einstellungen aus.';
+    return 'Dieser Server benötigt $p0. Wählen Sie den Core in den Einstellungen.';
   }
 
   @override
@@ -139,7 +139,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get chooseSubscription => 'Abonnement auswählen';
 
   @override
-  String get selectSubscription => 'Zu verwendendes Abonnement auswählen';
+  String get selectSubscription => 'Aktives Abonnement auswählen';
 
   @override
   String get refreshSubscription => 'Ausgewähltes Abonnement aktualisieren';
@@ -233,7 +233,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get changingCore => 'dem Wechsel des Kerns';
+  String get changingCore => 'dem Wechsel des Cores';
 
   @override
   String get changingMode => 'dem Wechsel des Verbindungsmodus';
@@ -245,14 +245,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get changingKillSwitch => 'der Änderung des Kill Switch';
 
   @override
-  String get core => 'Kern';
+  String get core => 'Core';
 
   @override
-  String get networkingCore => 'Netzwerkkern';
+  String get networkingCore => 'Netzwerk-Core';
 
   @override
-  String get coreHelp =>
-      'Wählen Sie den Kern manuell aus. Der benötigte Kern wird für jeden Server im Tab „Abonnements“ angezeigt.';
+  String get coreHelp => 'Wählen Sie den Core, den Ihr Server benötigt.';
 
   @override
   String get connectionMode => 'Verbindungsmodus';
@@ -266,7 +265,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get killSwitchHelp =>
-      'Schützt DNS und TUN-Routing während der Verbindung. Nach dem Trennen ist der normale Internetzugang wieder verfügbar.';
+      'Schützt während der Verbindung vor DNS- und Datenlecks.';
 
   @override
   String get availableTun => 'Im Modus VPN (TUN) verfügbar.';
@@ -275,29 +274,28 @@ class AppLocalizationsDe extends AppLocalizations {
   String get quickSettings => 'Schnelleinstellungen';
 
   @override
-  String get quickSettingsSubtitle => 'Über das Android-Panel verbinden';
+  String get quickSettingsSubtitle => 'Verbindung über die Kachel';
 
   @override
   String get quickSettingsHelp =>
-      'Über die Kachel „AORA Connect“ können Sie sich mit dem ausgewählten Server verbinden oder die Verbindung trennen. Halten Sie die Kachel gedrückt, um die App zu öffnen.';
+      'Tippen Sie auf die Systemkachel, um sich zu verbinden oder die Verbindung zu trennen. Langes Drücken öffnet die App.';
 
   @override
-  String get addQuickSettings => 'Zu Schnelleinstellungen hinzufügen';
+  String get addQuickSettings => 'Kachel hinzufügen';
 
   @override
-  String get tileAdded =>
-      'AORA Connect wurde zu den Schnelleinstellungen hinzugefügt.';
+  String get tileAdded => 'AORA-Connect-Kachel hinzugefügt.';
 
   @override
   String get tileAlreadyAdded =>
-      'AORA Connect ist bereits in den Schnelleinstellungen vorhanden.';
+      'Die AORA-Connect-Kachel ist bereits hinzugefügt.';
 
   @override
   String get tileManual =>
       'Öffnen Sie die Schnelleinstellungen, tippen Sie auf „Bearbeiten“ und ziehen Sie AORA Connect zu Ihren Kacheln.';
 
   @override
-  String get tileDeclined => 'Die Kachel wurde nicht hinzugefügt.';
+  String get tileDeclined => 'Kachel nicht hinzugefügt.';
 
   @override
   String get tileFailed =>
@@ -324,11 +322,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get diagnostics => 'Diagnose';
 
   @override
-  String get diagnosticsSubtitle =>
-      'Validierung, Verbindungstest und Protokolle';
+  String get diagnosticsSubtitle => 'Konfiguration und Verbindung';
 
   @override
-  String get coreLogs => 'Kernprotokolle';
+  String get coreLogs => 'Core-Protokolle';
 
   @override
   String get noLogs => 'Noch keine Protokolle.';
@@ -344,7 +341,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get coresLicense =>
-      'Netzwerkkerne: sing-box und Xray. Ihre Binärdateien und Lizenzen sind von der App getrennt.';
+      'Netzwerk-Cores: sing-box und Xray. Ihre Binärdateien und Lizenzen sind von der App getrennt.';
 
   @override
   String get statistics => 'Statistik';
@@ -353,23 +350,22 @@ class AppLocalizationsDe extends AppLocalizations {
   String get off => 'Aus';
 
   @override
-  String get pingMeasuring => 'Server-Ping · Messung…';
+  String get pingMeasuring => 'Latenz · Messung…';
 
   @override
-  String get pingNoReply => 'Server-Ping · keine Antwort';
+  String get pingNoReply => 'Latenz · keine Antwort';
 
   @override
   String pingValue(String p0) {
-    return 'Server-Ping · $p0';
+    return 'Latenz · $p0';
   }
 
   @override
-  String get connectStatistics =>
-      'Verbinden Sie sich, um die ICMP-Livestatistik anzuzeigen';
+  String get connectStatistics => 'Verbinden Sie sich mit einem Server.';
 
   @override
   String target(String p0) {
-    return 'Ziel: $p0';
+    return 'Adresse: $p0';
   }
 
   @override
@@ -387,7 +383,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get pingHistory => 'Server-Ping-Verlauf. ';
+  String get pingHistory => 'Latenzverlauf. ';
 
   @override
   String successfulChecks(String p0, String p1) {
@@ -493,7 +489,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get match => 'Abgleich';
+  String get match => 'Regeltyp';
 
   @override
   String get value => 'Wert';
@@ -541,16 +537,16 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get automaticUpdates => 'Beim Start automatisch prüfen';
+  String get automaticUpdates => 'Beim Start prüfen';
 
   @override
   String get automaticUpdatesSemantics => 'Automatisch nach Updates suchen';
 
   @override
-  String get checkUpdates => 'Nach Updates suchen';
+  String get checkUpdates => 'Prüfen';
 
   @override
-  String get importUpdate => 'Update aus Datei';
+  String get importUpdate => 'Aus Datei';
 
   @override
   String get downloadUpdate => 'Update herunterladen';
@@ -581,7 +577,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get windowsInstaller => 'AORA-Update-Installer';
 
   @override
-  String get additionalSources => 'Zusätzliche Quellen (optional)';
+  String get additionalSources => 'Zusätzliche Quellen';
 
   @override
   String additionalSourcesCount(String p0) {

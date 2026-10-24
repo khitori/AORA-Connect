@@ -88,10 +88,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get refresh => '刷新';
 
   @override
-  String get validate => '验证配置';
+  String get validate => '检查';
 
   @override
-  String get testConnection => '测试连接';
+  String get testConnection => '连接';
 
   @override
   String get copyDiagnostics => '复制诊断信息';
@@ -125,7 +125,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get savedSubscriptions => '已保存的订阅';
 
   @override
-  String get noSubscriptions => '暂无订阅。请在上方添加链接以开始使用。';
+  String get noSubscriptions => '暂无订阅。请在上方添加链接。';
 
   @override
   String get activeSubscriptionNodes => '当前订阅中的服务器';
@@ -134,7 +134,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chooseSubscription => '选择订阅';
 
   @override
-  String get selectSubscription => '选择要使用的订阅';
+  String get selectSubscription => '选择当前订阅';
 
   @override
   String get refreshSubscription => '刷新所选订阅';
@@ -229,7 +229,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get changingDns => '修改 DNS';
 
   @override
-  String get changingKillSwitch => '修改断网保护';
+  String get changingKillSwitch => '修改 Kill Switch';
 
   @override
   String get core => '核心';
@@ -238,7 +238,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get networkingCore => '网络核心';
 
   @override
-  String get coreHelp => '请手动选择核心。每个服务器所需的核心会显示在“订阅”页面中。';
+  String get coreHelp => '选择服务器所需的核心。';
 
   @override
   String get connectionMode => '连接模式';
@@ -247,10 +247,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get connectionModeHelp => 'VPN (TUN) 会自动接管系统流量。本地代理模式需要在各应用中配置代理。';
 
   @override
-  String get killSwitch => '断网保护';
+  String get killSwitch => 'Kill Switch';
 
   @override
-  String get killSwitchHelp => '连接期间保护 DNS 和 TUN 路由。断开连接后会恢复正常的互联网访问。';
+  String get killSwitchHelp => '连接期间防止 DNS 和流量泄漏。';
 
   @override
   String get availableTun => '仅在 VPN (TUN) 模式下可用。';
@@ -259,29 +259,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quickSettings => '快捷设置';
 
   @override
-  String get quickSettingsSubtitle => '从 Android 面板连接';
+  String get quickSettingsSubtitle => '从快捷设置连接';
 
   @override
-  String get quickSettingsHelp =>
-      '使用 AORA Connect 快捷磁贴连接到所选服务器或断开连接。长按磁贴可打开应用。';
+  String get quickSettingsHelp => '点按快捷设置中的图块可连接所选服务器或断开 VPN。长按可打开应用。';
 
   @override
-  String get addQuickSettings => '添加到快捷设置';
+  String get addQuickSettings => '添加图块';
 
   @override
-  String get tileAdded => '已将 AORA Connect 添加到快捷设置。';
+  String get tileAdded => '已添加 AORA Connect 图块。';
 
   @override
-  String get tileAlreadyAdded => 'AORA Connect 已在快捷设置中。';
+  String get tileAlreadyAdded => '已添加过 AORA Connect 图块。';
 
   @override
-  String get tileManual => '打开快捷设置，点击“编辑”，然后将 AORA Connect 拖入磁贴列表。';
+  String get tileManual => '打开快捷设置，点击“编辑”，然后添加 AORA Connect 图块。';
 
   @override
-  String get tileDeclined => '未添加快捷磁贴。';
+  String get tileDeclined => '未添加图块。';
 
   @override
-  String get tileFailed => '无法添加磁贴。请打开快捷设置，通过“编辑”添加 AORA Connect。';
+  String get tileFailed => '无法添加图块。请在快捷设置中点击“编辑”，手动添加 AORA Connect。';
 
   @override
   String get dnsServer => 'DNS 服务器';
@@ -303,7 +302,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get diagnostics => '诊断';
 
   @override
-  String get diagnosticsSubtitle => '配置验证、连接测试和日志';
+  String get diagnosticsSubtitle => '配置与连接';
 
   @override
   String get coreLogs => '核心日志';
@@ -330,22 +329,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get off => '已关闭';
 
   @override
-  String get pingMeasuring => '服务器延迟 · 正在测量…';
+  String get pingMeasuring => '延迟 · 正在测量…';
 
   @override
-  String get pingNoReply => '服务器延迟 · 无响应';
+  String get pingNoReply => '延迟 · 无响应';
 
   @override
   String pingValue(String p0) {
-    return '服务器延迟 · $p0';
+    return '延迟 · $p0';
   }
 
   @override
-  String get connectStatistics => '连接后可查看实时 ICMP 统计';
+  String get connectStatistics => '请连接任意服务器。';
 
   @override
   String target(String p0) {
-    return '目标：$p0';
+    return '地址：$p0';
   }
 
   @override
@@ -363,7 +362,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get pingHistory => '服务器延迟历史。';
+  String get pingHistory => '延迟历史。';
 
   @override
   String successfulChecks(String p0, String p1) {
@@ -460,7 +459,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get match => '匹配条件';
+  String get match => '匹配类型';
 
   @override
   String get value => '值';
@@ -510,10 +509,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get automaticUpdatesSemantics => '自动检查更新';
 
   @override
-  String get checkUpdates => '检查更新';
+  String get checkUpdates => '检查';
 
   @override
-  String get importUpdate => '从文件更新';
+  String get importUpdate => '从文件导入';
 
   @override
   String get downloadUpdate => '下载更新';
@@ -542,11 +541,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get windowsInstaller => 'AORA 更新安装程序';
 
   @override
-  String get additionalSources => '额外来源（可选）';
+  String get additionalSources => '其他来源';
 
   @override
   String additionalSourcesCount(String p0) {
-    return '额外来源：$p0';
+    return '其他来源：$p0';
   }
 
   @override
@@ -615,7 +614,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get failed => '失败';
 
   @override
-  String get unavailable => '不适用';
+  String get unavailable => '不可用';
 
   @override
   String get checkingUpdates => '正在检查更新…';
@@ -649,7 +648,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get installationCompleted => '安装完成';
 
   @override
-  String get trayShow => '显示 AORA Connect';
+  String get trayShow => '打开 AORA Connect';
 
   @override
   String get trayExit => '退出';

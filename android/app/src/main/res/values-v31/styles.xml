@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AoraSplashTheme" parent="AoraWindowTheme">
+        <item name="android:windowBackground">@color/aora_splash_background</item>
+        <item name="android:windowSplashScreenBackground">@color/aora_splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/aora_splash_animated</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
+        <item name="android:windowSplashScreenAnimationDuration">700</item>
+    </style>
+    <style name="LaunchTheme" parent="AoraSplashTheme" />
+</resources>

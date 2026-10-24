@@ -73,8 +73,6 @@ class _InstalledApplicationPickerState
         children: [
           TextField(
             decoration: InputDecoration(
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               hintText: context.l10n.searchApplications,
               prefixIcon: Icon(Icons.search_rounded, size: 20),
               prefixIconConstraints: BoxConstraints(

@@ -152,10 +152,10 @@ void main() {
           ),
         );
         final validate = tester.getRect(
-          find.widgetWithText(OutlinedButton, 'Validate'),
+          find.widgetWithText(OutlinedButton, 'Check'),
         );
         final test = tester.getRect(
-          find.widgetWithText(OutlinedButton, 'Test connection'),
+          find.widgetWithText(OutlinedButton, 'Test'),
         );
         final copy = tester.getRect(
           find.widgetWithText(OutlinedButton, 'Copy diagnostics'),

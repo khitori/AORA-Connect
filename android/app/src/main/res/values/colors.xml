@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="aora_icon_background">#F4F4F2</color>
+    <color name="aora_splash_background">#F4F4F2</color>
 </resources>

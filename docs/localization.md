@@ -19,6 +19,24 @@ controller. System default follows the device's supported locale preferences.
 
 ## Adding a language
 
+### Wording and terminology
+
+The maintainer-edited Russian catalog is the editorial reference for tone and
+level of detail. Adapt its intent naturally to each language rather than
+translating its grammar literally.
+
+- Keep action labels short when the section already provides context, such as
+  **Check** and **From file** in Updates.
+- Use concise help text that explains the setting's purpose. Avoid repeating
+  navigation instructions or implementation details.
+- Retain **Kill Switch**, product names, and protocol identifiers consistently.
+  Use natural local terminology for cores, routing, subscriptions, and checks.
+- Distinguish connected/disconnected states from application or process states.
+- Preserve connection-scoped qualifications for leak protection, validation
+  requirements, placeholders, plural rules, and error meanings.
+
+### Catalog workflow
+
 1. Copy `app_en.arb` to `app_<locale>.arb`, set `@@locale`, and translate every
    message. Retain message keys, placeholder names, and ICU plural syntax.
    Translate full sentences; do not construct sentences by joining words.

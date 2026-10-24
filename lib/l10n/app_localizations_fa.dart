@@ -88,10 +88,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get refresh => 'تازه‌سازی';
 
   @override
-  String get validate => 'اعتبارسنجی';
+  String get validate => 'بررسی';
 
   @override
-  String get testConnection => 'آزمایش اتصال';
+  String get testConnection => 'اتصال';
 
   @override
   String get copyDiagnostics => 'کپی اطلاعات عیب‌یابی';
@@ -128,7 +128,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get noSubscriptions =>
-      'هنوز اشتراکی وجود ندارد. برای شروع یک پیوند در بالا اضافه کنید.';
+      'هنوز اشتراکی ندارید. پیوندی در بالا اضافه کنید.';
 
   @override
   String get activeSubscriptionNodes => 'سرورهای اشتراک فعال';
@@ -137,7 +137,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get chooseSubscription => 'انتخاب اشتراک';
 
   @override
-  String get selectSubscription => 'اشتراک مورد استفاده را انتخاب کنید';
+  String get selectSubscription => 'اشتراک فعال را انتخاب کنید';
 
   @override
   String get refreshSubscription => 'تازه‌سازی اشتراک انتخاب‌شده';
@@ -235,7 +235,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get changingDns => 'تغییر DNS';
 
   @override
-  String get changingKillSwitch => 'تغییر قطع‌کن اضطراری';
+  String get changingKillSwitch => 'تغییر Kill Switch';
 
   @override
   String get core => 'هسته';
@@ -244,8 +244,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get networkingCore => 'هستهٔ شبکه';
 
   @override
-  String get coreHelp =>
-      'هسته را به‌صورت دستی انتخاب کنید. هستهٔ مورد نیاز هر سرور در صفحهٔ اشتراک‌ها نمایش داده می‌شود.';
+  String get coreHelp => 'هستهٔ مورد نیاز سرور را انتخاب کنید.';
 
   @override
   String get connectionMode => 'حالت اتصال';
@@ -255,11 +254,11 @@ class AppLocalizationsFa extends AppLocalizations {
       'حالت VPN (TUN) ترافیک سیستم را خودکار مسیریابی می‌کند. در حالت پروکسی محلی باید پروکسی را در برنامه‌هایتان تنظیم کنید.';
 
   @override
-  String get killSwitch => 'قطع‌کن اضطراری';
+  String get killSwitch => 'Kill Switch';
 
   @override
   String get killSwitchHelp =>
-      'هنگام اتصال از DNS و مسیریابی TUN محافظت می‌کند. پس از قطع اتصال، دسترسی عادی به اینترنت برقرار می‌شود.';
+      'هنگام اتصال از نشت DNS و ترافیک جلوگیری می‌کند.';
 
   @override
   String get availableTun => 'در حالت VPN (TUN) در دسترس است.';
@@ -268,28 +267,27 @@ class AppLocalizationsFa extends AppLocalizations {
   String get quickSettings => 'تنظیمات سریع';
 
   @override
-  String get quickSettingsSubtitle => 'اتصال از پنل اندروید';
+  String get quickSettingsSubtitle => 'اتصال از پنل';
 
   @override
   String get quickSettingsHelp =>
-      'از کاشی AORA Connect برای اتصال به سرور انتخاب‌شده یا قطع اتصال استفاده کنید. برای بازکردن برنامه، کاشی را نگه دارید.';
+      'با زدن روی کاشی تنظیمات سریع، به سرور انتخاب‌شده متصل شوید یا اتصال را قطع کنید. نگه‌داشتن کاشی، برنامه را باز می‌کند.';
 
   @override
-  String get addQuickSettings => 'افزودن به تنظیمات سریع';
+  String get addQuickSettings => 'افزودن کاشی';
 
   @override
-  String get tileAdded => 'کاشی AORA Connect به تنظیمات سریع اضافه شد.';
+  String get tileAdded => 'کاشی AORA Connect اضافه شد.';
 
   @override
-  String get tileAlreadyAdded =>
-      'کاشی AORA Connect از قبل در تنظیمات سریع وجود دارد.';
+  String get tileAlreadyAdded => 'کاشی AORA Connect از قبل اضافه شده است.';
 
   @override
   String get tileManual =>
       'تنظیمات سریع را باز کنید، روی ویرایش بزنید و کاشی AORA Connect را اضافه کنید.';
 
   @override
-  String get tileDeclined => 'کاشی تنظیمات سریع اضافه نشد.';
+  String get tileDeclined => 'کاشی اضافه نشد.';
 
   @override
   String get tileFailed =>
@@ -303,20 +301,20 @@ class AppLocalizationsFa extends AppLocalizations {
       'ارائه‌دهندهٔ DNS برای VPN (TUN). در حالت پروکسی محلی، DNS سیستم تغییر نمی‌کند.';
 
   @override
-  String get serverChecks => 'آزمایش سرورها';
+  String get serverChecks => 'بررسی سرورها';
 
   @override
-  String get serverPingMethod => 'روش آزمایش سرورها';
+  String get serverPingMethod => 'روش بررسی سرورها';
 
   @override
   String get serverChecksHelp =>
-      'در آزمایش سرورها در سراسر برنامه اعمال می‌شود. آمار از ICMP زنده استفاده می‌کند. آزمایش‌های پروکسی، https://www.gstatic.com/generate_204 را از طریق هر سرور درخواست می‌کنند.';
+      'برای همهٔ سرورها استفاده می‌شود. آمار از ICMP استفاده می‌کند. بررسی پروکسی با درخواست به https://www.gstatic.com/generate_204 از طریق هر سرور انجام می‌شود.';
 
   @override
   String get diagnostics => 'عیب‌یابی';
 
   @override
-  String get diagnosticsSubtitle => 'اعتبارسنجی، آزمایش اتصال و گزارش‌ها';
+  String get diagnosticsSubtitle => 'پیکربندی و اتصال';
 
   @override
   String get coreLogs => 'گزارش‌های هسته';
@@ -344,22 +342,22 @@ class AppLocalizationsFa extends AppLocalizations {
   String get off => 'خاموش';
 
   @override
-  String get pingMeasuring => 'تأخیر سرور · در حال اندازه‌گیری…';
+  String get pingMeasuring => 'تأخیر · در حال اندازه‌گیری…';
 
   @override
-  String get pingNoReply => 'تأخیر سرور · بدون پاسخ';
+  String get pingNoReply => 'تأخیر · بدون پاسخ';
 
   @override
   String pingValue(String p0) {
-    return 'تأخیر سرور · $p0';
+    return 'تأخیر · $p0';
   }
 
   @override
-  String get connectStatistics => 'برای مشاهدهٔ آمار زندهٔ ICMP متصل شوید';
+  String get connectStatistics => 'به یکی از سرورها متصل شوید.';
 
   @override
   String target(String p0) {
-    return 'مقصد: $p0';
+    return 'نشانی: $p0';
   }
 
   @override
@@ -377,11 +375,11 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get pingHistory => 'تاریخچهٔ تأخیر سرور. ';
+  String get pingHistory => 'تاریخچهٔ تأخیر. ';
 
   @override
   String successfulChecks(String p0, String p1) {
-    return 'از $p1 آزمایش انجام‌شده، $p0 مورد موفق بوده است.';
+    return 'بررسی‌های موفق: $p0 از $p1.';
   }
 
   @override
@@ -404,25 +402,25 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get notChecked => 'آزمایش نشده';
+  String get notChecked => 'بررسی نشده';
 
   @override
-  String get noCompletedCheck => 'هنوز آزمایش سروری انجام نشده است';
+  String get noCompletedCheck => 'هنوز بررسی‌ای انجام نشده است';
 
   @override
   String lastCheck(String p0, String p1) {
-    return 'آخرین آزمایش در $p0:$p1';
+    return 'آخرین بررسی: $p0:$p1';
   }
 
   @override
-  String get checkServers => 'در حال آزمایش سرورها';
+  String get checkServers => 'در حال بررسی سرورها';
 
   @override
-  String get cancelChecks => 'لغو آزمایش سرورها';
+  String get cancelChecks => 'لغو بررسی سرورها';
 
   @override
   String serverCheck(String p0) {
-    return 'آزمایش سرور با $p0';
+    return 'بررسی سرور با $p0';
   }
 
   @override
@@ -482,7 +480,7 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get match => 'شرط تطبیق';
+  String get match => 'نوع قانون';
 
   @override
   String get value => 'مقدار';
@@ -530,16 +528,16 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get automaticUpdates => 'بررسی خودکار هنگام اجرا';
+  String get automaticUpdates => 'بررسی هنگام اجرا';
 
   @override
   String get automaticUpdatesSemantics => 'بررسی خودکار به‌روزرسانی‌ها';
 
   @override
-  String get checkUpdates => 'بررسی به‌روزرسانی';
+  String get checkUpdates => 'بررسی';
 
   @override
-  String get importUpdate => 'به‌روزرسانی از فایل';
+  String get importUpdate => 'از فایل';
 
   @override
   String get downloadUpdate => 'دانلود به‌روزرسانی';
@@ -570,11 +568,11 @@ class AppLocalizationsFa extends AppLocalizations {
   String get windowsInstaller => 'نصب‌کنندهٔ به‌روزرسانی AORA';
 
   @override
-  String get additionalSources => 'منابع اضافی (اختیاری)';
+  String get additionalSources => 'منابع بیشتر';
 
   @override
   String additionalSourcesCount(String p0) {
-    return 'منابع اضافی: $p0';
+    return 'منابع بیشتر: $p0';
   }
 
   @override
@@ -679,7 +677,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get installationCompleted => 'نصب کامل شد';
 
   @override
-  String get trayShow => 'نمایش AORA Connect';
+  String get trayShow => 'بازکردن AORA Connect';
 
   @override
   String get trayExit => 'خروج';
@@ -750,8 +748,8 @@ class AppLocalizationsFa extends AppLocalizations {
       'منابع به‌روزرسانی باید پیوندهای HTTPS بدون نام کاربری یا گذرواژه باشند.';
 
   @override
-  String get checkAllServers => 'آزمایش همهٔ سرورها';
+  String get checkAllServers => 'بررسی همهٔ سرورها';
 
   @override
-  String get checkSelectedServer => 'آزمایش سرور انتخاب‌شده';
+  String get checkSelectedServer => 'بررسی سرور انتخاب‌شده';
 }

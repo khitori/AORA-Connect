@@ -59,11 +59,6 @@ Future<RoutingRule?> showRoutingRuleEditor(
                   textDirection: TextDirection.ltr,
                   onChanged: (value) => target = value,
                   decoration: InputDecoration(
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
                     labelText: context.l10n.value,
                     hintText:
                         Platform.isAndroid && match == RoutingMatch.application
@@ -76,12 +71,6 @@ Future<RoutingRule?> showRoutingRuleEditor(
                     (Platform.isWindows || Platform.isAndroid)) ...[
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
                     icon: const Icon(Icons.apps_rounded),
                     label: Text(
                       context.l10n.chooseApplication,

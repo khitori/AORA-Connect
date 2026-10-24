@@ -72,7 +72,7 @@ class AoraVpnService : VpnService(), CommandServerHandler {
                     val inbounds = JSONObject(config!!).getJSONArray("inbounds")
                     val settings = (0 until inbounds.length()).map { inbounds.getJSONObject(it) }
                         .first { it.optString("protocol") == "tun" }.getJSONObject("settings")
-                    val builder = Builder().setSession("AORA Connect").setMtu(settings.optInt("mtu", 1500))
+                    val builder = Builder().setSession(applicationInfo.loadLabel(packageManager).toString()).setMtu(settings.optInt("mtu", 1500))
                         .setUnderlyingNetworks(arrayOf(PhysicalNetworkMonitor.get(this).awaitReady().network))
                     if (android.os.Build.VERSION.SDK_INT >= 29) builder.setMetered(false)
                     val addresses = settings.getJSONArray("gateway")
@@ -155,7 +155,7 @@ class AoraVpnService : VpnService(), CommandServerHandler {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         return Notification.Builder(this, "vpn")
             .setSmallIcon(R.drawable.ic_vpn)
-            .setContentTitle("AORA Connect")
+            .setContentTitle(applicationInfo.loadLabel(packageManager))
             .setContentText(status)
             .setContentIntent(open)
             .setOngoing(true)

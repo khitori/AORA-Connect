@@ -61,10 +61,10 @@ class AppLocalizationsHe extends AppLocalizations {
   String get connecting => 'מתחבר…';
 
   @override
-  String get stopping => 'מפסיק…';
+  String get stopping => 'מתנתק…';
 
   @override
-  String get localProxy => 'שרת מתווך מקומי';
+  String get localProxy => 'פרוקסי מקומי';
 
   @override
   String get vpnTun => 'VPN (TUN)';
@@ -88,10 +88,10 @@ class AppLocalizationsHe extends AppLocalizations {
   String get refresh => 'רענון';
 
   @override
-  String get validate => 'בדיקת תקינות';
+  String get validate => 'בדיקה';
 
   @override
-  String get testConnection => 'בדיקת חיבור';
+  String get testConnection => 'חיבור';
 
   @override
   String get copyDiagnostics => 'העתקת נתוני אבחון';
@@ -103,7 +103,7 @@ class AppLocalizationsHe extends AppLocalizations {
   String get diagnosticsCopyFailed => 'לא ניתן להעתיק את נתוני האבחון.';
 
   @override
-  String get loadSubscriptionFirst => 'יש לטעון תחילה מינוי בלשונית המינויים.';
+  String get loadSubscriptionFirst => 'יש להוסיף תחילה מינוי בלשונית המינויים.';
 
   @override
   String serverRequiresCore(String p0) {
@@ -125,8 +125,7 @@ class AppLocalizationsHe extends AppLocalizations {
   String get savedSubscriptions => 'מינויים שמורים';
 
   @override
-  String get noSubscriptions =>
-      'אין עדיין מינויים. יש להוסיף קישור למעלה כדי להתחיל.';
+  String get noSubscriptions => 'אין עדיין מינויים. יש להוסיף קישור למעלה.';
 
   @override
   String get activeSubscriptionNodes => 'שרתים במינוי הפעיל';
@@ -135,7 +134,7 @@ class AppLocalizationsHe extends AppLocalizations {
   String get chooseSubscription => 'בחירת מינוי';
 
   @override
-  String get selectSubscription => 'בחירת מינוי לשימוש';
+  String get selectSubscription => 'בחירת מינוי פעיל';
 
   @override
   String get refreshSubscription => 'רענון המינוי שנבחר';
@@ -230,7 +229,7 @@ class AppLocalizationsHe extends AppLocalizations {
   String get changingDns => 'שינוי DNS';
 
   @override
-  String get changingKillSwitch => 'שינוי מתג הניתוק';
+  String get changingKillSwitch => 'שינוי Kill Switch';
 
   @override
   String get core => 'ליבה';
@@ -239,22 +238,20 @@ class AppLocalizationsHe extends AppLocalizations {
   String get networkingCore => 'ליבת רשת';
 
   @override
-  String get coreHelp =>
-      'יש לבחור את הליבה ידנית. הליבה הנדרשת לכל שרת מוצגת בדף המינויים.';
+  String get coreHelp => 'יש לבחור את הליבה הנדרשת לשרת.';
 
   @override
   String get connectionMode => 'מצב חיבור';
 
   @override
   String get connectionModeHelp =>
-      'מצב VPN (TUN) מנתב את תעבורת המערכת אוטומטית. שרת מתווך מקומי דורש הגדרת שרת מתווך ביישומים.';
+      'מצב VPN (TUN) מנתב את תעבורת המערכת אוטומטית. בפרוקסי מקומי יש להגדיר פרוקסי ביישומים.';
 
   @override
-  String get killSwitch => 'מתג ניתוק';
+  String get killSwitch => 'Kill Switch';
 
   @override
-  String get killSwitchHelp =>
-      'מגן על DNS ועל ניתוב TUN בזמן החיבור. הגישה הרגילה לאינטרנט מתחדשת לאחר הניתוק.';
+  String get killSwitchHelp => 'מגן מפני דליפות DNS ותעבורה בזמן החיבור.';
 
   @override
   String get availableTun => 'זמין במצב VPN (TUN).';
@@ -263,27 +260,27 @@ class AppLocalizationsHe extends AppLocalizations {
   String get quickSettings => 'הגדרות מהירות';
 
   @override
-  String get quickSettingsSubtitle => 'התחברות מהחלונית של Android';
+  String get quickSettingsSubtitle => 'חיבור מהחלונית';
 
   @override
   String get quickSettingsHelp =>
-      'אריח AORA Connect מאפשר להתחבר לשרת שנבחר או להתנתק. לחיצה ממושכת פותחת את היישום.';
+      'האריח מתחבר לשרת שנבחר או מנתק את ה־VPN. לחיצה ממושכת פותחת את היישום.';
 
   @override
-  String get addQuickSettings => 'הוספה להגדרות המהירות';
+  String get addQuickSettings => 'הוספת אריח';
 
   @override
-  String get tileAdded => 'AORA Connect נוסף להגדרות המהירות.';
+  String get tileAdded => 'האריח של AORA Connect נוסף.';
 
   @override
-  String get tileAlreadyAdded => 'AORA Connect כבר נמצא בהגדרות המהירות.';
+  String get tileAlreadyAdded => 'האריח של AORA Connect כבר נוסף.';
 
   @override
   String get tileManual =>
       'יש לפתוח את ההגדרות המהירות, להקיש על עריכה ולגרור את AORA Connect אל האריחים.';
 
   @override
-  String get tileDeclined => 'האריח לא נוסף להגדרות המהירות.';
+  String get tileDeclined => 'האריח לא נוסף.';
 
   @override
   String get tileFailed =>
@@ -294,7 +291,7 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get dnsHelp =>
-      'ספק DNS עבור VPN (TUN). במצב שרת מתווך מקומי לא מוגדר DNS לכל המערכת.';
+      'ספק DNS עבור VPN (TUN). מצב פרוקסי מקומי אינו משנה את DNS המערכת.';
 
   @override
   String get serverChecks => 'בדיקות שרתים';
@@ -304,13 +301,13 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get serverChecksHelp =>
-      'חל על בדיקות שרתים בכל היישום. הנתונים הסטטיסטיים משתמשים ב־ICMP בזמן אמת. בדיקות שרת מתווך פונות אל https://www.gstatic.com/generate_204 דרך כל שרת.';
+      'חל על כל בדיקות השרתים. הסטטיסטיקה משתמשת ב־ICMP. בדיקות פרוקסי פונות אל https://www.gstatic.com/generate_204 דרך כל שרת.';
 
   @override
   String get diagnostics => 'אבחון';
 
   @override
-  String get diagnosticsSubtitle => 'בדיקת תקינות, בדיקת חיבור ויומנים';
+  String get diagnosticsSubtitle => 'תצורה וחיבור';
 
   @override
   String get coreLogs => 'יומני הליבה';
@@ -338,22 +335,22 @@ class AppLocalizationsHe extends AppLocalizations {
   String get off => 'כבוי';
 
   @override
-  String get pingMeasuring => 'השהיית שרת · מודד…';
+  String get pingMeasuring => 'השהיה · מודד…';
 
   @override
-  String get pingNoReply => 'השהיית שרת · אין תגובה';
+  String get pingNoReply => 'השהיה · אין תגובה';
 
   @override
   String pingValue(String p0) {
-    return 'השהיית שרת · $p0';
+    return 'השהיה · $p0';
   }
 
   @override
-  String get connectStatistics => 'יש להתחבר כדי להציג נתוני ICMP בזמן אמת';
+  String get connectStatistics => 'יש להתחבר לשרת כלשהו.';
 
   @override
   String target(String p0) {
-    return 'יעד: $p0';
+    return 'כתובת: $p0';
   }
 
   @override
@@ -371,7 +368,7 @@ class AppLocalizationsHe extends AppLocalizations {
   }
 
   @override
-  String get pingHistory => 'היסטוריית השהיית שרת. ';
+  String get pingHistory => 'היסטוריית השהיה. ';
 
   @override
   String successfulChecks(String p0, String p1) {
@@ -474,7 +471,7 @@ class AppLocalizationsHe extends AppLocalizations {
   }
 
   @override
-  String get match => 'התאמה';
+  String get match => 'סוג כלל';
 
   @override
   String get value => 'ערך';
@@ -521,16 +518,16 @@ class AppLocalizationsHe extends AppLocalizations {
   }
 
   @override
-  String get automaticUpdates => 'בדיקה אוטומטית בעת ההפעלה';
+  String get automaticUpdates => 'בדיקה בעת ההפעלה';
 
   @override
   String get automaticUpdatesSemantics => 'בדיקת עדכונים אוטומטית';
 
   @override
-  String get checkUpdates => 'בדיקת עדכונים';
+  String get checkUpdates => 'בדיקה';
 
   @override
-  String get importUpdate => 'עדכון מקובץ';
+  String get importUpdate => 'מקובץ';
 
   @override
   String get downloadUpdate => 'הורדת עדכון';
@@ -561,7 +558,7 @@ class AppLocalizationsHe extends AppLocalizations {
   String get windowsInstaller => 'תוכנית התקנת עדכון של AORA';
 
   @override
-  String get additionalSources => 'מקורות נוספים (רשות)';
+  String get additionalSources => 'מקורות נוספים';
 
   @override
   String additionalSourcesCount(String p0) {
@@ -611,22 +608,22 @@ class AppLocalizationsHe extends AppLocalizations {
   String get ipCidr => 'IP / CIDR';
 
   @override
-  String get proxyGet => 'דרך שרת מתווך GET';
+  String get proxyGet => 'דרך פרוקסי GET';
 
   @override
-  String get proxyHead => 'דרך שרת מתווך HEAD';
+  String get proxyHead => 'דרך פרוקסי HEAD';
 
   @override
-  String get stateStopped => 'מופסק';
+  String get stateStopped => 'מנותק';
 
   @override
-  String get stateStarting => 'מתחיל';
+  String get stateStarting => 'מתחבר';
 
   @override
-  String get stateRunning => 'פועל';
+  String get stateRunning => 'מחובר';
 
   @override
-  String get stateStopping => 'מפסיק';
+  String get stateStopping => 'מתנתק';
 
   @override
   String get timeout => 'תם הזמן הקצוב';
@@ -669,7 +666,7 @@ class AppLocalizationsHe extends AppLocalizations {
   String get installationCompleted => 'ההתקנה הושלמה';
 
   @override
-  String get trayShow => 'הצגת AORA Connect';
+  String get trayShow => 'פתיחת AORA Connect';
 
   @override
   String get trayExit => 'יציאה';

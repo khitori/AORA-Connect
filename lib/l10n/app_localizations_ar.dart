@@ -88,10 +88,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get refresh => 'تحديث';
 
   @override
-  String get validate => 'التحقق من الإعدادات';
+  String get validate => 'فحص';
 
   @override
-  String get testConnection => 'اختبار الاتصال';
+  String get testConnection => 'الاتصال';
 
   @override
   String get copyDiagnostics => 'نسخ معلومات التشخيص';
@@ -125,7 +125,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get savedSubscriptions => 'الاشتراكات المحفوظة';
 
   @override
-  String get noSubscriptions => 'لا توجد اشتراكات بعد. أضف رابطًا أعلاه للبدء.';
+  String get noSubscriptions => 'لا توجد اشتراكات بعد. أضف رابطًا أعلاه.';
 
   @override
   String get activeSubscriptionNodes => 'خوادم الاشتراك النشط';
@@ -134,7 +134,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get chooseSubscription => 'اختيار اشتراك';
 
   @override
-  String get selectSubscription => 'اختر الاشتراك الذي تريد استخدامه';
+  String get selectSubscription => 'اختر الاشتراك النشط';
 
   @override
   String get refreshSubscription => 'تحديث الاشتراك المحدد';
@@ -229,7 +229,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get changingDns => 'تغيير DNS';
 
   @override
-  String get changingKillSwitch => 'تغيير قاطع الاتصال';
+  String get changingKillSwitch => 'تغيير Kill Switch';
 
   @override
   String get core => 'المحرّك';
@@ -238,8 +238,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get networkingCore => 'محرّك الشبكة';
 
   @override
-  String get coreHelp =>
-      'اختر المحرّك يدويًا. يُعرض المحرّك المطلوب لكل خادم في صفحة الاشتراكات.';
+  String get coreHelp => 'اختر المحرّك الذي يتطلبه الخادم.';
 
   @override
   String get connectionMode => 'وضع الاتصال';
@@ -249,11 +248,10 @@ class AppLocalizationsAr extends AppLocalizations {
       'يوجّه وضع VPN (TUN) حركة مرور النظام تلقائيًا. ويتطلب الوكيل المحلي إعداد الوكيل داخل تطبيقاتك.';
 
   @override
-  String get killSwitch => 'قاطع الاتصال';
+  String get killSwitch => 'Kill Switch';
 
   @override
-  String get killSwitchHelp =>
-      'يحمي DNS وتوجيه TUN أثناء الاتصال. ويعود الوصول العادي إلى الإنترنت بعد قطع الاتصال.';
+  String get killSwitchHelp => 'يحمي من تسرب DNS وحركة المرور أثناء الاتصال.';
 
   @override
   String get availableTun => 'متاح في وضع VPN (TUN).';
@@ -262,32 +260,31 @@ class AppLocalizationsAr extends AppLocalizations {
   String get quickSettings => 'الإعدادات السريعة';
 
   @override
-  String get quickSettingsSubtitle => 'الاتصال من لوحة Android';
+  String get quickSettingsSubtitle => 'الاتصال من اللوحة';
 
   @override
   String get quickSettingsHelp =>
-      'استخدم مربع AORA Connect للاتصال بالخادم المحدد أو قطع الاتصال. اضغط عليه مطولًا لفتح التطبيق.';
+      'اضغط على زر الإعدادات السريعة للاتصال بالخادم المحدد أو قطع الاتصال. اضغط مطولًا لفتح التطبيق.';
 
   @override
-  String get addQuickSettings => 'إضافة إلى الإعدادات السريعة';
+  String get addQuickSettings => 'إضافة الزر';
 
   @override
-  String get tileAdded => 'أُضيف AORA Connect إلى الإعدادات السريعة.';
+  String get tileAdded => 'أُضيف زر AORA Connect.';
 
   @override
-  String get tileAlreadyAdded =>
-      'AORA Connect موجود بالفعل في الإعدادات السريعة.';
+  String get tileAlreadyAdded => 'زر AORA Connect مضاف بالفعل.';
 
   @override
   String get tileManual =>
-      'افتح الإعدادات السريعة، واضغط على تعديل، ثم أضف مربع AORA Connect.';
+      'افتح الإعدادات السريعة، واضغط على «تعديل»، ثم أضف زر AORA Connect.';
 
   @override
-  String get tileDeclined => 'لم يُضف مربع الإعدادات السريعة.';
+  String get tileDeclined => 'لم يُضف الزر.';
 
   @override
   String get tileFailed =>
-      'تعذّرت إضافة المربع. افتح الإعدادات السريعة وأضف AORA Connect من خيار تعديل.';
+      'تعذّرت إضافة الزر. أضف AORA Connect من «تعديل» في الإعدادات السريعة.';
 
   @override
   String get dnsServer => 'خادم DNS';
@@ -310,7 +307,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get diagnostics => 'التشخيص';
 
   @override
-  String get diagnosticsSubtitle => 'التحقق واختبار الاتصال والسجلات';
+  String get diagnosticsSubtitle => 'الإعدادات والاتصال';
 
   @override
   String get coreLogs => 'سجلات المحرّك';
@@ -338,22 +335,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get off => 'معطّل';
 
   @override
-  String get pingMeasuring => 'زمن استجابة الخادم · جارٍ القياس…';
+  String get pingMeasuring => 'زمن الاستجابة · جارٍ القياس…';
 
   @override
-  String get pingNoReply => 'زمن استجابة الخادم · لا توجد استجابة';
+  String get pingNoReply => 'زمن الاستجابة · لا توجد استجابة';
 
   @override
   String pingValue(String p0) {
-    return 'زمن استجابة الخادم · $p0';
+    return 'زمن الاستجابة · $p0';
   }
 
   @override
-  String get connectStatistics => 'اتصل لعرض إحصاءات ICMP المباشرة';
+  String get connectStatistics => 'اتصل بأي خادم.';
 
   @override
   String target(String p0) {
-    return 'الهدف: $p0';
+    return 'العنوان: $p0';
   }
 
   @override
@@ -371,7 +368,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get pingHistory => 'سجل زمن استجابة الخادم. ';
+  String get pingHistory => 'سجل زمن الاستجابة. ';
 
   @override
   String successfulChecks(String p0, String p1) {
@@ -474,7 +471,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get match => 'شرط المطابقة';
+  String get match => 'نوع القاعدة';
 
   @override
   String get value => 'القيمة';
@@ -521,16 +518,16 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get automaticUpdates => 'الفحص تلقائيًا عند التشغيل';
+  String get automaticUpdates => 'الفحص عند التشغيل';
 
   @override
   String get automaticUpdatesSemantics => 'البحث عن التحديثات تلقائيًا';
 
   @override
-  String get checkUpdates => 'البحث عن تحديثات';
+  String get checkUpdates => 'فحص';
 
   @override
-  String get importUpdate => 'التحديث من ملف';
+  String get importUpdate => 'من ملف';
 
   @override
   String get downloadUpdate => 'تنزيل التحديث';
@@ -561,7 +558,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get windowsInstaller => 'مثبّت تحديث AORA';
 
   @override
-  String get additionalSources => 'مصادر إضافية (اختياري)';
+  String get additionalSources => 'مصادر إضافية';
 
   @override
   String additionalSourcesCount(String p0) {
@@ -668,7 +665,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get installationCompleted => 'اكتمل التثبيت';
 
   @override
-  String get trayShow => 'إظهار AORA Connect';
+  String get trayShow => 'فتح AORA Connect';
 
   @override
   String get trayExit => 'خروج';
@@ -730,11 +727,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get routingValidationApplication =>
-      'أدخل مسار ملف تنفيذي أو اسم عملية دون أحرف بدل.';
+      'أدخل مسار ملف تنفيذي أو اسم عملية دون رموز بدل.';
 
   @override
   String get routingValidationDomain =>
-      'أدخل نطاقًا دون بروتوكول أو مسار أو أحرف بدل.';
+      'أدخل نطاقًا دون بروتوكول أو مسار أو رموز بدل.';
 
   @override
   String get routingValidationIp => 'أدخل عنوان IP أو نطاق CIDR.';

@@ -193,10 +193,12 @@ FileProvider. Android may ask the user to allow installations from AORA Connect;
 the system installation confirmation is still required. Cancelling returns to
 the app without deleting user settings. Nothing installs silently.
 
-Development and release builds use different signing keys. A release APK cannot
-replace the debug build currently used for development. Do not uninstall a
-development copy containing important settings just to bypass this check.
-Tests should use the isolated `.updatetest` application ID. Normal subsequent
+Development and release builds use different signing keys and application IDs.
+Normal debug runs install **AORA Connect Dev** (`aora.aoranet.aoravpn.dev`)
+alongside the release (`aora.aoranet.aoravpn`), with independent app data.
+Production APK updates cannot replace the Dev app. Update verification tests
+keep the isolated `.updatetest` identity. Existing release installations and
+their data do not need to be removed for development runs. Subsequent
 release-to-release upgrades with the same signing key preserve private app data.
 
 The signature comparison intentionally rejects key rotation until an explicit

@@ -217,7 +217,12 @@ void main() {
         expect(find.text('Добавить подписку'), findsOneWidget);
         await tester.tap(find.byKey(const ValueKey('bottom-nav-routing')));
         await tester.pumpAndSettle();
-        expect(find.text('Маршрутизация'), findsWidgets);
+        expect(
+          find.text(
+            (await AppLocalizations.delegate.load(const Locale('ru'))).routing,
+          ),
+          findsWidgets,
+        );
         expect(tester.takeException(), isNull);
         await tester.tap(find.byKey(const ValueKey('open-settings')));
         await tester.pumpAndSettle();
@@ -271,7 +276,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Обновления'));
       await tester.pumpAndSettle();
-      expect(find.text('Обновить из файла'), findsOneWidget);
+      expect(find.text('Через файл'), findsOneWidget);
       expect(find.text('21.10.2026'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },

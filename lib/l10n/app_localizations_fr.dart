@@ -89,10 +89,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get refresh => 'Actualiser';
 
   @override
-  String get validate => 'Valider';
+  String get validate => 'Vérifier';
 
   @override
-  String get testConnection => 'Tester la connexion';
+  String get testConnection => 'Connexion';
 
   @override
   String get copyDiagnostics => 'Copier le diagnostic';
@@ -128,8 +128,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get savedSubscriptions => 'Abonnements enregistrés';
 
   @override
-  String get noSubscriptions =>
-      'Aucun abonnement pour le moment. Ajoutez un lien ci-dessus pour commencer.';
+  String get noSubscriptions => 'Aucun abonnement. Ajoutez un lien ci-dessus.';
 
   @override
   String get activeSubscriptionNodes => 'Serveurs de l’abonnement actif';
@@ -138,7 +137,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get chooseSubscription => 'Choisir un abonnement';
 
   @override
-  String get selectSubscription => 'Sélectionnez un abonnement à utiliser';
+  String get selectSubscription => 'Choisir l’abonnement actif';
 
   @override
   String get refreshSubscription => 'Actualiser l’abonnement sélectionné';
@@ -239,7 +238,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get changingDns => 'de modifier le DNS';
 
   @override
-  String get changingKillSwitch => 'de modifier le coupe-circuit';
+  String get changingKillSwitch => 'de modifier le Kill Switch';
 
   @override
   String get core => 'Moteur';
@@ -248,8 +247,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get networkingCore => 'Moteur réseau';
 
   @override
-  String get coreHelp =>
-      'Choisissez le moteur manuellement. Le moteur requis est indiqué pour chaque serveur dans l’onglet « Abonnements ».';
+  String get coreHelp => 'Choisissez le moteur requis par votre serveur.';
 
   @override
   String get connectionMode => 'Mode de connexion';
@@ -259,11 +257,11 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le mode VPN (TUN) achemine automatiquement le trafic système. Le proxy local nécessite de configurer le proxy dans vos applications.';
 
   @override
-  String get killSwitch => 'Coupe-circuit';
+  String get killSwitch => 'Kill Switch';
 
   @override
   String get killSwitchHelp =>
-      'Protège le DNS et le routage TUN pendant la connexion. L’accès normal à Internet reprend après la déconnexion.';
+      'Protège contre les fuites DNS et de trafic pendant la connexion.';
 
   @override
   String get availableTun => 'Disponible en mode VPN (TUN).';
@@ -272,28 +270,27 @@ class AppLocalizationsFr extends AppLocalizations {
   String get quickSettings => 'Paramètres rapides';
 
   @override
-  String get quickSettingsSubtitle => 'Se connecter depuis le panneau Android';
+  String get quickSettingsSubtitle => 'Connexion depuis le panneau';
 
   @override
   String get quickSettingsHelp =>
-      'Utilisez la tuile AORA Connect pour vous connecter au serveur sélectionné ou vous déconnecter. Maintenez-la appuyée pour ouvrir l’application.';
+      'La tuile système permet de se connecter au serveur sélectionné ou de se déconnecter. Un appui long ouvre l’application.';
 
   @override
-  String get addQuickSettings => 'Ajouter aux paramètres rapides';
+  String get addQuickSettings => 'Ajouter la tuile';
 
   @override
-  String get tileAdded => 'AORA Connect a été ajouté aux paramètres rapides.';
+  String get tileAdded => 'Tuile AORA Connect ajoutée.';
 
   @override
-  String get tileAlreadyAdded =>
-      'AORA Connect est déjà dans les paramètres rapides.';
+  String get tileAlreadyAdded => 'La tuile AORA Connect est déjà ajoutée.';
 
   @override
   String get tileManual =>
       'Ouvrez les paramètres rapides, appuyez sur « Modifier », puis ajoutez la tuile AORA Connect.';
 
   @override
-  String get tileDeclined => 'La tuile n’a pas été ajoutée.';
+  String get tileDeclined => 'Tuile non ajoutée.';
 
   @override
   String get tileFailed =>
@@ -320,7 +317,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get diagnostics => 'Diagnostic';
 
   @override
-  String get diagnosticsSubtitle => 'Validation, test de connexion et journaux';
+  String get diagnosticsSubtitle => 'Configuration et connexion';
 
   @override
   String get coreLogs => 'Journaux du moteur';
@@ -348,23 +345,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get off => 'Désactivé';
 
   @override
-  String get pingMeasuring => 'Latence serveur · mesure…';
+  String get pingMeasuring => 'Latence · mesure…';
 
   @override
-  String get pingNoReply => 'Latence serveur · aucune réponse';
+  String get pingNoReply => 'Latence · aucune réponse';
 
   @override
   String pingValue(String p0) {
-    return 'Latence serveur · $p0';
+    return 'Latence · $p0';
   }
 
   @override
-  String get connectStatistics =>
-      'Connectez-vous pour voir les statistiques ICMP en direct';
+  String get connectStatistics => 'Connectez-vous à un serveur.';
 
   @override
   String target(String p0) {
-    return 'Cible : $p0';
+    return 'Adresse : $p0';
   }
 
   @override
@@ -382,7 +378,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get pingHistory => 'Historique de latence du serveur. ';
+  String get pingHistory => 'Historique de latence. ';
 
   @override
   String successfulChecks(String p0, String p1) {
@@ -543,10 +539,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Rechercher automatiquement les mises à jour';
 
   @override
-  String get checkUpdates => 'Rechercher des mises à jour';
+  String get checkUpdates => 'Vérifier';
 
   @override
-  String get importUpdate => 'Mettre à jour depuis un fichier';
+  String get importUpdate => 'Depuis un fichier';
 
   @override
   String get downloadUpdate => 'Télécharger la mise à jour';
@@ -577,7 +573,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get windowsInstaller => 'Programme de mise à jour AORA';
 
   @override
-  String get additionalSources => 'Sources supplémentaires (facultatif)';
+  String get additionalSources => 'Sources supplémentaires';
 
   @override
   String additionalSourcesCount(String p0) {
@@ -685,7 +681,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get installationCompleted => 'Installation terminée';
 
   @override
-  String get trayShow => 'Afficher AORA Connect';
+  String get trayShow => 'Ouvrir AORA Connect';
 
   @override
   String get trayExit => 'Quitter';

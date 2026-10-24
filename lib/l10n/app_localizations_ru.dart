@@ -31,7 +31,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get subscriptions => 'Подписки';
 
   @override
-  String get routing => 'Маршрутизация';
+  String get routing => 'Роутинг';
 
   @override
   String get hideToTray => 'Свернуть в трей';
@@ -88,10 +88,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get refresh => 'Обновить';
 
   @override
-  String get validate => 'Проверить конфигурацию';
+  String get validate => 'Проверить';
 
   @override
-  String get testConnection => 'Проверить соединение';
+  String get testConnection => 'Соединение';
 
   @override
   String get copyDiagnostics => 'Скопировать диагностику';
@@ -244,7 +244,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get coreHelp =>
-      'Выберите ядро вручную. Требуемое ядро указано у каждого сервера на вкладке «Подписки».';
+      'Выбор ядра. Необходимо если сервер требует поддержки конкретного.';
 
   @override
   String get connectionMode => 'Режим подключения';
@@ -254,11 +254,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'VPN (TUN) автоматически направляет системный трафик через туннель. Для локального прокси настройте прокси в приложениях.';
 
   @override
-  String get killSwitch => 'Аварийная блокировка';
+  String get killSwitch => 'Kill Switch';
 
   @override
-  String get killSwitchHelp =>
-      'Защищает DNS и маршруты TUN при подключении. После отключения обычный доступ в интернет восстанавливается.';
+  String get killSwitchHelp => 'Защищает DNS и трафик от утечек.';
 
   @override
   String get availableTun => 'Доступно в режиме VPN (TUN).';
@@ -267,11 +266,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get quickSettings => 'Быстрые настройки';
 
   @override
-  String get quickSettingsSubtitle => 'Подключение из панели Android';
+  String get quickSettingsSubtitle => 'Подключение панели';
 
   @override
   String get quickSettingsHelp =>
-      'Плитка AORA Connect подключает к выбранному серверу или отключает VPN. Удерживайте плитку, чтобы открыть приложение.';
+      'Системная плитка подключает к выбранному серверу или отключает VPN. Удерживание на плитке открывает само приложение.';
 
   @override
   String get addQuickSettings => 'Добавить плитку';
@@ -314,7 +313,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get diagnostics => 'Диагностика';
 
   @override
-  String get diagnosticsSubtitle => 'Конфигурация, соединение и журнал';
+  String get diagnosticsSubtitle => 'Конфигурация и соединение';
 
   @override
   String get coreLogs => 'Журнал ядра';
@@ -354,7 +353,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get connectStatistics => 'Подключитесь для просмотра статистики ICMP';
+  String get connectStatistics => 'Подключитесь к любому серверу.';
 
   @override
   String target(String p0) {
@@ -534,10 +533,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get automaticUpdatesSemantics => 'Проверять обновления автоматически';
 
   @override
-  String get checkUpdates => 'Проверить обновления';
+  String get checkUpdates => 'Проверить';
 
   @override
-  String get importUpdate => 'Обновить из файла';
+  String get importUpdate => 'Через файл';
 
   @override
   String get downloadUpdate => 'Скачать обновление';

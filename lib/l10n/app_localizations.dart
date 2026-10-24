@@ -217,7 +217,7 @@ abstract class AppLocalizations {
   /// No description provided for @stopping.
   ///
   /// In en, this message translates to:
-  /// **'Stopping…'**
+  /// **'Disconnecting…'**
   String get stopping;
 
   /// No description provided for @localProxy.
@@ -271,13 +271,13 @@ abstract class AppLocalizations {
   /// No description provided for @validate.
   ///
   /// In en, this message translates to:
-  /// **'Validate'**
+  /// **'Check'**
   String get validate;
 
   /// No description provided for @testConnection.
   ///
   /// In en, this message translates to:
-  /// **'Test connection'**
+  /// **'Test'**
   String get testConnection;
 
   /// No description provided for @copyDiagnostics.
@@ -301,7 +301,7 @@ abstract class AppLocalizations {
   /// No description provided for @loadSubscriptionFirst.
   ///
   /// In en, this message translates to:
-  /// **'Load a subscription on the Subscriptions tab first.'**
+  /// **'Add a subscription in the Subscriptions tab first.'**
   String get loadSubscriptionFirst;
 
   /// No description provided for @serverRequiresCore.
@@ -337,13 +337,13 @@ abstract class AppLocalizations {
   /// No description provided for @noSubscriptions.
   ///
   /// In en, this message translates to:
-  /// **'No subscriptions yet. Add a link above to get started.'**
+  /// **'No subscriptions yet. Add a link above.'**
   String get noSubscriptions;
 
   /// No description provided for @activeSubscriptionNodes.
   ///
   /// In en, this message translates to:
-  /// **'Nodes in active subscription'**
+  /// **'Servers in active subscription'**
   String get activeSubscriptionNodes;
 
   /// No description provided for @chooseSubscription.
@@ -355,7 +355,7 @@ abstract class AppLocalizations {
   /// No description provided for @selectSubscription.
   ///
   /// In en, this message translates to:
-  /// **'Select a subscription to use'**
+  /// **'Choose an active subscription'**
   String get selectSubscription;
 
   /// No description provided for @refreshSubscription.
@@ -373,7 +373,7 @@ abstract class AppLocalizations {
   /// No description provided for @subscriptionLink.
   ///
   /// In en, this message translates to:
-  /// **'Subscription or server link...'**
+  /// **'Subscription or server link…'**
   String get subscriptionLink;
 
   /// No description provided for @pasteClipboard.
@@ -547,7 +547,7 @@ abstract class AppLocalizations {
   /// No description provided for @coreHelp.
   ///
   /// In en, this message translates to:
-  /// **'Choose the core manually. Each server shows its required core on the Subscriptions page.'**
+  /// **'Select the core required by your server.'**
   String get coreHelp;
 
   /// No description provided for @connectionMode.
@@ -571,7 +571,7 @@ abstract class AppLocalizations {
   /// No description provided for @killSwitchHelp.
   ///
   /// In en, this message translates to:
-  /// **'Protects DNS and TUN routing while connected. Normal internet access resumes when disconnected.'**
+  /// **'Protects against DNS and traffic leaks while connected.'**
   String get killSwitchHelp;
 
   /// No description provided for @availableTun.
@@ -589,31 +589,31 @@ abstract class AppLocalizations {
   /// No description provided for @quickSettingsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Connect from the Android panel'**
+  /// **'Connect from the panel'**
   String get quickSettingsSubtitle;
 
   /// No description provided for @quickSettingsHelp.
   ///
   /// In en, this message translates to:
-  /// **'Use the AORA Connect tile to connect to your selected server or disconnect. Hold the tile to open the app.'**
+  /// **'Tap the system tile to connect to the selected server or disconnect. Hold it to open the app.'**
   String get quickSettingsHelp;
 
   /// No description provided for @addQuickSettings.
   ///
   /// In en, this message translates to:
-  /// **'Add to Quick Settings'**
+  /// **'Add tile'**
   String get addQuickSettings;
 
   /// No description provided for @tileAdded.
   ///
   /// In en, this message translates to:
-  /// **'AORA Connect added to Quick Settings.'**
+  /// **'AORA Connect tile added.'**
   String get tileAdded;
 
   /// No description provided for @tileAlreadyAdded.
   ///
   /// In en, this message translates to:
-  /// **'AORA Connect is already in Quick Settings.'**
+  /// **'AORA Connect tile already added.'**
   String get tileAlreadyAdded;
 
   /// No description provided for @tileManual.
@@ -625,7 +625,7 @@ abstract class AppLocalizations {
   /// No description provided for @tileDeclined.
   ///
   /// In en, this message translates to:
-  /// **'Quick Settings tile was not added.'**
+  /// **'Tile not added.'**
   String get tileDeclined;
 
   /// No description provided for @tileFailed.
@@ -673,7 +673,7 @@ abstract class AppLocalizations {
   /// No description provided for @diagnosticsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Validation, connection test and logs'**
+  /// **'Configuration and connection'**
   String get diagnosticsSubtitle;
 
   /// No description provided for @coreLogs.
@@ -727,31 +727,31 @@ abstract class AppLocalizations {
   /// No description provided for @pingMeasuring.
   ///
   /// In en, this message translates to:
-  /// **'Server ping · measuring…'**
+  /// **'Latency · measuring…'**
   String get pingMeasuring;
 
   /// No description provided for @pingNoReply.
   ///
   /// In en, this message translates to:
-  /// **'Server ping · no reply'**
+  /// **'Latency · no reply'**
   String get pingNoReply;
 
   /// No description provided for @pingValue.
   ///
   /// In en, this message translates to:
-  /// **'Server ping · {p0}'**
+  /// **'Latency · {p0}'**
   String pingValue(String p0);
 
   /// No description provided for @connectStatistics.
   ///
   /// In en, this message translates to:
-  /// **'Connect to view live ICMP statistics'**
+  /// **'Connect to any server.'**
   String get connectStatistics;
 
   /// No description provided for @target.
   ///
   /// In en, this message translates to:
-  /// **'Target: {p0}'**
+  /// **'Address: {p0}'**
   String target(String p0);
 
   /// No description provided for @measuring.
@@ -781,7 +781,7 @@ abstract class AppLocalizations {
   /// No description provided for @pingHistory.
   ///
   /// In en, this message translates to:
-  /// **'Server ping history. '**
+  /// **'Latency history. '**
   String get pingHistory;
 
   /// No description provided for @successfulChecks.
@@ -1039,7 +1039,7 @@ abstract class AppLocalizations {
   /// No description provided for @automaticUpdates.
   ///
   /// In en, this message translates to:
-  /// **'Check automatically at startup'**
+  /// **'Check at startup'**
   String get automaticUpdates;
 
   /// No description provided for @automaticUpdatesSemantics.
@@ -1051,13 +1051,13 @@ abstract class AppLocalizations {
   /// No description provided for @checkUpdates.
   ///
   /// In en, this message translates to:
-  /// **'Check for updates'**
+  /// **'Check'**
   String get checkUpdates;
 
   /// No description provided for @importUpdate.
   ///
   /// In en, this message translates to:
-  /// **'Update from file'**
+  /// **'From file'**
   String get importUpdate;
 
   /// No description provided for @downloadUpdate.
@@ -1111,7 +1111,7 @@ abstract class AppLocalizations {
   /// No description provided for @additionalSources.
   ///
   /// In en, this message translates to:
-  /// **'Additional sources (optional)'**
+  /// **'Additional sources'**
   String get additionalSources;
 
   /// No description provided for @additionalSourcesCount.
@@ -1213,25 +1213,25 @@ abstract class AppLocalizations {
   /// No description provided for @stateStopped.
   ///
   /// In en, this message translates to:
-  /// **'stopped'**
+  /// **'disconnected'**
   String get stateStopped;
 
   /// No description provided for @stateStarting.
   ///
   /// In en, this message translates to:
-  /// **'starting'**
+  /// **'connecting'**
   String get stateStarting;
 
   /// No description provided for @stateRunning.
   ///
   /// In en, this message translates to:
-  /// **'running'**
+  /// **'connected'**
   String get stateRunning;
 
   /// No description provided for @stateStopping.
   ///
   /// In en, this message translates to:
-  /// **'stopping'**
+  /// **'disconnecting'**
   String get stateStopping;
 
   /// No description provided for @timeout.
@@ -1309,7 +1309,7 @@ abstract class AppLocalizations {
   /// No description provided for @trayShow.
   ///
   /// In en, this message translates to:
-  /// **'Show AORA Connect'**
+  /// **'Open AORA Connect'**
   String get trayShow;
 
   /// No description provided for @trayExit.

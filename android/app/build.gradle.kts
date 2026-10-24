@@ -45,6 +45,12 @@ android {
         }
     }
     buildTypes {
+        debug {
+            if (!updateTest) {
+                applicationIdSuffix = ".dev"
+                manifestPlaceholders["aoraAppLabel"] = "AORA Connect Dev"
+            }
+        }
         release {
             signingConfig = signingConfigs.getByName("release")
         }

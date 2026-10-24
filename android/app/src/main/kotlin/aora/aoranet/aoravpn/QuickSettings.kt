@@ -97,7 +97,7 @@ internal object QuickSettings {
                 if (Build.VERSION.SDK_INT < 33) { result.success("manual"); return }
                 try {
                     activity.getSystemService(StatusBarManager::class.java).requestAddTileService(
-                        ComponentName(activity, AoraTileService::class.java), "AORA Connect",
+                        ComponentName(activity, AoraTileService::class.java), activity.applicationInfo.loadLabel(activity.packageManager),
                         Icon.createWithResource(activity, R.drawable.ic_quick_settings), activity.mainExecutor
                     ) { code -> result.success(when (code) {
                         StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED -> "added"

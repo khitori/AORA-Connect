@@ -21,9 +21,10 @@ class AoraTileService : TileService() {
         val tile = qsTile ?: return
         val status = QuickSettingsState.subtitle(VpnRuntime.state, QuickSettings.busy, QuickSettings.activeName, AppLanguage.tileLabels(this))
         tile.icon = Icon.createWithResource(this, R.drawable.ic_quick_settings)
-        tile.label = if (Build.VERSION.SDK_INT >= 29) "AORA Connect" else "AORA · $status"
+        val appName = applicationInfo.loadLabel(packageManager).toString()
+        tile.label = if (Build.VERSION.SDK_INT >= 29) appName else "$appName · $status"
         if (Build.VERSION.SDK_INT >= 29) tile.subtitle = status
-        tile.contentDescription = "AORA Connect, $status"
+        tile.contentDescription = "$appName, $status"
         tile.state = when {
             QuickSettings.busy || VpnRuntime.state in setOf("starting", "stopping") -> Tile.STATE_UNAVAILABLE
             VpnRuntime.state == "running" -> Tile.STATE_ACTIVE

@@ -11,8 +11,14 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.VpnService
 import android.os.Build
+import android.os.Bundle
 
 class MainActivity : FlutterActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        AndroidSplash.configure(this)
+        super.onCreate(savedInstanceState)
+    }
+
     private lateinit var updates: AndroidUpdates
     private data class PermissionRequest(val config: String, val core: String, val result: MethodChannel.Result)
     private var permissionRequest: PermissionRequest? = null

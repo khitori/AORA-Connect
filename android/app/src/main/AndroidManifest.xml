@@ -44,7 +44,7 @@
         <activity android:name=".TilePermissionActivity" android:exported="false"
             android:theme="@style/LaunchTheme" android:excludeFromRecents="true" />
         <service android:name=".AoraTileService" android:exported="true"
-            android:label="AORA Connect" android:icon="@drawable/ic_quick_settings"
+            android:label="${aoraAppLabel}" android:icon="@drawable/ic_quick_settings"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />

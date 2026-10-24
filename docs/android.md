@@ -9,7 +9,30 @@ DNS/routing settings. One-time server checks and optional live ICMP statistics
 are available. Android supports verified in-app and offline APK updates;
 local-proxy connection mode is not implemented.
 
+## Launch screen
+
+The launch screen uses the app's off-white background in both light and dark
+system modes. Its separate vector mark has a transparent background and safe
+padding for Android's splash icon mask; launcher icons are unchanged.
+
+Android 12 and newer use an animated vector with a subtle red-dot pulse, followed
+by a 140 ms fade when the first app frame is ready. Startup does not wait for the
+700 ms icon animation to complete. The exit fade is skipped when system animations
+are disabled. Older Android versions use the same mark as a static launch drawable.
+
+Keep `LaunchTheme` overrides in both `values-v31` and `values-night-v31` aligned.
+`AoraWindowTheme` supplies matching window and system-bar colors for launch and
+the Flutter activity, including when the device is in dark mode.
+
 ## Build and run
+
+Debug runs install as **AORA Connect Dev** (`aora.aoranet.aoravpn.dev`). The
+release remains **AORA Connect** (`aora.aoranet.aoravpn`). They can coexist with
+separate settings, subscriptions, VPN permissions, notifications, and Quick
+Settings tiles. A normal `flutter run` selects the development identity.
+
+The isolated update-test workflow keeps its existing `.updatetest` identity
+when `AORA_ANDROID_UPDATE_TEST=true`. Production APKs do not update the Dev app.
 
 Install Flutter, Android SDK Platform 36, SDK command-line tools, NDK
 `28.2.13676358`, Git and a JDK (the build script defaults to Android Studio's

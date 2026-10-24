@@ -122,9 +122,12 @@ abstract final class AppTheme {
         style: ButtonStyle(overlayColor: controlOverlayColor),
       ),
       inputDecorationTheme: InputDecorationThemeData(
+        visualDensity: VisualDensity.standard,
+        isDense: true,
+        constraints: const BoxConstraints(minHeight: controlHeight),
         filled: true,
         fillColor: AppColors.card,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         labelStyle: TextStyle(color: AppColors.muted400),
         floatingLabelStyle: TextStyle(color: AppColors.accent),
         hintStyle: TextStyle(color: AppColors.muted300),

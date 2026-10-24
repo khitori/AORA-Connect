@@ -366,16 +366,16 @@ class _AppShellState extends State<_AppShell> {
             onSelected: (page) => setState(() => _page = page),
             destinations: [
               FloatingNavigationDestination(
-                _AppPage.connection,
-                context.l10n.connection,
-                Icons.power_settings_new_rounded,
-                id: 'connection',
-              ),
-              FloatingNavigationDestination(
                 _AppPage.subscriptions,
                 context.l10n.subscriptions,
                 Icons.link_rounded,
                 id: 'subscriptions',
+              ),
+              FloatingNavigationDestination(
+                _AppPage.connection,
+                context.l10n.connection,
+                Icons.power_settings_new_rounded,
+                id: 'connection',
               ),
               FloatingNavigationDestination(
                 _AppPage.routing,

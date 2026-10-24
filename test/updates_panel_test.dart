@@ -73,7 +73,7 @@ Future<(UpdateController, Directory)> _mount(
 }
 
 Future<void> _openSources(WidgetTester tester) async {
-  await tester.tap(find.text('Additional sources (optional)'));
+  await tester.tap(find.text('Additional sources'));
   await tester.pumpAndSettle();
   await tester.enterText(
     find.byType(TextField),

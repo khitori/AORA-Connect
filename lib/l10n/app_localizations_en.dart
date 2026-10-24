@@ -61,7 +61,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get connecting => 'Connecting…';
 
   @override
-  String get stopping => 'Stopping…';
+  String get stopping => 'Disconnecting…';
 
   @override
   String get localProxy => 'Local proxy';
@@ -88,10 +88,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get refresh => 'Refresh';
 
   @override
-  String get validate => 'Validate';
+  String get validate => 'Check';
 
   @override
-  String get testConnection => 'Test connection';
+  String get testConnection => 'Test';
 
   @override
   String get copyDiagnostics => 'Copy diagnostics';
@@ -104,7 +104,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loadSubscriptionFirst =>
-      'Load a subscription on the Subscriptions tab first.';
+      'Add a subscription in the Subscriptions tab first.';
 
   @override
   String serverRequiresCore(String p0) {
@@ -127,17 +127,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get savedSubscriptions => 'Saved subscriptions';
 
   @override
-  String get noSubscriptions =>
-      'No subscriptions yet. Add a link above to get started.';
+  String get noSubscriptions => 'No subscriptions yet. Add a link above.';
 
   @override
-  String get activeSubscriptionNodes => 'Nodes in active subscription';
+  String get activeSubscriptionNodes => 'Servers in active subscription';
 
   @override
   String get chooseSubscription => 'Choose a subscription';
 
   @override
-  String get selectSubscription => 'Select a subscription to use';
+  String get selectSubscription => 'Choose an active subscription';
 
   @override
   String get refreshSubscription => 'Refresh selected subscription';
@@ -146,7 +145,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get removeSubscription => 'Remove selected subscription';
 
   @override
-  String get subscriptionLink => 'Subscription or server link...';
+  String get subscriptionLink => 'Subscription or server link…';
 
   @override
   String get pasteClipboard => 'Paste from clipboard';
@@ -244,8 +243,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get networkingCore => 'Networking core';
 
   @override
-  String get coreHelp =>
-      'Choose the core manually. Each server shows its required core on the Subscriptions page.';
+  String get coreHelp => 'Select the core required by your server.';
 
   @override
   String get connectionMode => 'Connection mode';
@@ -259,7 +257,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get killSwitchHelp =>
-      'Protects DNS and TUN routing while connected. Normal internet access resumes when disconnected.';
+      'Protects against DNS and traffic leaks while connected.';
 
   @override
   String get availableTun => 'Available in VPN (TUN) mode.';
@@ -268,27 +266,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickSettings => 'Quick Settings';
 
   @override
-  String get quickSettingsSubtitle => 'Connect from the Android panel';
+  String get quickSettingsSubtitle => 'Connect from the panel';
 
   @override
   String get quickSettingsHelp =>
-      'Use the AORA Connect tile to connect to your selected server or disconnect. Hold the tile to open the app.';
+      'Tap the system tile to connect to the selected server or disconnect. Hold it to open the app.';
 
   @override
-  String get addQuickSettings => 'Add to Quick Settings';
+  String get addQuickSettings => 'Add tile';
 
   @override
-  String get tileAdded => 'AORA Connect added to Quick Settings.';
+  String get tileAdded => 'AORA Connect tile added.';
 
   @override
-  String get tileAlreadyAdded => 'AORA Connect is already in Quick Settings.';
+  String get tileAlreadyAdded => 'AORA Connect tile already added.';
 
   @override
   String get tileManual =>
       'Open Quick Settings, tap Edit, then drag AORA Connect into your tiles.';
 
   @override
-  String get tileDeclined => 'Quick Settings tile was not added.';
+  String get tileDeclined => 'Tile not added.';
 
   @override
   String get tileFailed =>
@@ -315,7 +313,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get diagnostics => 'Diagnostics';
 
   @override
-  String get diagnosticsSubtitle => 'Validation, connection test and logs';
+  String get diagnosticsSubtitle => 'Configuration and connection';
 
   @override
   String get coreLogs => 'Core logs';
@@ -343,22 +341,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get off => 'Off';
 
   @override
-  String get pingMeasuring => 'Server ping · measuring…';
+  String get pingMeasuring => 'Latency · measuring…';
 
   @override
-  String get pingNoReply => 'Server ping · no reply';
+  String get pingNoReply => 'Latency · no reply';
 
   @override
   String pingValue(String p0) {
-    return 'Server ping · $p0';
+    return 'Latency · $p0';
   }
 
   @override
-  String get connectStatistics => 'Connect to view live ICMP statistics';
+  String get connectStatistics => 'Connect to any server.';
 
   @override
   String target(String p0) {
-    return 'Target: $p0';
+    return 'Address: $p0';
   }
 
   @override
@@ -376,7 +374,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get pingHistory => 'Server ping history. ';
+  String get pingHistory => 'Latency history. ';
 
   @override
   String successfulChecks(String p0, String p1) {
@@ -527,16 +525,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get automaticUpdates => 'Check automatically at startup';
+  String get automaticUpdates => 'Check at startup';
 
   @override
   String get automaticUpdatesSemantics => 'Check for updates automatically';
 
   @override
-  String get checkUpdates => 'Check for updates';
+  String get checkUpdates => 'Check';
 
   @override
-  String get importUpdate => 'Update from file';
+  String get importUpdate => 'From file';
 
   @override
   String get downloadUpdate => 'Download update';
@@ -567,7 +565,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get windowsInstaller => 'AORA update installer';
 
   @override
-  String get additionalSources => 'Additional sources (optional)';
+  String get additionalSources => 'Additional sources';
 
   @override
   String additionalSourcesCount(String p0) {
@@ -622,16 +620,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proxyHead => 'Via Proxy HEAD';
 
   @override
-  String get stateStopped => 'stopped';
+  String get stateStopped => 'disconnected';
 
   @override
-  String get stateStarting => 'starting';
+  String get stateStarting => 'connecting';
 
   @override
-  String get stateRunning => 'running';
+  String get stateRunning => 'connected';
 
   @override
-  String get stateStopping => 'stopping';
+  String get stateStopping => 'disconnecting';
 
   @override
   String get timeout => 'Timeout';
@@ -674,7 +672,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get installationCompleted => 'Installation completed';
 
   @override
-  String get trayShow => 'Show AORA Connect';
+  String get trayShow => 'Open AORA Connect';
 
   @override
   String get trayExit => 'Exit';
