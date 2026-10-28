@@ -8,9 +8,9 @@ String diagnosticsSignals(Iterable<String> messages) {
     'connection refused': 'Connection refused',
     'timed out|timeout': 'Timeout',
     'quic: transport closed': 'QUIC transport closed',
-    'tls.*(?:fail|error)|(?:fail|error).*tls|certificate.*(?:invalid|expired|fail|error)|x509:':
+    'tls.*(?:fail|error)|(?:fail|error).*tls|certificate.*(?:invalid|expired|fail|error)|x509:|handshakeexception|certificate_verify_failed':
         'TLS/certificate issue',
-    'dns (?:lookup|resolution).*(?:fail|error|timeout)|failed host lookup|no such host':
+    'dns (?:lookup|resolution)(?! / connection).*(?:fail|error|timeout)|failed host lookup|no such host':
         'DNS lookup failed',
     'permission.*(?:denied|not granted)': 'Permission denied',
     'protect.*fail|binding failed': 'Outbound socket protection/binding failed',
@@ -51,6 +51,8 @@ String buildDiagnosticsReport(
   'Mode: ${connection.mode.name}',
   'DNS: ${connection.dnsProvider.label}',
   'Routing: ${connection.routingPolicy.enabled ? 'enabled' : 'disabled'}',
+  'Routing direction: ${connection.routingPolicy.direction.label}',
+  'Unmatched traffic: ${connection.routingPolicy.enabled ? connection.routingPolicy.defaultAction.label : 'Through tunnel'}',
   'Routing rules: ${connection.routingPolicy.rules.length}',
   'Physical network: $network',
   '',

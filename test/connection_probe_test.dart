@@ -5,6 +5,150 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:aoravpn/core/connection_probe.dart';
 
 void main() {
+  Future<HttpServer> httpServer(int status) async {
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    server.listen((request) {
+      request.response.statusCode = status;
+      request.response.close();
+    });
+    addTearDown(() => server.close(force: true));
+    return server;
+  }
+
+  Future<HttpServer> untrustedServer() async {
+    final context = SecurityContext()
+      ..useCertificateChain('test/fixtures/connection_probe_cert.pem')
+      ..usePrivateKey('test/fixtures/connection_probe_key.pem');
+    final server = await HttpServer.bindSecure(
+      InternetAddress.loopbackIPv4,
+      0,
+      context,
+    );
+    server.listen(
+      (request) => request.response.close(),
+      onError: (Object error) {},
+    );
+    addTearDown(() => server.close(force: true));
+    return server;
+  }
+
+  Uri url(HttpServer server, {bool secure = false}) =>
+      Uri.parse('${secure ? 'https' : 'http'}://127.0.0.1:${server.port}/');
+
+  test('HTTP 204 connectivity responses succeed', () async {
+    final server = await httpServer(HttpStatus.noContent);
+    expect(
+      await probeConnection(port: null, targetUrl: url(server)),
+      isA<Duration>(),
+    );
+  });
+
+  test(
+    'An unavailable endpoint falls back without logging private URLs',
+    () async {
+      final unavailable = await httpServer(HttpStatus.serviceUnavailable);
+      final available = await httpServer(HttpStatus.noContent);
+      final stages = <String>[];
+      final elapsed = await probeConnection(
+        port: null,
+        targetUrls: [
+          url(unavailable).replace(path: '/private-token'),
+          url(available),
+        ],
+        onStage: stages.add,
+      );
+      expect(elapsed, isA<Duration>());
+      expect(stages.join('\n'), contains('HTTP 503'));
+      expect(stages.join('\n'), contains('trying another HTTPS test endpoint'));
+      expect(stages.join('\n'), isNot(contains('private-token')));
+    },
+  );
+
+  test(
+    'Redirects and failed backup responses do not verify a connection',
+    () async {
+      final unavailable = await httpServer(HttpStatus.serviceUnavailable);
+      final redirect = await httpServer(HttpStatus.found);
+      await expectLater(
+        probeConnection(
+          port: null,
+          targetUrls: [url(unavailable), url(redirect)],
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'failure',
+            contains('HTTP 302'),
+          ),
+        ),
+      );
+    },
+  );
+
+  test(
+    'Untrusted certificates remain rejected and identify the TLS stage',
+    () async {
+      final server = await untrustedServer();
+      await expectLater(
+        probeConnection(port: null, targetUrl: url(server, secure: true)),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'failure',
+            allOf(
+              contains('TLS handshake / certificate verification'),
+              contains('HandshakeException'),
+              isNot(contains('DNS lookup / connection')),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+
+  test(
+    'A rejected certificate can fall back to a separate working endpoint',
+    () async {
+      final untrusted = await untrustedServer();
+      final available = await httpServer(HttpStatus.noContent);
+      final stages = <String>[];
+      expect(
+        await probeConnection(
+          port: null,
+          targetUrls: [url(untrusted, secure: true), url(available)],
+          onStage: stages.add,
+        ),
+        isA<Duration>(),
+      );
+      expect(stages.join('\n'), contains('HandshakeException'));
+      expect(stages.join('\n'), contains('trying another HTTPS test endpoint'));
+    },
+  );
+
+  test('A stalled connection can fall back after its timeout', () async {
+    final stalled = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+    final sockets = <Socket>[];
+    stalled.listen(sockets.add);
+    addTearDown(() async {
+      for (final socket in sockets) {
+        socket.destroy();
+      }
+      await stalled.close();
+    });
+    final available = await httpServer(HttpStatus.noContent);
+    expect(
+      await probeConnection(
+        port: null,
+        targetUrls: [
+          Uri.parse('https://127.0.0.1:${stalled.port}/'),
+          url(available),
+        ],
+        connectionTimeout: const Duration(milliseconds: 150),
+      ),
+      isA<Duration>(),
+    );
+  });
+
   test(
     'Stalled TLS setup reports the connection stage instead of a raw timeout',
     () async {

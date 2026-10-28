@@ -280,10 +280,13 @@ class SettingsPage extends StatelessWidget {
           children: [
             Text(context.l10n.quickSettingsHelp),
             const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () => _addTile(context),
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: Text(context.l10n.addQuickSettings),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _addTile(context),
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: Text(context.l10n.addQuickSettings),
+              ),
             ),
           ],
         ),

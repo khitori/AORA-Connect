@@ -103,6 +103,28 @@ void main() {
     },
   );
 
+  test(
+    'TLS failures in the combined connection stage are not DNS failures',
+    () {
+      final signals = diagnosticsSignals([
+        'Connection verification failed (Cloudflare DNS): Bad state: '
+            'Connection check failed during DNS lookup / connection: '
+            'HandshakeException: Handshake error in client '
+            'CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate',
+      ]);
+      expect(signals, contains('TLS/certificate issue'));
+      expect(signals, contains('Connection verification failed'));
+      expect(signals, isNot(contains('DNS lookup failed')));
+      expect(
+        diagnosticsSignals([
+          'Connection check failed during DNS lookup / connection: '
+              "SocketException: Failed host lookup: 'private.example'",
+        ]),
+        contains('DNS lookup failed'),
+      );
+    },
+  );
+
   Future<void> input(
     WidgetTester tester,
     TextEditingController controller,
