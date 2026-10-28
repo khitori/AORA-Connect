@@ -179,7 +179,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       find.text(
-        'Listed items go through the tunnel. Everything else uses your normal connection.',
+        'No items yet. Everything goes through the tunnel.',
       ),
       findsOneWidget,
     );
@@ -192,7 +192,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       find.text(
-        'Listed items use your normal connection. Everything else goes through the tunnel.',
+        'No items yet. Everything goes through the tunnel.',
       ),
       findsOneWidget,
     );

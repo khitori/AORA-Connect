@@ -164,7 +164,9 @@ class _RoutingPageState extends State<RoutingPage> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      policy.direction == RoutingAction.vpn
+                      !policy.rules.any((rule) => rule.enabled)
+                          ? context.l10n.emptyThroughTunnel
+                          : policy.direction == RoutingAction.vpn
                           ? context.l10n.listedThroughTunnel
                           : context.l10n.listedBypassTunnel,
                     ),
@@ -191,15 +193,6 @@ class _RoutingPageState extends State<RoutingPage> {
                     child: SelectableText(
                       error,
                       style: TextStyle(color: AppColors.accentDark),
-                    ),
-                  ),
-                if (policy.rules.isEmpty && policy.enabled)
-                  Padding(
-                    padding: EdgeInsets.only(top: 16),
-                    child: Text(
-                      policy.direction == RoutingAction.vpn
-                          ? context.l10n.emptyBypassTunnel
-                          : context.l10n.emptyThroughTunnel,
                     ),
                   ),
               ],

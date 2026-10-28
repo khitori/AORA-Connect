@@ -210,35 +210,53 @@ void main() {
     expect(result['outbounds'], hasLength(1));
   });
 
-  test(
-    'Empty lists use the opposite route and old blocking actions are discarded',
-    () {
+  test('Empty routing lists keep traffic in the VPN and old blocking actions are discarded', () {
+    for (final direction in RoutingAction.values) {
+      final policy = RoutingPolicy(enabled: true, direction: direction);
+      final config = applyRouting(singBox.config(), CoreKind.singBox, policy);
+      expect((config['route'] as Map)['final'], 'proxy');
+      expect(jsonEncode(config).contains('reject'), isFalse);
+    }
+    for (final profile in [singBox, xray]) {
       for (final direction in RoutingAction.values) {
-        final policy = RoutingPolicy(enabled: true, direction: direction);
-        final config = applyRouting(singBox.config(), CoreKind.singBox, policy);
-        expect(
-          (config['route'] as Map)['final'],
-          direction == RoutingAction.vpn ? 'direct' : 'proxy',
-        );
-        expect(jsonEncode(config).contains('reject'), isFalse);
+        for (final ruleList in [
+          <RoutingRule>[],
+          [rules.first.withEnabled(false)],
+        ]) {
+          final policy = RoutingPolicy(direction: direction, rules: ruleList);
+          final config = applyRouting(
+            profile.config(),
+            profile.coreKind,
+            policy,
+          );
+          expect(policy.defaultAction, RoutingAction.vpn);
+          expect(config['outbounds'], hasLength(1));
+          if (profile.coreKind == CoreKind.singBox) {
+            expect(config['route'], containsPair('final', 'proxy'));
+            expect(config['dns'], containsPair('final', 'vpn-dns'));
+          } else {
+            expect((config['outbounds'] as List).single['tag'], 'proxy');
+            expect((config['routing'] as Map)['rules'], isNull);
+          }
+        }
       }
-      final migrated = RoutingPolicy.fromJson({
-        'enabled': true,
-        'defaultAction': 'block',
-        'rules': [
-          {'match': 'domain', 'target': 'example.com', 'action': 'block'},
-        ],
-      });
-      expect(migrated.direction, RoutingAction.vpn);
-      expect(migrated.rules.single.target, 'example.com');
-      final config = applyRouting(xray.config(), CoreKind.xray, migrated);
-      final migratedRules = (config['routing'] as Map)['rules'] as List;
-      expect(migratedRules.first['outboundTag'], 'proxy');
-      expect(migratedRules.last['outboundTag'], 'direct');
-      expect(jsonEncode(config).contains('blackhole'), isFalse);
-      expect(jsonEncode(migrated.toJson()).contains('block'), isFalse);
-    },
-  );
+    }
+    final migrated = RoutingPolicy.fromJson({
+      'enabled': true,
+      'defaultAction': 'block',
+      'rules': [
+        {'match': 'domain', 'target': 'example.com', 'action': 'block'},
+      ],
+    });
+    expect(migrated.direction, RoutingAction.vpn);
+    expect(migrated.rules.single.target, 'example.com');
+    final config = applyRouting(xray.config(), CoreKind.xray, migrated);
+    final migratedRules = (config['routing'] as Map)['rules'] as List;
+    expect(migratedRules.first['outboundTag'], 'proxy');
+    expect(migratedRules.last['outboundTag'], 'direct');
+    expect(jsonEncode(config).contains('blackhole'), isFalse);
+    expect(jsonEncode(migrated.toJson()).contains('block'), isFalse);
+  });
 
   test('Stored policies preserve ordered rules and disabled rules', () {
     final policy = RoutingPolicy(

@@ -125,7 +125,9 @@ class RoutingPolicy {
   final bool enabled;
   final RoutingAction direction;
   RoutingAction get defaultAction =>
-      direction == RoutingAction.vpn ? RoutingAction.direct : RoutingAction.vpn;
+      !rules.any((rule) => rule.enabled) || direction == RoutingAction.direct
+      ? RoutingAction.vpn
+      : RoutingAction.direct;
   final List<RoutingRule> rules;
 
   Map<String, Object?> toJson() => {

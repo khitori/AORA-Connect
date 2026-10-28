@@ -65,6 +65,23 @@ class ControlledEngine implements TunnelEngine {
   }
 }
 
+class StartingEngine extends ControlledEngine {
+  final started = Completer<void>();
+  final finish = Completer<void>();
+  TunnelState currentState = TunnelState.stopped;
+
+  @override
+  TunnelState get state => currentState;
+
+  @override
+  Future<void> start(String path) async {
+    currentState = TunnelState.running;
+    changes.add(currentState);
+    started.complete();
+    await finish.future;
+  }
+}
+
 class MemoryKillSwitch implements KillSwitch {
   bool armed = false;
   int disarmCalls = 0;
@@ -97,6 +114,72 @@ class MemoryKillSwitch implements KillSwitch {
 }
 
 void main() {
+  test(
+    'Early core readiness does not display Connected before startup finishes',
+    () async {
+      final engine = StartingEngine();
+      final controller = ConnectionController(
+        engine: engine,
+        configPath: 'unused.json',
+      );
+      addTearDown(() async {
+        if (!engine.finish.isCompleted) engine.finish.complete();
+        await controller.shutdown();
+        controller.dispose();
+      });
+      final operation = controller.connect();
+      await engine.started.future;
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.state, TunnelState.starting);
+      expect(controller.busy, isTrue);
+      engine.finish.complete();
+      await operation;
+      expect(controller.state, TunnelState.running);
+      expect(controller.busy, isFalse);
+    },
+  );
+
+  test(
+    'Restoring an empty Through tunnel list generates a VPN default',
+    () async {
+      const url = 'https://example.com/sub';
+      final engine = ControlledEngine();
+      final store = MemorySettingsStore()
+        ..data = const AppSettingsData(
+          subscriptions: [SavedSubscription(url)],
+          activeSubscriptionUrl: url,
+          routingPolicy: RoutingPolicy(direction: RoutingAction.vpn),
+        );
+      final controller = ConnectionController(
+        engine: engine,
+        settingsStore: store,
+        subscriptionLoader: (_) async => SubscriptionLoadResult(
+          profiles: [
+            HysteriaProfile(
+              name: 'Server',
+              server: '127.0.0.1',
+              port: 443,
+              password: 'secret',
+              serverName: 'example.com',
+            ),
+          ],
+        ),
+      );
+      addTearDown(() async {
+        await controller.shutdown();
+        controller.dispose();
+      });
+      await controller.restore();
+      expect(controller.error, isNull);
+      final config = jsonDecode(
+        await File(engine.lastValidatedPath!).readAsString(),
+      );
+      expect(config['route']['final'], 'proxy');
+      expect(config['dns']['final'], 'vpn-dns');
+      expect(config['outbounds'], hasLength(1));
+    },
+  );
+
   test(
     'Diagnostics reports validation success and failure in settings and logs',
     () async {

@@ -128,7 +128,10 @@ class ConnectionController extends ChangeNotifier {
   Future<void>? _pending;
   Future<void>? _cleanup;
 
-  TunnelState get state => _state;
+  bool _connecting = false;
+  TunnelState get state => _connecting && _state == TunnelState.running
+      ? TunnelState.starting
+      : _state;
   ConnectionMode get mode => _mode;
   CoreKind get core => _core;
   DnsProvider get dnsProvider => _dnsProvider;
@@ -655,34 +658,39 @@ class ConnectionController extends ChangeNotifier {
     }
   }, errorScope: ConnectionErrorScope.settings);
   Future<void> connect() => _perform(() async {
-    if (selectedRequiresDifferentCore) {
-      throw StateError('Select ${_selected!.coreKind.label} in Settings.');
-    }
-    await _killSwitch?.disarm();
-    if (Platform.isAndroid && _selected != null) {
-      await _selectProfile(_selected!);
-    }
-    await _activeEngine.start(_activeConfig);
-    if (_selected == null) return;
-    _appendLog(
-      'Connection verification: ${activeCore.displayName}, DNS=${_dnsProvider.label}.',
-    );
+    _connecting = true;
     try {
-      final elapsed = await probeConnection(
-        port: _mode == ConnectionMode.tun ? null : 17890,
-        onStage: _appendLog,
-      );
-      _probeMilliseconds = elapsed.inMilliseconds;
-      _probeProtocol = null;
-    } catch (error) {
-      if (_activeEngine case final AndroidTunnelEngine android) {
-        await android.captureDiagnostics();
+      if (selectedRequiresDifferentCore) {
+        throw StateError('Select ${_selected!.coreKind.label} in Settings.');
       }
+      await _killSwitch?.disarm();
+      if (Platform.isAndroid && _selected != null) {
+        await _selectProfile(_selected!);
+      }
+      await _activeEngine.start(_activeConfig);
+      if (_selected == null) return;
       _appendLog(
-        'Connection verification failed (${_dnsProvider.label} DNS): $error',
+        'Connection verification: ${activeCore.displayName}, DNS=${_dnsProvider.label}.',
       );
-      await _activeEngine.stop();
-      rethrow;
+      try {
+        final elapsed = await probeConnection(
+          port: _mode == ConnectionMode.tun ? null : 17890,
+          onStage: _appendLog,
+        );
+        _probeMilliseconds = elapsed.inMilliseconds;
+        _probeProtocol = null;
+      } catch (error) {
+        if (_activeEngine case final AndroidTunnelEngine android) {
+          await android.captureDiagnostics();
+        }
+        _appendLog(
+          'Connection verification failed (${_dnsProvider.label} DNS): $error',
+        );
+        await _activeEngine.stop();
+        rethrow;
+      }
+    } finally {
+      _connecting = false;
     }
   }, errorScope: ConnectionErrorScope.connection);
   Future<void> stop() => _perform(() async {
