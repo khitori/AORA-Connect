@@ -124,6 +124,15 @@ unsafe fn update_theme(hwnd: HWND) {
 unsafe extern "C" fn first_frame(data: *mut c_void) {
     let state = data.cast::<Window>();
     (*state).first_frame = true;
+    for arg in std::env::args() {
+        if let Some(name) = arg.strip_prefix("--migration-ready=") {
+            if name.starts_with("Local\\AORAConnectMigrationReady-") {
+                if let Ok(event) = owned(OpenEventW(EVENT_MODIFY_STATE, 0, wide(name).as_ptr())) {
+                    SetEvent(event.as_raw_handle());
+                }
+            }
+        }
+    }
     if (*state).smoke {
         SetTimer((*state).hwnd, 1, 250, None);
     } else {

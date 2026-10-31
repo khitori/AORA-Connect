@@ -6,6 +6,25 @@ pub mod network;
 pub mod runner;
 pub mod updates;
 
+pub fn installation_root() -> std::io::Result<std::path::PathBuf> {
+    #[cfg(feature = "migration-fixture")]
+    { return Ok(std::path::PathBuf::from(env!("AORA_MIGRATION_FIXTURE_ROOT")).join("installed")); }
+    #[cfg(not(feature = "migration-fixture"))]
+    {
+    use windows_sys::Win32::{System::Com::CoTaskMemFree, UI::Shell::{SHGetKnownFolderPath, FOLDERID_ProgramFiles}};
+    unsafe {
+        let mut value = std::ptr::null_mut();
+        let code = SHGetKnownFolderPath(&FOLDERID_ProgramFiles, 0, std::ptr::null_mut(), &mut value);
+        if code < 0 { return Err(std::io::Error::from_raw_os_error(code)); }
+        let mut length = 0;
+        while *value.add(length) != 0 { length += 1; }
+        let path = std::path::PathBuf::from(<std::ffi::OsString as std::os::windows::ffi::OsStringExt>::from_wide(std::slice::from_raw_parts(value, length)));
+        CoTaskMemFree(value.cast());
+        Ok(path.join("AORAConnect"))
+    }
+    }
+}
+
 use std::ffi::OsStr;
 use std::io;
 use std::mem::{size_of, zeroed};

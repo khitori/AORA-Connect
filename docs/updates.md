@@ -30,9 +30,28 @@ No mirror is required or configured by default.
   app/portable launcher to close and does not forcibly terminate the VPN core.
 - The installer registers AORA Connect in Windows Installed Apps and creates
   a Start Menu shortcut; a desktop shortcut is optional.
-- Application files and both cores use `%LOCALAPPDATA%\AORAConnect`, alongside
-  the existing settings and runtime folders. The uninstall files are under
+- Windows installs under `%ProgramFiles%\AORAConnect` and requires administrator
+  approval. Application files, both cores, settings and runtime files share this
+  protected root. The uninstall files are under
   `uninstall/` in the same root.
+- The existing in-app updater can migrate a LocalAppData installation. The
+  installer copies `app-state.json`, `language.json` and `updates.json` and places
+  a temporary launcher at the restart path expected by the old updater. That
+  launcher starts a worker from Program Files. The worker waits for the old
+  updater to release its files, starts the new client, and waits for its first
+  rendered frame before removing the legacy application and verified settings
+  copies. A failed startup restores the previous executable and retains its data.
+  Conflicting settings and unrelated files stay in the old directory for recovery;
+  directory links are not followed. Subsequent updates use the new root directly
+  and do not recreate a legacy launcher.
+- The compatibility payload remains bundled as `app/aoravpn_migrate.exe` for
+  users skipping releases. Its fixture-only Cargo feature is excluded from release
+  builds. `tool/test_legacy_migration.ps1` tests the actual 1.1.9 updater against
+  isolated signed packages, including restart, cleanup, a subsequent update and
+  failed-startup rollback (`-FailStartup`).
+- Settings and runtime folders are restricted to Administrators and SYSTEM while
+  the Windows client requires elevation. The installation root is not made writable
+  to ordinary processes. Uninstall keeps user data unless deletion is selected.
 - Installing a newer release preserves subscriptions, settings, routing rules,
   and update preferences. Running an older installer is rejected once an
   installer version has been recorded. Running the same version can repair it.

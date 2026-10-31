@@ -186,11 +186,8 @@ unsafe extern "C" fn command(
                 let path = std::str::from_utf8(&bytes[15..])
                     .map_err(|_| std::io::Error::other("Invalid update path"))?;
                 let package = std::path::Path::new(path).canonicalize()?;
-                let root = std::path::PathBuf::from(
-                    std::env::var_os("LOCALAPPDATA")
-                        .ok_or_else(|| std::io::Error::other("Missing application storage"))?,
-                )
-                .join("AORAConnect/runtime")
+                let root = crate::installation_root()?
+                .join("runtime")
                 .canonicalize()?;
                 if !package.starts_with(root) {
                     return Err(std::io::Error::other(

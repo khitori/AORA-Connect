@@ -19,11 +19,19 @@ AppVersion={#AppVersion}
 VersionInfoVersion={#BuildVersion}
 AppPublisher=AORA Connect
 AppPublisherURL=https://github.com/khitori/AORA-Connect
-DefaultDirName={localappdata}\AORAConnect
+#ifdef MigrationFixtureRoot
+DefaultDirName={#MigrationFixtureRoot}\installed
+#else
+DefaultDirName={autopf64}\AORAConnect
+#endif
 DisableDirPage=yes
 DisableProgramGroupPage=yes
 UsePreviousAppDir=no
+#ifdef TestInstall
 PrivilegesRequired=lowest
+#else
+PrivilegesRequired=admin
+#endif
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0
@@ -37,7 +45,9 @@ Compression=lzma2
 SolidCompression=yes
 CloseApplications=no
 RestartApplications=no
+#ifndef TestInstall
 AppMutex=Local\AORAConnectApp,Local\AORAConnectPortableLaunch
+#endif
 WizardStyle=modern
 #ifdef TestInstall
 CreateUninstallRegKey=no
@@ -52,11 +62,12 @@ Source: "{#StageDir}\cores\*"; DestDir: "{app}\cores"; Flags: ignoreversion recu
 
 #ifndef TestInstall
 [Icons]
-Name: "{userprograms}\AORA Connect"; Filename: "{app}\app\aoravpn.exe"; WorkingDir: "{app}\app"
-Name: "{userdesktop}\AORA Connect"; Filename: "{app}\app\aoravpn.exe"; WorkingDir: "{app}\app"; Tasks: desktopicon
+Name: "{commonprograms}\AORA Connect"; Filename: "{app}\app\aoravpn.exe"; WorkingDir: "{app}\app"
+Name: "{commondesktop}\AORA Connect"; Filename: "{app}\app\aoravpn.exe"; WorkingDir: "{app}\app"; Tasks: desktopicon; Check: not LegacyDesktopShortcutExists
+Name: "{userdesktop}\AORA Connect"; Filename: "{app}\app\aoravpn.exe"; WorkingDir: "{app}\app"; Check: LegacyDesktopShortcutExists
 
 [Registry]
-Root: HKCU; Subkey: "Software\AORAConnect"; ValueType: string; ValueName: "Version"; ValueData: "{#AppVersion}"; Flags: uninsdeletekey
+Root: HKLM; Subkey: "Software\AORAConnect"; ValueType: string; ValueName: "Version"; ValueData: "{#AppVersion}"; Flags: uninsdeletekey
 
 [Run]
 Filename: "{app}\app\aoravpn.exe"; Description: "Open AORA Connect"; Flags: postinstall nowait skipifsilent shellexec
@@ -70,25 +81,139 @@ Type: files; Name: "{app}\installed-version.txt"
 [Code]
 var
   DeleteUserData: Boolean;
+  LegacyRoot: String;
+  MigratedSettings: Boolean;
+  LegacyHandoff: Boolean;
+
+function LegacyDesktopShortcutExists(): Boolean;
+begin
+  Result := (LegacyRoot <> '') and DirExists(LegacyRoot + '\app') and FileExists(ExpandConstant('{userdesktop}\AORA Connect.lnk'));
+end;
+
+function SafeDirectory(const Path: String): Boolean;
+var Find: TFindRec;
+begin
+  Result := not DirExists(Path);
+  if not DirExists(Path) then Exit;
+  if not FindFirst(Path, Find) then Exit;
+  try
+    Result := (Find.Attributes and FILE_ATTRIBUTE_REPARSE_POINT) = 0;
+  finally FindClose(Find); end;
+end;
+
+function CopyLegacySettings(): Boolean;
+var Names: TArrayOfString; I: Integer; Source, Target: String;
+begin
+  Result := False;
+  if not DirExists(LegacyRoot) then Exit;
+  if not SafeDirectory(LegacyRoot) or not SafeDirectory(LegacyRoot + '\settings') then
+    RaiseException('Legacy application storage contains a directory link. Migration was cancelled.');
+  Names := ['app-state.json', 'language.json', 'updates.json'];
+  ForceDirectories(ExpandConstant('{app}\settings'));
+  Result := True;
+  for I := 0 to GetArrayLength(Names) - 1 do begin
+    Source := LegacyRoot + '\settings\' + Names[I];
+    Target := ExpandConstant('{app}\settings\') + Names[I];
+    if FileExists(Source) then begin
+      if not FileExists(Target) and not CopyFile(Source, Target, True) then
+        RaiseException('Could not migrate ' + Names[I] + '. The original settings were kept.');
+      if GetSHA256OfFile(Source) <> GetSHA256OfFile(Target) then Result := False;
+    end;
+  end;
+end;
+
+function RemoveLegacyTree(const Path: String): Boolean;
+var Find: TFindRec; Child: String;
+begin
+  Result := True;
+  if not DirExists(Path) then Exit;
+  if not SafeDirectory(Path) then begin Result := False; Exit; end;
+  if FindFirst(Path + '\*', Find) then begin
+    try
+      repeat
+        if (Find.Name <> '.') and (Find.Name <> '..') then begin
+          Child := Path + '\' + Find.Name;
+          if (Find.Attributes and FILE_ATTRIBUTE_REPARSE_POINT) <> 0 then Result := False
+          else if (Find.Attributes and FILE_ATTRIBUTE_DIRECTORY) <> 0 then begin
+            if not RemoveLegacyTree(Child) then Result := False;
+          end else if not DeleteFile(Child) then Result := False;
+        end;
+      until not FindNext(Find);
+    finally FindClose(Find); end;
+  end;
+  if Result then Result := RemoveDir(Path);
+end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var Existing: AnsiString; OldVersion, NewVersion: Int64;
 begin
   Result := '';
 #ifndef TestInstall
-  if CompareText(RemoveBackslash(ExpandConstant('{app}')), RemoveBackslash(ExpandConstant('{localappdata}\AORAConnect'))) <> 0 then
-    Result := 'AORA Connect uses its existing local application folder. A custom installation folder is not supported.';
+  if CompareText(RemoveBackslash(ExpandConstant('{app}')), RemoveBackslash(ExpandConstant('{autopf64}\AORAConnect'))) <> 0 then begin
+    Result := 'AORA Connect must be installed in Program Files. A custom installation folder is not supported.';
+    Exit;
+  end;
+  LegacyRoot := ExpandConstant('{localappdata}\AORAConnect');
+  LegacyHandoff := WizardSilent and DirExists(LegacyRoot + '\app');
+#else
+#ifdef MigrationFixtureRoot
+  LegacyRoot := '{#MigrationFixtureRoot}\profile\Local\AORAConnect';
+  LegacyHandoff := WizardSilent and DirExists(LegacyRoot + '\app');
+#else
+  LegacyRoot := ExpandConstant('{param:LEGACYROOT|}');
+#endif
 #endif
   if LoadStringFromFile(ExpandConstant('{app}\installed-version.txt'), Existing) then
     if StrToVersion(Trim(Existing), OldVersion) and StrToVersion('{#BuildVersion}', NewVersion) then
       if ComparePackedVersion(OldVersion, NewVersion) > 0 then
         Result := 'A newer version is already installed. Downgrading would risk compatibility with your saved settings.';
+  if (LegacyRoot <> '') and LoadStringFromFile(LegacyRoot + '\installed-version.txt', Existing) then
+    if StrToVersion(Trim(Existing), OldVersion) and StrToVersion('{#BuildVersion}', NewVersion) then
+      if ComparePackedVersion(OldVersion, NewVersion) > 0 then
+        Result := 'The previous installation is newer. Migration would downgrade your saved settings.';
+  if (Result = '') and (LegacyRoot <> '') then
+    MigratedSettings := CopyLegacySettings();
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
+var Code: Integer; Location: String;
 begin
-  if CurStep = ssPostInstall then
+  if CurStep = ssPostInstall then begin
     SaveStringToFile(ExpandConstant('{app}\installed-version.txt'), '{#BuildVersion}', False);
+#ifndef TestInstall
+    if not ForceDirectories(ExpandConstant('{app}\runtime')) then RaiseException('Could not create runtime storage.');
+    if not ForceDirectories(ExpandConstant('{app}\settings')) then RaiseException('Could not create settings storage.');
+    if not Exec(ExpandConstant('{sys}\icacls.exe'), '"' + ExpandConstant('{app}\settings') + '" /inheritance:r /grant:r "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F"', '', SW_HIDE, ewWaitUntilTerminated, Code) or (Code <> 0) then RaiseException('Could not protect settings storage.');
+    if not Exec(ExpandConstant('{sys}\icacls.exe'), '"' + ExpandConstant('{app}\runtime') + '" /inheritance:r /grant:r "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F"', '', SW_HIDE, ewWaitUntilTerminated, Code) or (Code <> 0) then RaiseException('Could not protect runtime storage.');
+#endif
+    if LegacyHandoff then begin
+      if not SafeDirectory(LegacyRoot) or not SafeDirectory(LegacyRoot + '\app') then
+        RaiseException('Legacy launcher storage contains a directory link.');
+      if not FileExists(LegacyRoot + '\app\aoravpn.migration-backup.exe') and
+         not CopyFile(LegacyRoot + '\app\aoravpn.exe', LegacyRoot + '\app\aoravpn.migration-backup.exe', True) then
+        RaiseException('Could not preserve the previous client for migration rollback.');
+      if not CopyFile(ExpandConstant('{app}\app\aoravpn_migrate.exe'), LegacyRoot + '\app\aoravpn.exe', False) then
+        RaiseException('Could not prepare the legacy updater handoff. Settings were retained.');
+    end else if MigratedSettings then begin
+      if not SafeDirectory(LegacyRoot) then RaiseException('Legacy storage changed during migration.');
+      if not RemoveLegacyTree(LegacyRoot + '\app') then Log('Some legacy application files are still in use.');
+      if not RemoveLegacyTree(LegacyRoot + '\cores') then Log('Some legacy core files are still in use.');
+      if not RemoveLegacyTree(LegacyRoot + '\runtime') then Log('Some legacy runtime files are still in use.');
+      if not RemoveLegacyTree(LegacyRoot + '\uninstall') then Log('Some legacy uninstall files are still in use.');
+      DeleteFile(LegacyRoot + '\settings\app-state.json');
+      DeleteFile(LegacyRoot + '\settings\language.json');
+      DeleteFile(LegacyRoot + '\settings\updates.json');
+      RemoveDir(LegacyRoot + '\settings');
+      DeleteFile(LegacyRoot + '\installed-version.txt');
+#ifndef TestInstall
+      DeleteFile(ExpandConstant('{userprograms}\AORA Connect.lnk'));
+      if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{C9DE0FA9-DB41-4D08-B236-D7747D54C844}_is1', 'InstallLocation', Location) and (CompareText(RemoveBackslash(Location), RemoveBackslash(LegacyRoot)) = 0) then
+        RegDeleteKeyIncludingSubkeys(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{C9DE0FA9-DB41-4D08-B236-D7747D54C844}_is1');
+      RegDeleteKeyIncludingSubkeys(HKCU, 'Software\AORAConnect');
+#endif
+      RemoveDir(LegacyRoot);
+    end;
+  end;
 end;
 
 function InitializeUninstall(): Boolean;
@@ -121,8 +246,7 @@ end;
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
   if (CurUninstallStep = usPostUninstall) and DeleteUserData then begin
-    { Delete only the named app-owned data folders, never the user's profile. }
-    if CompareText(RemoveBackslash(ExpandConstant('{app}')), RemoveBackslash(ExpandConstant('{localappdata}\AORAConnect'))) = 0 then begin
+    if CompareText(RemoveBackslash(ExpandConstant('{app}')), RemoveBackslash(ExpandConstant('{autopf64}\AORAConnect'))) = 0 then begin
       DelTree(ExpandConstant('{app}\settings'), True, True, True);
       DelTree(ExpandConstant('{app}\runtime'), True, True, True);
     end;

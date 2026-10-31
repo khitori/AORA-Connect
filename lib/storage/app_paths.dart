@@ -2,14 +2,30 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
+
+import '../core/project_directory.dart';
 
 class AppPaths {
   static Directory get windowsRoot {
-    final base = Platform.environment['LOCALAPPDATA'];
-    if (base == null || base.isEmpty) {
-      throw StateError('Could not find the Windows local app data directory.');
+    if (!kReleaseMode) {
+      return Directory('${findProjectDirectory().path}/build/dev-data');
     }
-    return Directory('$base/AORAConnect');
+    return windowsInstalledRoot(Platform.resolvedExecutable);
+  }
+
+  static Directory windowsInstalledRoot(String executable) {
+    final appDirectory = File(executable).absolute.parent;
+    if (appDirectory.uri.pathSegments
+            .where((part) => part.isNotEmpty)
+            .last
+            .toLowerCase() !=
+        'app') {
+      throw StateError(
+        'The installed application must run from its app folder. Reinstall AORA Connect.',
+      );
+    }
+    return appDirectory.parent;
   }
 
   static Future<Directory> root() async {

@@ -10,10 +10,7 @@ use std::{
 use windows_sys::Win32::{Foundation::*, System::Threading::*, UI::WindowsAndMessaging::*};
 
 fn app_root() -> Result<PathBuf> {
-    Ok(
-        PathBuf::from(std::env::var_os("LOCALAPPDATA").ok_or("Missing application storage")?)
-            .join("AORAConnect"),
-    )
+    Ok(aora_windows_helpers::installation_root()?)
 }
 
 fn installer_lease(directory: &Path) -> std::io::Result<std::fs::File> {

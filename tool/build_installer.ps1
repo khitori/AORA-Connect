@@ -20,6 +20,7 @@ try {
   }
   $stage = (Get-Content -LiteralPath 'build/installer/stage-path.txt' -Raw).Trim()
   if (!(Test-Path -LiteralPath (Join-Path $stage 'app/aoravpn_update.exe'))) { throw 'Build staging is missing the update helper; rebuild first.' }
+  if (!(Test-Path -LiteralPath (Join-Path $stage 'app/aoravpn_migrate.exe'))) { throw 'Build staging is missing the migration helper; rebuild first.' }
   $version = ((Get-Content pubspec.yaml | Where-Object { $_ -match '^version:' }) -replace '^version:\s*', '').Trim()
   if ($version -notmatch '^\d+\.\d+\.\d+\+\d+$') { throw 'Set version to major.minor.patch+build in pubspec.yaml.' }
   $installerVersion = $version -replace '\+', '.'

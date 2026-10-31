@@ -2,6 +2,11 @@
 use std::{env, fs, path::PathBuf};
 
 fn main() {
+    println!("cargo:rerun-if-env-changed=AORA_MIGRATION_FIXTURE_ROOT");
+    if env::var_os("CARGO_FEATURE_MIGRATION_FIXTURE").is_some() {
+        let root = env::var("AORA_MIGRATION_FIXTURE_ROOT").expect("Migration fixtures require an isolated root");
+        println!("cargo:rustc-env=AORA_MIGRATION_FIXTURE_ROOT={root}");
+    }
     println!("cargo:rerun-if-changed=../../release/update-public-key.txt");
     println!("cargo:rerun-if-changed=../../pubspec.yaml");
     let update_key = fs::read_to_string("../../release/update-public-key.txt")

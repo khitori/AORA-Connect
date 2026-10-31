@@ -9,6 +9,7 @@ publish = false
 [features]
 portable = []
 runner = []
+migration-fixture = []
 
 [lib]
 crate-type = ["rlib", "staticlib"]
@@ -55,6 +56,10 @@ required-features = ["portable"]
 [[bin]]
 name = "aoravpn_update"
 path = "src/bin/update.rs"
+
+[[bin]]
+name = "aoravpn_migrate"
+path = "src/bin/migrate.rs"
 
 [profile.release]
 lto = true

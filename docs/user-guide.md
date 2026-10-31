@@ -108,7 +108,7 @@ Statistics is separate from that setting: it uses live ICMP while connected and 
 The packaged Windows client uses one app-managed root:
 
 ```text
-%LOCALAPPDATA%\AORAConnect\
+%ProgramFiles%\AORAConnect\
 ├── app\         Application, DLLs, assets, native helpers, license notices
 ├── cores\windows\  Bundled Windows networking cores and their companion files
 ├── settings\    app-state.json: settings, subscriptions, routing rules; language.json: language
@@ -128,6 +128,15 @@ Subscription links and settings are stored as **unencrypted JSON**. Generated co
 
 Runtime session folders are removed during normal cleanup. A crash or forced termination can leave files behind. Diagnostic logs and ping history are held in memory rather than a dedicated log archive.
 
+Updating from `%LOCALAPPDATA%\AORAConnect` migrates the installation automatically,
+including through the existing in-app updater. A temporary launcher handles the
+old restart path and is removed after the new client renders its first frame.
+Settings, subscriptions, routing rules, language and update preferences migrate
+into the Program Files root. Conflicting
+settings and unrelated files are retained for recovery. Windows installation,
+updates and the current client require administrator rights. Development builds
+use `build/dev-data` inside the source project, independently of the installed app.
+
 Older settings in `%APPDATA%\AORAVPN\app-state.json` migrate when the new settings file does not already exist. The old file is removed only after verifying its replacement; unrelated files and the old folder are left untouched.
 
-Network activity includes subscription requests to your provider, DNS resolution, and VPN traffic. Connection tests request `https://example.com/`; proxy server checks request `https://www.gstatic.com/generate_204`. These checks contact third-party services. Live ICMP statistics target the selected server.
+Network activity includes subscription requests to your provider, DNS resolution, and VPN traffic. Connection tests request `https://www.gstatic.com/generate_204` with `https://cp.cloudflare.com/generate_204` as a fallback; proxy server checks also use gstatic. These checks contact third-party services. Live ICMP statistics target the selected server.
