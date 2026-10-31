@@ -30,6 +30,9 @@ pub(super) struct Policy {
 }
 
 impl Policy {
+    pub fn user_sid(&self) -> &str {
+        &self.user_sid
+    }
     pub fn pipe_acl(&self) -> String {
         format!(
             "O:SYG:SYD:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;0x{CLIENT_RIGHTS:08x};;;{})",
@@ -37,6 +40,10 @@ impl Policy {
         )
     }
     pub fn permits(&self, peer: &Peer, command: &str) -> bool {
+        // A sign-in task belongs to its account; nobody else may change it.
+        if matches!(command, "startup.status" | "startup.set") {
+            return peer.eligible() && peer.sid == self.user_sid;
+        }
         if matches!(
             command,
             "settings.read"
@@ -167,10 +174,70 @@ fn location(root: &Path) -> io::Result<PathBuf> {
 }
 
 pub(super) fn private_directory(root: &Path, name: &str) -> io::Result<fs::File> {
-    use std::os::windows::io::AsRawHandle;
     if !matches!(name, "settings" | "runtime") {
         return Err(denied("Invalid protected directory"));
     }
+    secure_directory(root, name, "D:P(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)")
+}
+
+/// Creates or repairs `updates`, the one folder the enrolled account may write.
+/// It may add, replace and remove downloads inside it, but cannot delete,
+/// rename or re-permission the folder. Nothing privileged trusts its contents:
+/// the elevated update helper copies and verifies packages elsewhere.
+pub(super) fn updates_directory(root: &Path, user_sid: &str) -> io::Result<()> {
+    validate_sid(user_sid)?;
+    protected(root)?;
+    let path = root.join("updates");
+    match fs::symlink_metadata(&path) {
+        Err(error) if error.kind() == io::ErrorKind::NotFound => fs::create_dir(&path)?,
+        Err(error) => return Err(error),
+        Ok(_) => {}
+    }
+    secure_directory(root, "updates", &updates_acl(user_sid))?;
+    Ok(())
+}
+
+/// The folder itself: list, add files/folders, traverse and read (0x1200af).
+/// Inherited by its contents only: modify without permission changes (0x1301bf).
+fn updates_acl(user_sid: &str) -> String {
+    format!(
+        "D:P(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;;0x1200af;;;{user_sid})(A;OICIIO;0x1301bf;;;{user_sid})"
+    )
+}
+
+/// Deletes update downloads during uninstall without following links.
+pub(super) fn remove_updates(root: &Path) -> io::Result<()> {
+    let path = root.join("updates");
+    let plain = |path: &Path| {
+        fs::symlink_metadata(path)
+            .is_ok_and(|m| m.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT == 0)
+    };
+    if !path.try_exists()? || !plain(&path) {
+        return Ok(());
+    }
+    for entry in fs::read_dir(&path)?.flatten() {
+        let entry = entry.path();
+        if !plain(&entry) {
+            continue;
+        }
+        if entry.is_dir() {
+            for child in fs::read_dir(&entry)?.flatten() {
+                let child = child.path();
+                if plain(&child) && child.is_file() {
+                    let _ = fs::remove_file(child);
+                }
+            }
+            let _ = fs::remove_dir(entry);
+        } else {
+            let _ = fs::remove_file(entry);
+        }
+    }
+    let _ = fs::remove_dir(path);
+    Ok(())
+}
+
+fn secure_directory(root: &Path, name: &str, sddl: &str) -> io::Result<fs::File> {
+    use std::os::windows::io::AsRawHandle;
     protected(root)?;
     let path = root.join(name);
     let handle = unsafe {
@@ -212,7 +279,7 @@ pub(super) fn private_directory(root: &Path, name: &str) -> io::Result<fs::File>
                 "The protected directory is not owned by the installation administrator",
             ));
         }
-        let descriptor = SecurityDescriptor::new("D:P(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)")?;
+        let descriptor = SecurityDescriptor::new(sddl)?;
         let mut present = 0;
         let mut dacl = null_mut();
         let mut defaulted = 0;
@@ -469,9 +536,15 @@ mod tests {
         ] {
             assert!(!policy.permits(&owner, command));
         }
+        assert!(policy.permits(&owner, "startup.status"));
+        assert!(policy.permits(&owner, "startup.set"));
         let mut other = owner.clone();
         other.sid = "S-1-5-21-1-2-3-1002".into();
         assert!(!policy.permits(&other, "health"));
+        let mut system = owner.clone();
+        system.sid = "S-1-5-18".into();
+        system.session = 0;
+        assert!(!policy.permits(&system, "startup.set"));
         for elevated in [false, true] {
             other.elevated_admin = elevated;
             assert!(!policy.permits(&other, "settings.read"));
@@ -480,6 +553,7 @@ mod tests {
             assert!(!policy.permits(&other, "connection.status"));
             assert!(!policy.permits(&other, "checks.open"));
             assert!(!policy.permits(&other, "checks.close"));
+            assert!(!policy.permits(&other, "startup.set"));
         }
         let reply: serde_json::Value = serde_json::from_slice(&policy.access_reply(
             &owner,
@@ -516,6 +590,21 @@ mod tests {
         administrator.session = 0;
         assert!(policy.permits(&administrator, "status"));
         assert!(policy.permits(&administrator, "settings.write"));
+    }
+
+    #[test]
+    fn owner_cannot_delete_or_repermission_the_updates_folder() {
+        let acl = updates_acl(&owner().sid);
+        SecurityDescriptor::new(&acl).unwrap();
+        let folder = 0x1200af;
+        let contents = 0x1301bf;
+        for right in [DELETE, WRITE_DAC, WRITE_OWNER, FILE_DELETE_CHILD, FILE_WRITE_ATTRIBUTES] {
+            assert_eq!(folder & right, 0);
+        }
+        assert_eq!(folder & (FILE_ADD_FILE | FILE_ADD_SUBDIRECTORY), FILE_ADD_FILE | FILE_ADD_SUBDIRECTORY);
+        assert_eq!(contents & (WRITE_DAC | WRITE_OWNER), 0);
+        assert_ne!(contents & DELETE, 0);
+        assert!(acl.contains(&format!("(A;OICIIO;0x1301bf;;;{})", owner().sid)));
     }
 
     #[test]

@@ -112,22 +112,58 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
+  /// No description provided for @startup.
+  ///
+  /// In en, this message translates to:
+  /// **'Startup'**
   String get startup;
 
+  /// No description provided for @manualStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start manually'**
   String get manualStart;
 
+  /// No description provided for @startWithWindows.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with Windows'**
   String get startWithWindows;
 
+  /// No description provided for @startWithWindowsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the installed app when you sign in to Windows.'**
   String get startWithWindowsHelp;
 
+  /// No description provided for @startMinimized.
+  ///
+  /// In en, this message translates to:
+  /// **'Start minimized'**
   String get startMinimized;
 
+  /// No description provided for @startMinimizedHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the app in the system tray when it starts.'**
   String get startMinimizedHelp;
 
+  /// No description provided for @startupConnectionHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening the app does not connect the VPN automatically.'**
   String get startupConnectionHelp;
 
+  /// No description provided for @startupLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load startup settings. Try again.'**
   String get startupLoadFailed;
 
+  /// No description provided for @startupSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save startup settings. Refresh and try again.'**
   String get startupSaveFailed;
 
   /// No description provided for @language.

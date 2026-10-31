@@ -30,7 +30,7 @@ Get the installer or APK from [GitHub Releases](https://github.com/khitori/AORA-
 1. Install the Windows Setup EXE or Android APK. Close any running Windows instance before upgrading.
 2. Open **Subscriptions → Add subscription**, paste your subscription or server link, and press **Add**.
 3. Choose a server. If it requires a different core, select it in **Settings → Core**.
-4. Open **Connection** and connect. Approve the Windows administrator prompt or Android VPN permission when requested.
+4. Open **Connection** and connect. On Android, approve the VPN permission when requested.
 
 Opening the app does not start a VPN connection automatically. Disconnect before changing subscriptions, cores, or routing rules.
 

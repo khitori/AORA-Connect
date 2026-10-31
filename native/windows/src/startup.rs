@@ -15,7 +15,10 @@ use windows::{
 use windows_sys::Win32::{
     Foundation::*,
     Security::{
-        Authorization::{ConvertSidToStringSidW, ConvertStringSidToSidW},
+        Authorization::{
+            ConvertSidToStringSidW, ConvertStringSecurityDescriptorToSecurityDescriptorW,
+            ConvertStringSidToSidW,
+        },
         *,
     },
     Storage::FileSystem::*,
@@ -156,6 +159,12 @@ fn no_link(path: &Path) -> io::Result<()> {
 }
 
 fn storage(user: &str) -> io::Result<(PathBuf, PathBuf)> {
+    if !user.starts_with("S-1-")
+        || user.len() > 184
+        || !user.bytes().all(|b| b == b'S' || b == b'-' || b.is_ascii_digit())
+    {
+        return Err(io::Error::other("Invalid startup account"));
+    }
     let root = crate::installation_root()?;
     let settings = root.join("settings");
     no_link(&root)?;
@@ -255,7 +264,8 @@ unsafe fn existing(
         .map_err(native)?;
     if !same_user(&text(|out| principal.UserId(out))?, user)?
         || logon != TASK_LOGON_INTERACTIVE_TOKEN
-        || level != TASK_RUNLEVEL_HIGHEST
+        // Tasks from elevated interfaces used the highest level; migrate() lowers them.
+        || (level != TASK_RUNLEVEL_LUA && level != TASK_RUNLEVEL_HIGHEST)
         || !text(|out| action.Path(out))?.eq_ignore_ascii_case(&executable.to_string_lossy())
         || text(|out| action.Arguments(out))? != "--startup"
         || !text(|out| action.WorkingDirectory(out))?
@@ -285,7 +295,7 @@ fn definition(user: &str, executable: &Path) -> String {
         r#"<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
 <RegistrationInfo><Author>AORA Connect</Author><Description>Open AORA Connect when this user signs in.</Description></RegistrationInfo>
 <Triggers><LogonTrigger><Enabled>true</Enabled><UserId>{user}</UserId></LogonTrigger></Triggers>
-<Principals><Principal id="User"><UserId>{user}</UserId><LogonType>InteractiveToken</LogonType><RunLevel>HighestAvailable</RunLevel></Principal></Principals>
+<Principals><Principal id="User"><UserId>{user}</UserId><LogonType>InteractiveToken</LogonType><RunLevel>LeastPrivilege</RunLevel></Principal></Principals>
 <Settings><MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy><DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries><StopIfGoingOnBatteries>false</StopIfGoingOnBatteries><AllowHardTerminate>false</AllowHardTerminate><StartWhenAvailable>false</StartWhenAvailable><Enabled>true</Enabled><ExecutionTimeLimit>PT0S</ExecutionTimeLimit></Settings>
 <Actions Context="User"><Exec><Command>{exe}</Command><Arguments>--startup</Arguments><WorkingDirectory>{directory}</WorkingDirectory></Exec></Actions></Task>"#
     )
@@ -313,16 +323,16 @@ fn executable(root: &Path) -> io::Result<PathBuf> {
     Ok(executable)
 }
 
-pub fn status() -> io::Result<Preferences> {
-    let user = sid()?;
-    let (root, file) = storage(&user)?;
+/// Reads the startup task and preference of the enrolled account `user`.
+pub fn status(user: &str) -> io::Result<Preferences> {
+    let (root, file) = storage(user)?;
     let saved = read(&file)?;
     let (_com, folder) = scheduler()?;
     let task = unsafe {
         existing(
             &folder,
             &format!("{PREFIX}{user}"),
-            &user,
+            user,
             &executable(&root)?,
         )?
     };
@@ -336,22 +346,23 @@ pub fn status() -> io::Result<Preferences> {
     })
 }
 
-pub fn configure(preferences: Preferences) -> io::Result<Preferences> {
+/// Saves startup preferences for the enrolled account `user`. The task runs the
+/// installed interface with the user's ordinary rights at sign-in.
+pub fn configure(user: &str, preferences: Preferences) -> io::Result<Preferences> {
     let _lock = SettingsLock::acquire()?;
-    let user = sid()?;
-    let (root, file) = storage(&user)?;
+    let (root, file) = storage(user)?;
     let _ = read(&file)?;
     let executable = executable(&root)?;
     let (_com, folder) = scheduler()?;
     let name = format!("{PREFIX}{user}");
-    let task = unsafe { existing(&folder, &name, &user, &executable)? };
+    let task = unsafe { existing(&folder, &name, user, &executable)? };
     let previous_xml = task
         .as_ref()
         .map(|task| unsafe { task.Xml().map(|xml| xml.to_string()).map_err(native) })
         .transpose()?;
     unsafe {
         if preferences.start_with_windows {
-            register(&folder, &name, &user, &definition(&user, &executable))?;
+            register(&folder, &name, user, &definition(user, &executable))?;
         } else if task.is_some() {
             folder.DeleteTask(&BSTR::from(&name), 0).map_err(native)?;
         }
@@ -359,10 +370,7 @@ pub fn configure(preferences: Preferences) -> io::Result<Preferences> {
     let temporary = file.with_extension(format!("{}.tmp", std::process::id()));
     let result = (|| {
         use std::io::Write;
-        let mut output = fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&temporary)?;
+        let mut output = private_file(&temporary, user)?;
         output.write_all(&serde_json::to_vec(&Saved {
             start_minimized: preferences.start_minimized,
         })?)?;
@@ -384,7 +392,7 @@ pub fn configure(preferences: Preferences) -> io::Result<Preferences> {
         let _ = fs::remove_file(&temporary);
         let rollback = unsafe {
             if let Some(xml) = previous_xml {
-                register(&folder, &name, &user, &xml)
+                register(&folder, &name, user, &xml)
             } else if preferences.start_with_windows {
                 folder.DeleteTask(&BSTR::from(&name), 0).map_err(native)
             } else {
@@ -399,6 +407,46 @@ pub fn configure(preferences: Preferences) -> io::Result<Preferences> {
         return Err(error);
     }
     Ok(preferences)
+}
+
+/// Lowers a task created by an elevated interface to ordinary rights and lets
+/// the interface read its own minimized preference. Safe to repeat.
+pub fn migrate(user: &str) -> io::Result<()> {
+    configure(user, status(user)?).map(|_| ())
+}
+
+/// Creates the preference file readable, but not writable, by its account so
+/// an unelevated interface can honor Start minimized at launch.
+fn private_file(path: &Path, user: &str) -> io::Result<fs::File> {
+    unsafe {
+        let mut descriptor = null_mut();
+        if ConvertStringSecurityDescriptorToSecurityDescriptorW(
+            wide(format!("D:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FR;;;{user})")).as_ptr(),
+            1,
+            &mut descriptor,
+            null_mut(),
+        ) == 0
+        {
+            return Err(io::Error::last_os_error());
+        }
+        let security = SECURITY_ATTRIBUTES {
+            nLength: size_of::<SECURITY_ATTRIBUTES>() as u32,
+            lpSecurityDescriptor: descriptor,
+            bInheritHandle: 0,
+        };
+        let handle = CreateFileW(
+            wide(path).as_ptr(),
+            GENERIC_WRITE,
+            0,
+            &security,
+            CREATE_NEW,
+            FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OPEN_REPARSE_POINT,
+            null_mut(),
+        );
+        let file = owned(handle);
+        LocalFree(descriptor);
+        Ok(fs::File::from(file?))
+    }
 }
 
 pub fn remove_all() -> io::Result<()> {
@@ -435,6 +483,8 @@ mod tests {
         );
         assert!(xml.contains("AORA &amp; Test"));
         assert!(xml.contains("<LogonType>InteractiveToken</LogonType>"));
+        assert!(xml.contains("<RunLevel>LeastPrivilege</RunLevel>"));
+        assert!(!xml.contains("HighestAvailable"));
         assert!(xml.contains("<ExecutionTimeLimit>PT0S</ExecutionTimeLimit>"));
         assert!(xml.contains("<Arguments>--startup</Arguments>"));
         assert!(!xml.contains("BootTrigger"));

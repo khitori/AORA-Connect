@@ -133,8 +133,10 @@ including through the existing in-app updater. A temporary launcher handles the
 old restart path and is removed after the new client renders its first frame.
 Settings, subscriptions, routing rules, language and update preferences migrate
 into the Program Files root. Conflicting
-settings and unrelated files are retained for recovery. Windows installation,
-updates and the current client require administrator rights. Development builds
+settings and unrelated files are retained for recovery. Windows installation and
+installing updates require administrator approval; the app itself runs with
+your ordinary rights. Update downloads are kept in `updates`, the only folder
+your account may write to. Development builds
 use the same installed settings and service; changes in development affect the installed app's configuration too.
 
 Older settings in `%APPDATA%\AORAVPN\app-state.json` migrate when the new settings file does not already exist. The old file is removed only after verifying its replacement; unrelated files and the old folder are left untouched.

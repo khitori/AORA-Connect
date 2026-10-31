@@ -2,11 +2,12 @@
 
 [← Installation and updates](updates.md)
 
-## Current behavior: checkpoint 3
+## Current behavior: checkpoint 4
 
 Windows development and release builds use the same installed service for the main sing-box/Xray connection.
-The existing Connect interface remains elevated until update storage and
-startup operations finish moving behind the service. Windows proxy-based
+The Connect interface runs with the signed-in user's ordinary rights
+(`asInvoker` manifest). Installation and installing updates are the only steps
+that ask for administrator approval. Windows proxy-based
 server checks now use separate service-owned core sessions. ICMP/TCP probes
 remain in the ordinary client helper.
 Windows Settings includes a Startup card with Start with Windows and Start
@@ -14,7 +15,7 @@ minimized. Both default to off. They do not start a VPN connection.
 
 ## Removing interface elevation: authorization checkpoint
 
-The interface remains elevated. Service enrollment records the intended
+Service enrollment records the intended
 Windows sign-in account in `settings/service-access.json`, using the session
 identity reported by Windows rather than a SID supplied by the client. An
 existing owner is retained on repair and upgrade. First enrollment requires
@@ -35,6 +36,8 @@ AppContainer, low-integrity and non-interactive ordinary callers are denied.
 
 The enrolled ordinary account can request `health`, `access`, `settings.read`
 and `settings.write`, plus the restricted `connection.*` and `checks.*` commands described below.
+Only the enrolled account itself (not SYSTEM or other administrators) can
+request `startup.status` and `startup.set`, because the sign-in task is its own.
 Raw core configuration commands remain privileged. The `access`
 handshake reports `owner`, `privileged`, `settings` and `runtime`; settings are
 enabled for the enrolled account and SYSTEM. Runtime now reports access to
@@ -51,11 +54,13 @@ access list allowing ordinary accounts only the bounded client rights. This
 does not change the service process permissions. An ordinary process cannot
 create a pipe owned by SYSTEM.
 
-Remaining work before switching the manifest to ordinary-user execution:
-update-cache access, ordinary-user service startup, followed
-by startup-task migration and
-an unelevated end-to-end test. Never expose the existing privileged raw-core
-configuration interface to ordinary clients as a shortcut.
+Installation grants the enrolled account the service rights to query its
+configuration/status, read its permissions and start it (`CCLCRPRC`), but not
+to stop, reconfigure or delete it. The interface's `start` request asks only
+for those rights, so it can demand-start a stopped service without elevation.
+
+Never expose the existing privileged raw-core configuration interface to
+ordinary clients as a shortcut.
 
 ## Removing interface elevation: settings checkpoint
 
@@ -95,10 +100,8 @@ the typed document using the `missing` revision, preserving the original
 legacy file as a recovery copy. The service never accepts arbitrary profile
 paths to perform this import.
 
-A running service can be used without requesting SCM start rights. Starting
-a stopped service still requires elevation at this checkpoint. The UI manifest
-remains elevated; update-cache operations and startup tasks have not yet been
-migrated.
+A running service can be used without requesting SCM start rights; a stopped
+one is started with the enrolled account's start right described above.
 
 ## Removing interface elevation: connection runtime checkpoint
 
@@ -224,20 +227,70 @@ fixture-only direct outbounds, and confirms main-connection tickets do not
 change. It neither starts a VPN nor accesses saved providers. Real scans through
 TUN/physical networks remain part of the disposable Windows/VM release checks.
 
+## Removing interface elevation: update checkpoint
+
+Updates use a Windows administrator prompt instead of the service. This was a
+deliberate choice: the privileged service never receives update packages,
+paths or installer requests, and an ordinary process cannot install silently.
+
+The interface downloads and imports into `updates` inside the installation,
+using its existing session locks and cleanup. Everything stays in the one
+installation folder. Installation (`aoravpn_service.exe install`) creates or
+repairs `updates` with a protected access list: SYSTEM and Administrators have
+full control. The enrolled account may list, add files/folders and read the
+folder itself (`0x1200af`) and modify its contents (`0x1301bf`, inherit-only).
+It cannot delete, rename or re-permission `updates`, and every other folder
+stays read-only to it. The interface never creates the folder; if it is
+missing, updates report that the installation needs repair. Uninstall removes
+the downloads without following links. Manifest and package checks there only drive the interface; they are
+not trusted for installation. **Install** asks Windows to run the installed
+`app\aoravpn_update.exe install <package> <interface PID>` with `runas`, then
+waits up to two minutes for that step. The runner accepts only a package
+inside `updates`. A declined prompt keeps the interface open with an error.
+
+The elevated step runs only from the installed application folder and refuses
+linked installation/runtime directories. It removes earlier
+`runtime\update-*` sessions that contain only known regular files and whose
+installer lease is not held. It creates a new randomly named
+SYSTEM/Administrators-only folder, copies the package while denying other
+writers (links, directories and oversized files are refused), and copies
+itself. It verifies the protected copy's signature, hash and newer version
+before starting the copied helper's `run` step and exiting. Exit code 2 means
+verification failed and 3 means not newer; the interface shows a matching
+message. Only exit code 0 closes the interface.
+
+`run` accepts only a package in a `runtime\update-*` folder and must be that
+folder's helper copy. It holds the installer lease, waits for the interface and
+portable launcher to close, verifies again and runs the installer silently from
+the protected copy. Afterwards, including after a failed installation, it reopens
+the interface through the signed-in user's Explorer
+(`IShellDispatch2::ShellExecute`), so the interface does not inherit
+administrator rights. If Explorer is unavailable it falls back to a direct
+start.
+
 ## Startup settings
 
-Start with Windows registers one Task Scheduler logon task for the current
-Windows user. It uses the installed `app/aoravpn.exe`, an interactive user token
-and the elevated privileges still required by the interface. It does not run
-the interface as SYSTEM, store an account password or execute a project/build
+Start with Windows registers one Task Scheduler logon task for the enrolled
+Windows user. The interface asks the service through `startup.status` and
+`startup.set`; only the enrolled account may use them, and the service always
+acts for the enrolled SID, never one supplied by the client. The task uses the
+installed `app/aoravpn.exe`, an interactive user token and the least-privilege
+run level, so the interface starts with ordinary rights. Its access list
+allows only SYSTEM and Administrators to change it. It does not run the
+interface as SYSTEM, store an account password or execute a project/build
 path. Start minimized opens the interface in its tray at launch, with a visible
 window fallback if tray registration fails. `--show` overrides that preference
 for a single launch.
 
-The minimized preference is stored in `settings/startup-<Windows SID>.json`;
-startup registration is read from Task Scheduler. Development and release use
+The minimized preference is stored in `settings/startup-<Windows SID>.json`.
+That file alone grants its account read access, so the unelevated interface
+can honor it at launch; the account still cannot write it or list `settings`.
+Startup registration is read from Task Scheduler. Development and release use
 the same preference and task. Native changes are serialized, refuse foreign
 task actions/owners and attempt task rollback if saving preferences fails.
+Installation/repair re-registers a task left at the highest run level by an
+older elevated interface and rewrites the preference with its read access; a
+failure there leaves the previous task working and does not block installation.
 Uninstall removes verified AORA startup tasks before removing the service.
 An upgraded installer is required to put these controls and the new tray startup
 behavior into an older installed interface; development builds do not replace
@@ -339,12 +392,10 @@ directory/file links rejected:
 | `probe` | Return versioned JSON health information |
 | `request` | Exchange a bounded JSON control request through standard input |
 | `installation-info` | Identify the helper's compiled installation, service and fixture status |
-| `startup-status` | Read the current user's startup task and minimized preference |
-| `startup-set` | Save typed startup preferences from standard input |
 | `startup-remove` | Remove verified AORA startup tasks during uninstall |
 
 The versioned local named-pipe protocol accepts `health`, `access`, `settings.read`,
-`settings.write`, the typed `connection.*` and `checks.*` commands, `status`, `recover`,
+`settings.write`, the typed `connection.*`, `checks.*` and `startup.*` commands, `status`, `recover`,
 `validate`, `start`, `confirm` and `stop`.
 Requests have a little-endian 32-bit byte length followed by UTF-8 JSON. Each
 frame is limited to 512 KiB. The CLI and service retain a 4 KiB limit for core
@@ -465,11 +516,14 @@ packages are not rebuilt or published by these checkpoints.
 
 ## Next checkpoints
 
-1. Complete the real TUN and installer verification described above.
-2. Move the remaining update runtime operations into the service using the
-   enrolled-user authorization before removing UI elevation. Do not grant
-   ordinary processes write access to executable/core folders or allow arbitrary
-   executable paths, file paths or raw privileged core configurations over IPC.
+1. Complete the real TUN and installer verification described above, including
+   an in-app update through the administrator prompt on a disposable installation.
+2. Run the unelevated end-to-end test with an installer built from this
+   checkpoint: service demand-start from a stopped state, `updates` permissions,
+   startup task migration from an older install, and connect/disconnect without
+   any administrator prompt. Do not grant ordinary processes write access to
+   executable/core folders or allow arbitrary executable paths, file paths or
+   raw privileged core configurations over IPC.
 3. Verify actual sign-in and minimized launch using the updated installed interface.
 4. Add opt-in automatic connection after sign-in, with network readiness and
    bounded retries. Connection before sign-in is a separate future feature.

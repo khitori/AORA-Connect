@@ -181,32 +181,58 @@ unsafe extern "C" fn command(
             b"ok"
         }
         _ if bytes.starts_with(b"install-update:") => {
-            use std::os::windows::process::CommandExt;
-            let result = (|| -> std::io::Result<()> {
+            // The installed helper is started with an administrator prompt. It
+            // stages and verifies a protected copy before this window closes.
+            let result = (|| -> std::io::Result<u32> {
                 let path = std::str::from_utf8(&bytes[15..])
                     .map_err(|_| std::io::Error::other("Invalid update path"))?;
                 let package = std::path::Path::new(path).canonicalize()?;
-                let root = crate::installation_root()?
-                .join("runtime")
-                .canonicalize()?;
-                if !package.starts_with(root) {
-                    return Err(std::io::Error::other(
-                        "Update is outside application storage",
-                    ));
+                let root = crate::installation_root()?;
+                if !package.starts_with(root.join("updates").canonicalize()?)
+                    || package.file_name().and_then(|name| name.to_str())
+                        != Some("AORAConnect-Setup.exe")
+                {
+                    return Err(std::io::Error::other("Invalid update package"));
                 }
-                let helper = package.parent().unwrap().join("aoravpn_update.exe");
-                std::process::Command::new(helper)
-                    .arg("install")
-                    .arg(package)
-                    .arg(std::process::id().to_string())
-                    .creation_flags(CREATE_BREAKAWAY_FROM_JOB | CREATE_NO_WINDOW)
-                    .spawn()?;
-                Ok(())
+                let app = root.join("app");
+                let verb = wide("runas");
+                let helper = wide(app.join("aoravpn_update.exe"));
+                let parameters = wide(format!(
+                    "install \"{}\" {}",
+                    package.display(),
+                    std::process::id()
+                ));
+                let directory = wide(&app);
+                let mut info: SHELLEXECUTEINFOW = zeroed();
+                info.cbSize = size_of::<SHELLEXECUTEINFOW>() as u32;
+                info.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NOASYNC | SEE_MASK_FLAG_NO_UI;
+                info.hwnd = hwnd;
+                info.lpVerb = verb.as_ptr();
+                info.lpFile = helper.as_ptr();
+                info.lpParameters = parameters.as_ptr();
+                info.lpDirectory = directory.as_ptr();
+                info.nShow = SW_HIDE;
+                if ShellExecuteExW(&mut info) == 0 {
+                    return Err(std::io::Error::last_os_error());
+                }
+                let process = owned(info.hProcess)?;
+                if WaitForSingleObject(process.as_raw_handle(), 120_000) != WAIT_OBJECT_0 {
+                    return Err(std::io::Error::other("Update staging timed out"));
+                }
+                let mut code = 0;
+                if GetExitCodeProcess(process.as_raw_handle(), &mut code) == 0 {
+                    return Err(std::io::Error::last_os_error());
+                }
+                Ok(code)
             })();
-            if result.is_ok() {
-                b"ok"
-            } else {
-                b"Could not start update installer"
+            match result {
+                Ok(0) => b"ok",
+                Ok(2) => b"Update file changed after verification. Import or download it again.",
+                Ok(3) => b"This update is not newer than the installed application.",
+                Err(error) if error.raw_os_error() == Some(ERROR_CANCELLED as i32) => {
+                    b"Administrator approval is required to install the update."
+                }
+                _ => b"Could not start update installer",
             }
         }
         _ => b"Unsupported window command",

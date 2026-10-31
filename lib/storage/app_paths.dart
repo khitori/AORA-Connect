@@ -57,6 +57,26 @@ class AppPaths {
     throw UnsupportedError('App storage is not supported on this platform.');
   }
 
+  /// The service creates this folder and grants the signed-in account write
+  /// access to its contents only; the interface never creates it.
+  static Directory get windowsUpdateCache =>
+      Directory('${windowsRoot.path}/updates');
+
+  static Future<Directory> updateRuntime() async => Platform.isWindows
+      ? windowsUpdateCache
+      : Directory('${(await root()).path}/runtime');
+
+  static Future<Directory> createUpdateSession() async {
+    if (!Platform.isWindows) return createSession('update-');
+    final cache = windowsUpdateCache;
+    if (!await cache.exists()) {
+      throw StateError(
+        'Update storage is missing. Repair the installation to enable updates.',
+      );
+    }
+    return cache.createTemp('update-');
+  }
+
   static Future<Directory> createSession(String prefix) async {
     final location = await root();
     final runtime = Directory('${location.path}/runtime');

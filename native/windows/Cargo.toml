@@ -22,7 +22,7 @@ ed25519-dalek = "2.2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
-windows = { version = "=0.58.0", features = ["Win32_System_TaskScheduler", "Win32_System_Com", "Win32_System_Ole", "Win32_System_Variant"] }
+windows = { version = "=0.58.0", features = ["Win32_System_TaskScheduler", "Win32_System_Com", "Win32_System_Ole", "Win32_System_Variant", "Win32_UI_Shell"] }
 windows-sys = { version = "=0.59.0", features = [
   "Win32_Foundation", "Win32_Security", "Win32_Storage_FileSystem",
   "Win32_System_Console", "Win32_System_Threading", "Win32_System_IO",

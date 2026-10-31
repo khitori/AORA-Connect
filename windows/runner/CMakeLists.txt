@@ -70,7 +70,7 @@ target_link_libraries(${BINARY_NAME} PRIVATE "${RUST_RUNNER_LIBRARY}"
   libcmt libvcruntime libucrt)
 
 target_link_options(${BINARY_NAME} PRIVATE
-  "/MANIFESTUAC:level='requireAdministrator' uiAccess='false'"
+  "/MANIFESTUAC:level='asInvoker' uiAccess='false'"
   "/ENTRY:wWinMainCRTStartup" "/INCLUDE:wWinMain"
 )
 

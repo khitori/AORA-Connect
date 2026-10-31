@@ -160,6 +160,41 @@ pub fn probe() -> io::Result<Health> {
     Ok(health)
 }
 
+/// Reads or saves the enrolled account's startup task and preference.
+#[cfg(not(feature = "service-fixture"))]
+fn startup_reply(user_sid: &str, bytes: &[u8]) -> Vec<u8> {
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct StartupRequest {
+        protocol: u32,
+        command: String,
+        preferences: Option<crate::startup::Preferences>,
+    }
+    let result = match serde_json::from_slice::<StartupRequest>(bytes) {
+        Ok(request) if request.protocol != PROTOCOL => Err("unsupported_protocol".to_owned()),
+        Ok(StartupRequest {
+            command,
+            preferences: None,
+            ..
+        }) if command == "startup.status" => {
+            crate::startup::status(user_sid).map_err(|e| e.to_string())
+        }
+        Ok(StartupRequest {
+            command,
+            preferences: Some(preferences),
+            ..
+        }) if command == "startup.set" => {
+            crate::startup::configure(user_sid, preferences).map_err(|e| e.to_string())
+        }
+        _ => Err("invalid_request".to_owned()),
+    };
+    serde_json::to_vec(&match result {
+        Ok(startup) => serde_json::json!({"protocol": PROTOCOL, "ok": true, "startup": startup}),
+        Err(error) => serde_json::json!({"protocol": PROTOCOL, "ok": false, "error": error}),
+    })
+    .unwrap()
+}
+
 #[cfg(not(feature = "service-fixture"))]
 fn report(handle: SERVICE_STATUS_HANDLE, state: u32, error: u32) -> io::Result<()> {
     let status = SERVICE_STATUS {
@@ -241,6 +276,9 @@ unsafe extern "system" fn service_main(_: u32, _: *mut *mut u16) {
                     if matches!(command, "checks.open" | "checks.status" | "checks.close") {
                         return checks.reply(bytes);
                     }
+                    if matches!(command, "startup.status" | "startup.set") {
+                        return startup_reply(policy.user_sid(), bytes);
+                    }
                     if bytes.len() > 4096 && !command.starts_with("connection.") {
                         return br#"{"protocol":1,"ok":false,"error":"request_too_large"}"#
                             .to_vec();
@@ -282,27 +320,9 @@ pub fn run(arguments: Vec<String>) -> io::Result<()> {
             feature = "service-scm-fixture",
             feature = "migration-fixture"
         )))]
-        [command] if command.starts_with("startup-") => {
+        [command] if command == "startup-remove" => {
             require_installed_executable()?;
-            let result = match command.as_str() {
-                "startup-status" => crate::startup::status()?,
-                "startup-set" => {
-                    use std::io::Read;
-                    let mut bytes = Vec::new();
-                    io::stdin().take(1025).read_to_end(&mut bytes)?;
-                    if bytes.len() > 1024 {
-                        return Err(io::Error::other("Invalid startup request"));
-                    }
-                    crate::startup::configure(serde_json::from_slice(&bytes)?)?
-                }
-                "startup-remove" => {
-                    crate::startup::remove_all()?;
-                    return Ok(());
-                }
-                _ => return Err(io::Error::other("Unknown startup command")),
-            };
-            println!("{}", serde_json::to_string(&result)?);
-            Ok(())
+            crate::startup::remove_all()
         }
         #[cfg(not(feature = "service-fixture"))]
         [command] if command == "installation-info" => {

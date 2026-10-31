@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
-import '../storage/app_paths.dart';
+import '../core/windows_service_transport.dart';
 
 typedef StartupRequest = Future<Map<String, dynamic>> Function(
   Map<String, bool>? preferences,
@@ -22,29 +20,23 @@ class WindowsStartupController extends ChangeNotifier {
   bool failed = false;
   bool _disposed = false;
 
+  /// The service registers the sign-in task for the enrolled account.
   static Future<Map<String, dynamic>> _native(
     Map<String, bool>? preferences,
   ) async {
-    final process = await Process.start(
-      AppPaths.windowsHelper('aoravpn_service'),
-      [preferences == null ? 'startup-status' : 'startup-set'],
-    );
-    final output = process.stdout.transform(utf8.decoder).join();
-    final errors = process.stderr.transform(utf8.decoder).join();
-    try {
-      if (preferences != null) process.stdin.write(jsonEncode(preferences));
-      await process.stdin.close();
-      final code = await process.exitCode.timeout(const Duration(seconds: 20));
-      final text = await output;
-      final error = await errors;
-      if (code != 0) throw StateError(error.trim());
-      if (text.length > 4096) throw StateError('Invalid startup reply.');
-      return jsonDecode(text) as Map<String, dynamic>;
-    } on TimeoutException {
-      process.kill();
-      await process.exitCode;
-      throw StateError('Startup settings timed out.');
+    await WindowsServiceTransport.start();
+    final reply = await WindowsServiceTransport.request({
+      'protocol': 1,
+      'command': preferences == null ? 'startup.status' : 'startup.set',
+      'preferences': ?preferences,
+    });
+    final startup = reply['startup'];
+    if (reply['ok'] != true || startup is! Map<String, dynamic>) {
+      throw StateError(
+        reply['error'] as String? ?? 'Startup settings are unavailable.',
+      );
     }
+    return startup;
   }
 
   Future<void> initialize() => _change(null);

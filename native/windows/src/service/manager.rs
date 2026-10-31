@@ -211,10 +211,10 @@ pub(super) fn manage(action: &str, executable: &Path) -> io::Result<()> {
                 },
         ))?;
         let name = wide(SERVICE_NAME);
+        // Starting requests only the rights granted to the enrolled account.
         let rights = SERVICE_QUERY_CONFIG
             | SERVICE_QUERY_STATUS
-            | SERVICE_STOP
-            | if starting { SERVICE_START } else { 0 }
+            | if starting { SERVICE_START } else { SERVICE_STOP }
             | if installing {
                 SERVICE_START | SERVICE_CHANGE_CONFIG | WRITE_DAC
             } else if action == "remove" {
@@ -274,15 +274,24 @@ pub(super) fn manage(action: &str, executable: &Path) -> io::Result<()> {
         }
         if !installing {
             stop(service.0)?;
-            if action == "remove" && DeleteService(service.0) == 0 {
-                return Err(io::Error::last_os_error());
+            if action == "remove" {
+                if DeleteService(service.0) == 0 {
+                    return Err(io::Error::last_os_error());
+                }
+                let _ = super::authorization::remove_updates(&super::service_root()?);
             }
             return Ok(());
         }
         let result = (|| {
-            super::authorization::enroll(&super::service_root()?)?;
-            super::runtime::enroll(&super::service_root()?)?;
-            let acl = SecurityDescriptor::new("D:P(A;;GA;;;SY)(A;;GA;;;BA)")?;
+            let root = super::service_root()?;
+            let policy = super::authorization::enroll(&root)?;
+            super::runtime::enroll(&root)?;
+            super::authorization::updates_directory(&root, policy.user_sid())?;
+            // Lower a sign-in task registered by an older elevated interface. A
+            // failure leaves the previous task working and must not block repair.
+            #[cfg(not(any(feature = "service-scm-fixture", feature = "migration-fixture")))]
+            let _ = crate::startup::migrate(policy.user_sid());
+            let acl = SecurityDescriptor::new(&service_acl(policy.user_sid()))?;
             if SetServiceObjectSecurity(service.0, DACL_SECURITY_INFORMATION, acl.as_ptr()) == 0 {
                 return Err(io::Error::last_os_error());
             }
@@ -340,6 +349,12 @@ pub(super) fn manage(action: &str, executable: &Path) -> io::Result<()> {
     }
 }
 
+/// The enrolled account may query and start the demand-start service, but not
+/// stop, reconfigure or delete it. The SID is validated during enrollment.
+fn service_acl(user_sid: &str) -> String {
+    format!("D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;CCLCRPRC;;;{user_sid})")
+}
+
 fn display_name() -> String {
     #[cfg(feature = "service-scm-fixture")]
     return format!(
@@ -363,6 +378,18 @@ mod tests {
             .unwrap(),
             "\"C:\\Program Files\\AORAConnect\\app\\aoravpn_service.exe\" run"
         );
+    }
+
+    #[test]
+    fn enrolled_account_may_only_query_and_start_the_service() {
+        let acl = service_acl("S-1-5-21-1-2-3-1001");
+        SecurityDescriptor::new(&acl).unwrap();
+        let ace = acl.rsplit('(').next().unwrap();
+        assert!(ace.ends_with(";;;S-1-5-21-1-2-3-1001)"));
+        let rights = ace.split(';').nth(2).unwrap();
+        let rights: Vec<_> = (0..rights.len()).step_by(2).map(|i| &rights[i..i + 2]).collect();
+        // Query config, query status, start and read permissions only.
+        assert_eq!(rights, ["CC", "LC", "RP", "RC"]);
     }
 
     #[test]

@@ -41,7 +41,9 @@ Run this command from the project directory:
 powershell -ExecutionPolicy Bypass -File .\tool\run_windows.ps1
 ```
 
-The script requests elevation and runs Flutter. Alternatively, run `flutter run -d windows` from an elevated terminal or IDE.
+The script runs Flutter. Alternatively, run `flutter run -d windows` from any
+terminal or IDE. The interface runs with your ordinary Windows rights; do not
+start it elevated, or you will not be testing what users run.
 
 Install AORA Connect once before Windows development. Development and release
 share the service, cores and settings under `Program Files\AORAConnect`.
@@ -56,8 +58,9 @@ change your actual saved configuration. Windows development mode hides the
 public updater. Application preferences and language are read and saved through
 the shared service. VPN configurations are also built and stored by the service
 from restricted connection plans. Proxy-based server checks use separate service
-core sessions; ordinary ICMP/TCP probes stay in the client. The interface still
-needs elevation for update storage and startup operations. See [Windows service development](windows-service.md) for the
+core sessions; ordinary ICMP/TCP probes stay in the client. The interface runs
+without administrator rights: it may start the stopped service, and the
+service manages its sign-in task. Updates use their own administrator prompt. See [Windows service development](windows-service.md) for the
 preparation and rollback behavior.
 
 Controller and ping tests explicitly create isolated temporary sessions. They
@@ -122,7 +125,7 @@ lib/
 ├── storage/        App paths, settings, and migration
 └── theme/          Global palette and widget styles
 
-windows/runner/     Window resources, administrator manifest, and Cargo integration
+windows/runner/     Window resources, ordinary-user manifest, and Cargo integration
 native/windows/    Rust window runner, core-host, ping, recovery, and launcher
 tool/               Development and packaging tools
 test/               Automated tests

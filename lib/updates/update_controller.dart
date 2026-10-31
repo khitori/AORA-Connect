@@ -181,7 +181,7 @@ class UpdateController extends ChangeNotifier {
 
   Future<Directory> _session() async {
     final directory =
-        await (sessionCreator?.call() ?? AppPaths.createSession('update-'));
+        await (sessionCreator?.call() ?? AppPaths.createUpdateSession());
     final lock = await UpdateCache.acquire(directory);
     if (lock == null) throw StateError('Update storage is in use.');
     _sessions[directory] = lock;
@@ -195,7 +195,6 @@ class UpdateController extends ChangeNotifier {
         preferredPackage: package?.path,
       );
       if (recover && pending != null && !_disposed) {
-        await _stageHelper(pending.file.parent);
         package = pending.file;
         release = AppRelease(pending.release);
         _phase = UpdatePhase.ready;
@@ -248,7 +247,7 @@ class UpdateController extends ChangeNotifier {
       final runtime =
           runtimeDirectory ??
           (preferencesDirectory == null && sessionCreator == null
-              ? Directory('${(await AppPaths.root()).path}/runtime')
+              ? await AppPaths.updateRuntime()
               : null);
       if (runtime != null) {
         _cache = UpdateCache(
@@ -444,7 +443,6 @@ class UpdateController extends ChangeNotifier {
             'Downloaded file does not match the selected release.',
           );
         }
-        await _stageHelper(directory);
         package = file;
         _phase = UpdatePhase.ready;
         progress = 1;
@@ -471,15 +469,10 @@ class UpdateController extends ChangeNotifier {
     if (!_newer(candidate.version)) {
       throw StateError('Choose an update newer than $currentVersion.');
     }
-    await _stageHelper(directory);
     release = candidate;
     package = file;
     _phase = UpdatePhase.imported;
   });
-  Future<void> _stageHelper(Directory directory) async {
-    if (isAndroid) return;
-    await File(helperPath).copy('${directory.path}/aoravpn_update.exe');
-  }
 
   Future<void> install({
     required bool Function() canInstall,

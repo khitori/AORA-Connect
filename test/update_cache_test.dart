@@ -196,7 +196,7 @@ void main() {
   );
 
   test(
-    'rejected staging cannot recover an uncommitted authentic package',
+    'Windows imports stage only the package; the elevated helper copies itself',
     () async {
       final source = await File('${root.path}/original.exe')
           .writeAsString('1.2.0+4');
@@ -211,9 +211,14 @@ void main() {
       );
       await controller.initialize(checkAutomatically: false);
       await controller.importFile(source.path);
-      expect(controller.error, isNotNull);
-      expect(controller.package, isNull);
-      expect(await runtime.list().toList(), isEmpty);
+      expect(controller.error, isNull);
+      expect(controller.package, isNotNull);
+      final staged = [
+        for (final entry in await controller.package!.parent.list().toList())
+          entry.uri.pathSegments.last,
+      ];
+      expect(staged, isNot(contains('aoravpn_update.exe')));
+      expect(staged, contains('AORAConnect-Setup.exe'));
       expect(await source.exists(), isTrue);
       controller.dispose();
     },

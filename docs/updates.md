@@ -27,8 +27,8 @@ No mirror is required or configured by default.
 
 Windows service work is staged separately; see
 [Windows service development](windows-service.md) for its current checkpoint and
-verification limits. Windows release builds now use the service for VPN core
-control; startup controls and removal of UI elevation are later checkpoints.
+verification limits. Windows release builds use the service for VPN core
+control, and the app runs with ordinary user rights.
 
 - Download `AORAConnect-Setup.exe` and run it to install or upgrade. Close the
   existing app first, including its tray instance. The installer waits for the
@@ -54,9 +54,10 @@ control; startup controls and removal of UI elevation are later checkpoints.
   builds. `tool/test_legacy_migration.ps1` tests the actual 1.1.9 updater against
   isolated signed packages, including restart, cleanup, a subsequent update and
   failed-startup rollback (`-FailStartup`).
-- Settings and runtime folders are restricted to Administrators and SYSTEM while
-  the Windows client requires elevation. The installation root is not made writable
-  to ordinary processes. Uninstall keeps user data unless deletion is selected.
+- Settings and runtime folders are restricted to Administrators and SYSTEM; the
+  app reaches them only through the service. The installation root is not made
+  writable to ordinary processes; only `updates` accepts the enrolled account's
+  downloads. Uninstall keeps user data unless deletion is selected.
 - Installing a newer release preserves subscriptions, settings, routing rules,
   and update preferences. Running an older installer is rejected once an
   installer version has been recorded. Running the same version can repair it.
@@ -66,6 +67,14 @@ control; startup controls and removal of UI elevation are later checkpoints.
 - In the app, startup update checks are enabled by default and can be disabled.
   Downloading and installing require user action. Installation requires an idle,
   disconnected VPN and no active server-check batch.
+- On Windows, downloads and imported files are kept in the installation's
+  `updates` folder, the only folder the enrolled account may write to.
+  **Install** shows a Windows administrator prompt.
+  Declining it keeps the app open and changes nothing. After approval, the
+  installed `app\aoravpn_update.exe` copies the package into a new
+  administrator-only `runtime\update-<random>` folder and verifies that copy
+  before the app closes. The installer runs from there, then the app is reopened
+  through Explorer with the signed-in user's normal rights.
 - **Update from file** accepts the same signed Setup EXE downloaded anywhere,
   without contacting GitHub. It verifies the package and requires a newer build.
 
@@ -128,8 +137,9 @@ unfinished builds to the stable channel.
 Mirrors can host copies of these same two files. Metadata and payload must not
 be modified; any invalid signature or altered installer is rejected. Metadata
 is limited to 64 KiB, installer payloads to 512 MiB, redirects to HTTPS, and
-downloads are staged before installation. The helper rechecks the staged file
-after app shutdown. Download/verification failure never launches an installer.
+downloads are staged before installation. The elevated helper copies the
+package while blocking other writers, verifies the protected copy, and rechecks
+it after app shutdown. Download/verification failure never launches an installer.
 
 Use the Setup EXE for the Windows release workflow. Older portable installations
 can migrate through the installer while retaining the existing storage root.
@@ -139,6 +149,8 @@ can migrate through the installer while retaining the existing storage root.
 `flutter test --no-pub test/update_controller_test.dart` covers version ordering,
 offline import, verification gates, connection gates, and saved preferences.
 `cargo test --locked --lib` in `native/windows` tests signature validation.
+`cargo test --locked --bin aoravpn_update` tests protected staging cleanup and
+locked copies; add `-- --ignored` to also check the Explorer relaunch path.
 `tool/test_update_package.ps1` checks the built installer and rejects unsigned
 and modified copies without executing any installer.
 `tool/test_installer.ps1` uses a temporary directory and a test-only installer
