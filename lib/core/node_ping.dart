@@ -14,32 +14,9 @@ import 'server_ping.dart';
 import 'tunnel_engine.dart';
 import 'windows_core_engine.dart';
 import 'android_tunnel_engine.dart';
-
-class PingCancellation {
-  bool cancelled = false;
-  final _callbacks = <void Function()>[];
-  void cancel() {
-    if (cancelled) return;
-    cancelled = true;
-    for (final callback in List.of(_callbacks)) {
-      callback();
-    }
-    _callbacks.clear();
-  }
-
-  void add(void Function() callback) {
-    if (cancelled) {
-      callback();
-    } else {
-      _callbacks.add(callback);
-    }
-  }
-
-  void remove(void Function() callback) => _callbacks.remove(callback);
-  void check() {
-    if (cancelled) throw const ServerPingException('Cancelled');
-  }
-}
+import 'windows_check_client.dart';
+import 'ping_cancellation.dart';
+export 'ping_cancellation.dart';
 
 typedef NodePingProbe = Future<Duration> Function(
   ServerProfile profile,
@@ -56,7 +33,16 @@ class NodePingService {
     this.helperPath,
     Uri? targetUrl,
     PingEngineFactory? engineFactory,
+    this.sessionCreator,
+    WindowsCheckClient? windowsChecks,
   }) : targetUrl = targetUrl ?? testUrl,
+       _windowsChecks =
+           windowsChecks ??
+           (Platform.isWindows &&
+                   engineFactory == null &&
+                   sessionCreator == null
+               ? WindowsCheckClient()
+               : null),
        _engineFactory =
            engineFactory ??
            ((executable, kind) =>
@@ -65,6 +51,8 @@ class NodePingService {
   final String? helperPath;
   final Uri targetUrl;
   final PingEngineFactory _engineFactory;
+  final Future<Directory> Function()? sessionCreator;
+  final WindowsCheckClient? _windowsChecks;
 
   static Future<String> _resolve(String server) async {
     if (InternetAddress.tryParse(server) != null) return server;
@@ -138,6 +126,9 @@ class NodePingService {
     PingCancellation cancellation,
   ) async {
     if (Platform.isAndroid) return _openAndroidBatch(profiles, cancellation);
+    if (_windowsChecks != null) {
+      return _openWindowsBatch(profiles, cancellation);
+    }
     final batch = NodePingBatch._(targetUrl);
     final reservations = <ServerSocket>[];
     final prepared = <ServerProfile, _PreparedNode>{};
@@ -228,7 +219,9 @@ class NodePingService {
               );
             }
             cancellation.check();
-            final directory = await AppPaths.createSession('ping-');
+            final directory =
+                await (sessionCreator?.call() ??
+                    AppPaths.createSession('ping-'));
             session = _PingSession(_engineFactory(executable, kind), directory);
             Map<String, Object?> configuration(List<_PreparedNode> members) => {
               'log': kind == CoreKind.xray
@@ -369,6 +362,61 @@ class NodePingService {
     }
   }
 
+  Future<NodePingBatch> _openWindowsBatch(
+    List<ServerProfile> profiles,
+    PingCancellation cancellation,
+  ) async {
+    if (profiles.length > 1024) {
+      throw const ServerPingException(
+        'A server-check batch supports up to 1024 nodes.',
+      );
+    }
+    final batch = NodePingBatch._(targetUrl);
+    final nodes = <Map<String, Object?>>[];
+    final addresses = <String, Future<String>>{};
+    var next = 0;
+    Future<void> prepare() async {
+      while (!cancellation.cancelled && next < profiles.length) {
+        final index = next++, profile = profiles[index];
+        try {
+          final address = await addresses.putIfAbsent(
+            profile.server,
+            () => _resolve(profile.server),
+          );
+          cancellation.check();
+          nodes.add({
+            'index': index,
+            'core': profile.coreKind.name,
+            'outbound': profile.outbound(serverAddress: address),
+          });
+        } catch (error) {
+          batch._errors[profile] = error;
+        }
+      }
+    }
+
+    try {
+      await Future.wait(
+        List.generate(profiles.length.clamp(0, 24), (_) => prepare()),
+      );
+      cancellation.check();
+      if (nodes.isEmpty) return batch;
+      final session = await _windowsChecks!.open(nodes, cancellation);
+      batch._windows = session;
+      for (final entry in session.ports.entries) {
+        batch._ports[profiles[entry.key]] = entry.value;
+      }
+      for (final entry in session.errors.entries) {
+        batch._errors[profiles[entry.key]] = ServerPingException(entry.value);
+      }
+      cancellation.check();
+      return batch;
+    } catch (_) {
+      await batch.dispose();
+      rethrow;
+    }
+  }
+
   Future<NodePingBatch> _openAndroidBatch(
     List<ServerProfile> profiles,
     PingCancellation cancellation,
@@ -471,6 +519,7 @@ class NodePingBatch {
   final _errors = <ServerProfile, Object>{};
   final _sessions = <_PingSession>[];
   int? _androidId;
+  WindowsCheckSession? _windows;
   final _xrayIndices = <ServerProfile, int>{};
   PingCancellation? _cancellation;
   void Function()? _abort;
@@ -504,7 +553,9 @@ class NodePingBatch {
       }
     }
     final port = _ports[profile];
-    if (port == null || _disposal != null) {
+    if (port == null ||
+        _disposal != null ||
+        _windows != null && !_windows!.available) {
       throw const ServerPingException('Proxy check session is unavailable.');
     }
     final client = HttpClient()
@@ -545,6 +596,7 @@ class NodePingBatch {
     try {
       await Future.wait(_sessions.map((session) => session.dispose()));
     } finally {
+      await _windows?.dispose();
       if (_androidId != null) {
         await AndroidTunnelEngine.channel.invokeMethod<void>('closePingBatch', {
           'id': _androidId,

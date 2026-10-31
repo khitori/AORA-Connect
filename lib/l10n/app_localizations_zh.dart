@@ -10,6 +10,33 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get startup => '启动';
+
+  @override
+  String get manualStart => '手动启动';
+
+  @override
+  String get startWithWindows => '随 Windows 启动';
+
+  @override
+  String get startWithWindowsHelp => '登录 Windows 时打开已安装的应用。';
+
+  @override
+  String get startMinimized => '启动时最小化';
+
+  @override
+  String get startMinimizedHelp => '启动时将应用收起到系统托盘。';
+
+  @override
+  String get startupConnectionHelp => '打开应用不会自动连接 VPN。';
+
+  @override
+  String get startupLoadFailed => '无法加载启动设置，请重试。';
+
+  @override
+  String get startupSaveFailed => '无法保存启动设置，请刷新后重试。';
+
+  @override
   String get language => '语言';
 
   @override

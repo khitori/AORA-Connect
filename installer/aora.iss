@@ -85,6 +85,25 @@ var
   MigratedSettings: Boolean;
   LegacyHandoff: Boolean;
 
+#ifndef TestInstall
+function ServiceCommand(const Command: String; const Required: Boolean): String;
+var Helper: String; Code: Integer;
+begin
+  Result := '';
+  Helper := ExpandConstant('{app}\app\aoravpn_service.exe');
+  if not FileExists(Helper) then begin
+    if Required or RegKeyExists(HKLM, 'SYSTEM\CurrentControlSet\Services\AORAConnectService') then
+      Result := 'The AORA Connect service executable is missing. Repair the installation before continuing.';
+    Exit;
+  end;
+  if not Exec(Helper, Command, ExpandConstant('{app}\app'), SW_HIDE, ewWaitUntilTerminated, Code) then
+    Result := 'Could not launch the AORA Connect service manager.'
+  else if Code <> 0 then
+    Result := 'Could not ' + Command + ' the AORA Connect service (exit ' + IntToStr(Code) + '). Installation was stopped to protect existing files.';
+  Log('Service ' + Command + ': ' + Result);
+end;
+#endif
+
 function LegacyDesktopShortcutExists(): Boolean;
 begin
   Result := (LegacyRoot <> '') and DirExists(LegacyRoot + '\app') and FileExists(ExpandConstant('{userdesktop}\AORA Connect.lnk'));
@@ -173,6 +192,9 @@ begin
         Result := 'The previous installation is newer. Migration would downgrade your saved settings.';
   if (Result = '') and (LegacyRoot <> '') then
     MigratedSettings := CopyLegacySettings();
+#ifndef TestInstall
+  if Result = '' then Result := ServiceCommand('stop', False);
+#endif
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
@@ -185,6 +207,8 @@ begin
     if not ForceDirectories(ExpandConstant('{app}\settings')) then RaiseException('Could not create settings storage.');
     if not Exec(ExpandConstant('{sys}\icacls.exe'), '"' + ExpandConstant('{app}\settings') + '" /inheritance:r /grant:r "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F"', '', SW_HIDE, ewWaitUntilTerminated, Code) or (Code <> 0) then RaiseException('Could not protect settings storage.');
     if not Exec(ExpandConstant('{sys}\icacls.exe'), '"' + ExpandConstant('{app}\runtime') + '" /inheritance:r /grant:r "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F"', '', SW_HIDE, ewWaitUntilTerminated, Code) or (Code <> 0) then RaiseException('Could not protect runtime storage.');
+    Location := ServiceCommand('install', True);
+    if Location <> '' then RaiseException(Location);
 #endif
     if LegacyHandoff then begin
       if not SafeDirectory(LegacyRoot) or not SafeDirectory(LegacyRoot + '\app') then
@@ -217,11 +241,11 @@ begin
 end;
 
 function InitializeUninstall(): Boolean;
-var Form: TSetupForm; Description: TNewStaticText; Check: TNewCheckBox; Remove, Cancel: TNewButton;
+var Form: TSetupForm; Description: TNewStaticText; Check: TNewCheckBox; Remove, Cancel: TNewButton; ServiceError: String;
 begin
   DeleteUserData := False;
   Result := True;
-  if UninstallSilent then Exit;
+  if not UninstallSilent then begin
   Form := CreateCustomForm(ScaleX(380), ScaleY(150), False, False);
   try
     Form.Caption := 'Uninstall AORA Connect';
@@ -241,6 +265,18 @@ begin
     Result := Form.ShowModal = mrOk;
     DeleteUserData := Result and Check.Checked;
   finally Form.Free; end;
+  end;
+#ifndef TestInstall
+  if Result then begin
+    ServiceError := ServiceCommand('startup-remove', False);
+    if ServiceError = '' then ServiceError := ServiceCommand('remove', False);
+    if ServiceError <> '' then begin
+      Result := False;
+      Log(ServiceError);
+      if not UninstallSilent then MsgBox(ServiceError, mbError, MB_OK);
+    end;
+  end;
+#endif
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);

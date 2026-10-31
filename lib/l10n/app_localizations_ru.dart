@@ -10,6 +10,38 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
+  String get startup => 'Запуск';
+
+  @override
+  String get manualStart => 'Запуск вручную';
+
+  @override
+  String get startWithWindows => 'Запускать вместе с Windows';
+
+  @override
+  String get startWithWindowsHelp =>
+      'Открывать установленное приложение при входе в Windows.';
+
+  @override
+  String get startMinimized => 'Запускать свёрнутым';
+
+  @override
+  String get startMinimizedHelp =>
+      'При запуске сворачивать приложение в системный трей.';
+
+  @override
+  String get startupConnectionHelp =>
+      'Запуск приложения не включает VPN автоматически.';
+
+  @override
+  String get startupLoadFailed =>
+      'Не удалось загрузить настройки запуска. Попробуйте ещё раз.';
+
+  @override
+  String get startupSaveFailed =>
+      'Не удалось сохранить настройки запуска. Обновите данные и попробуйте ещё раз.';
+
+  @override
   String get language => 'Язык';
 
   @override

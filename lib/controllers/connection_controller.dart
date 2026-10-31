@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import '../core/android_quick_settings.dart';
 import '../core/android_tunnel_engine.dart';
 import '../core/connection_mode.dart';
+import '../core/connection_plan.dart';
 import '../core/connection_probe.dart';
 import '../core/core_kind.dart';
 import '../core/development_paths.dart';
@@ -17,6 +18,7 @@ import '../core/ping_type.dart';
 import '../core/tunnel_engine.dart';
 import '../core/unavailable_tunnel_engine.dart';
 import '../core/windows_core_engine.dart';
+import '../core/windows_service_engine.dart';
 import '../l10n/app_localizations_en.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/directional_text.dart';
@@ -41,15 +43,22 @@ class ConnectionController extends ChangeNotifier {
     this.settingsStore,
     SubscriptionLoader? subscriptionLoader,
     KillSwitch? killSwitch,
+    WindowsServiceClient? windowsService,
+    this.sessionCreator,
   }) : supported =
            engine is! UnavailableTunnelEngine &&
            (engine != null || Platform.isWindows || Platform.isAndroid),
        _hasTestConfig = configPath != null,
        _subscriptionLoader = subscriptionLoader ?? loadSubscriptionDetailed {
     final root = findCoreRoot();
+    _windowsService =
+        windowsService ??
+        (engine == null && Platform.isWindows ? WindowsServiceClient() : null);
     _engine =
         engine ??
-        (Platform.isWindows
+        (_windowsService != null
+            ? WindowsServiceEngine(_windowsService, CoreKind.singBox)
+            : Platform.isWindows
             ? WindowsSingBoxEngine(
                 executablePath:
                     '${root.path}/cores/windows/sing-box-${CoreKind.singBox.configuredVersion}-windows-amd64/sing-box.exe',
@@ -59,7 +68,9 @@ class ConnectionController extends ChangeNotifier {
             : const UnavailableTunnelEngine());
     _xrayEngine =
         xrayEngine ??
-        (Platform.isWindows
+        (_windowsService != null
+            ? WindowsServiceEngine(_windowsService, CoreKind.xray)
+            : Platform.isWindows
             ? WindowsXrayEngine(
                 executablePath:
                     '${root.path}/cores/windows/xray-v${CoreKind.xray.configuredVersion}-windows-64/xray.exe',
@@ -70,7 +81,7 @@ class ConnectionController extends ChangeNotifier {
     _configPath = configPath ?? '${root.path}/configs/local-test.json';
     _killSwitch =
         killSwitch ??
-        (engine == null && Platform.isWindows
+        (engine == null && Platform.isWindows && _windowsService == null
             ? const WindowsKillSwitch()
             : null);
     _state = _engine.state;
@@ -92,8 +103,11 @@ class ConnectionController extends ChangeNotifier {
   bool get serverChecksSupported => supported;
   final AppSettingsStore? settingsStore;
   final SubscriptionLoader _subscriptionLoader;
+  final Future<Directory> Function()? sessionCreator;
   final bool _hasTestConfig;
   late final KillSwitch? _killSwitch;
+  late final WindowsServiceClient? _windowsService;
+  bool _serviceUnavailable = false;
   late final TunnelEngine _engine;
   late final TunnelEngine _xrayEngine;
   late final String _configPath;
@@ -125,6 +139,7 @@ class ConnectionController extends ChangeNotifier {
   String? _tileConfig;
   bool get _hasAndroidTile => _engine is AndroidTunnelEngine;
   Directory? _runtimeDirectory;
+  ConnectionPlan? _activePlan;
   Future<void>? _pending;
   Future<void>? _cleanup;
 
@@ -174,7 +189,11 @@ class ConnectionController extends ChangeNotifier {
   SubscriptionLoadResult? subscriptionDetailsFor(String url) =>
       _profileCache[url];
   List<String> get logs => List.unmodifiable(_lines);
-  bool get canEdit => !_busy && !_maintenance && _state == TunnelState.stopped;
+  bool get canEdit =>
+      !_busy &&
+      !_maintenance &&
+      !_serviceUnavailable &&
+      _state == TunnelState.stopped;
   bool beginMaintenance() {
     if (!canEdit || _cleanup != null) return false;
     _maintenance = true;
@@ -232,12 +251,26 @@ class ConnectionController extends ChangeNotifier {
   StreamSubscription<TunnelState> _listenStates(
     TunnelEngine engine,
     CoreKind kind,
-  ) => engine.states.listen((state) {
-    if (kind != activeCore) return;
-    _state = state;
-    if (state != TunnelState.running) _probeMilliseconds = null;
-    _changed();
-  });
+  ) => engine.states.listen(
+    (state) {
+      if (kind != activeCore) return;
+      _state = state;
+      if (_serviceUnavailable) {
+        _serviceUnavailable = false;
+        _error = null;
+        _errorScope = null;
+      }
+      if (state != TunnelState.running) _probeMilliseconds = null;
+      _changed();
+    },
+    onError: (Object error) {
+      if (kind != activeCore) return;
+      _serviceUnavailable = error is WindowsServiceUnavailable;
+      _error = error.toString();
+      _errorScope = ConnectionErrorScope.connection;
+      _changed();
+    },
+  );
 
   void _changed() {
     if (!_disposed) notifyListeners();
@@ -348,25 +381,46 @@ class ConnectionController extends ChangeNotifier {
   }
 
   Future<void> restore() {
-    if (settingsStore == null && _killSwitch == null) return Future.value();
+    if (settingsStore == null &&
+        _killSwitch == null &&
+        _windowsService == null) {
+      return Future.value();
+    }
     return _perform(
       () async {
-        if (_engine case final AndroidTunnelEngine android) await android.ready;
-        if (_xrayEngine case final AndroidTunnelEngine android) {
-          await android.ready;
-        }
-        await _killSwitch?.disarm();
         final saved = await settingsStore?.read() ?? const AppSettingsData();
         _subscriptions = saved.subscriptions;
         _activeSubscriptionUrl = saved.activeSubscriptionUrl;
         _mode = Platform.isAndroid ? ConnectionMode.tun : saved.mode;
         _core = supportsCore(saved.core) ? saved.core : CoreKind.singBox;
-        _state = _activeEngine.state;
         _dnsProvider = saved.dnsProvider;
         _pingType = saved.pingType;
         _killSwitchEnabled = saved.killSwitchEnabled;
         _statisticsEnabled = saved.statisticsEnabled;
         _routingPolicy = saved.routingPolicy;
+        _changed();
+        if (_engine case final AndroidTunnelEngine android) await android.ready;
+        if (_xrayEngine case final AndroidTunnelEngine android) {
+          await android.ready;
+        }
+        await _killSwitch?.disarm();
+        WindowsServiceSnapshot? service;
+        try {
+          service = await _windowsService?.initialize();
+        } catch (_) {
+          _serviceUnavailable = _windowsService != null;
+          _errorScope = ConnectionErrorScope.connection;
+          rethrow;
+        }
+        if (service != null &&
+            service.state != TunnelState.stopped &&
+            service.core != null) {
+          _core = service.core!;
+          _mode = service.mode == 'proxy'
+              ? ConnectionMode.proxy
+              : ConnectionMode.tun;
+        }
+        _state = _activeEngine.state;
         _changed();
         if (_activeSubscriptionUrl != null) {
           await _activate(_activeSubscriptionUrl!, refresh: true);
@@ -472,6 +526,7 @@ class ConnectionController extends ChangeNotifier {
       _selectedServerAddress = null;
       _state = _engine.state;
       _importedConfigPath = null;
+      _activePlan = null;
       _tileConfig = null;
       final previous = _runtimeDirectory;
       _runtimeDirectory = null;
@@ -516,7 +571,7 @@ class ConnectionController extends ChangeNotifier {
         );
       }
       if (_selected != null && _selected!.coreKind == core) {
-        await _engineFor(core).validate(_activeConfig);
+        await _validateActive(_engineFor(core));
       }
       _core = core;
       _state = _activeEngine.state;
@@ -591,7 +646,7 @@ class ConnectionController extends ChangeNotifier {
     ConnectionMode? mode,
   }) async {
     final nextMode = mode ?? _mode;
-    final directory = await AppPaths.createSession('profile-');
+    Directory? directory;
     try {
       final addresses = Platform.isAndroid
           ? [
@@ -608,38 +663,73 @@ class ConnectionController extends ChangeNotifier {
         (value) => value.type == InternetAddressType.IPv4,
         orElse: () => addresses.first,
       );
-      final config = File('${directory.path}/config.json');
-      await config.writeAsString(
-        jsonEncode(
-          applyRouting(
-            profile.config(
-              mode: nextMode,
-              serverAddress: address.address,
-              leakProtection: _killSwitchEnabled,
+      final engine = _engineFor(profile.coreKind);
+      final plan = ConnectionPlan(
+        profile: profile,
+        serverAddress: address.address,
+        mode: nextMode,
+        dnsProvider: _dnsProvider,
+        leakProtection: _killSwitchEnabled,
+        routing: _routingPolicy,
+      );
+      if (engine is PlannedTunnelEngine) {
+        if (supported && profile.coreKind == _core) {
+          await engine.validatePlan(plan);
+        }
+        final previous = _runtimeDirectory;
+        if (previous != null) await previous.delete(recursive: true);
+        _runtimeDirectory = null;
+        _importedConfigPath = null;
+        _activePlan = plan;
+      } else {
+        directory =
+            await (sessionCreator?.call() ??
+                AppPaths.createSession('profile-'));
+        final config = File('${directory.path}/config.json');
+        await config.writeAsString(
+          jsonEncode(
+            applyRouting(
+              profile.config(
+                mode: nextMode,
+                serverAddress: address.address,
+                leakProtection: _killSwitchEnabled,
+                dnsProvider: _dnsProvider,
+              ),
+              profile.coreKind,
+              _routingPolicy,
               dnsProvider: _dnsProvider,
             ),
-            profile.coreKind,
-            _routingPolicy,
-            dnsProvider: _dnsProvider,
           ),
-        ),
-      );
-      if (supported && profile.coreKind == _core) {
-        await _activeEngine.validate(config.path);
+        );
+        if (supported && profile.coreKind == _core) {
+          await _activeEngine.validate(config.path);
+        }
+        final previous = _runtimeDirectory;
+        if (previous != null) await previous.delete(recursive: true);
+        _runtimeDirectory = directory;
+        _importedConfigPath = config.path;
+        _activePlan = null;
+        if (_hasAndroidTile) _tileConfig = await config.readAsString();
       }
-      final previous = _runtimeDirectory;
-      if (previous != null) await previous.delete(recursive: true);
-      _runtimeDirectory = directory;
-      _importedConfigPath = config.path;
-      if (_hasAndroidTile) _tileConfig = await config.readAsString();
       _selected = profile;
       _selectedServerAddress = address.address;
       _mode = nextMode;
       _state = _activeEngine.state;
       _lines.clear();
     } catch (_) {
-      if (await directory.exists()) await directory.delete(recursive: true);
+      if (directory != null && await directory.exists()) {
+        await directory.delete(recursive: true);
+      }
       rethrow;
+    }
+  }
+
+  Future<void> _validateActive(TunnelEngine engine) async {
+    final plan = _activePlan;
+    if (engine is PlannedTunnelEngine && plan != null) {
+      await engine.validatePlan(plan);
+    } else {
+      await engine.validate(_activeConfig);
     }
   }
 
@@ -648,7 +738,7 @@ class ConnectionController extends ChangeNotifier {
       throw StateError('Select ${_selected!.coreKind.label} in Settings.');
     }
     try {
-      await _activeEngine.validate(_activeConfig);
+      await _validateActive(_activeEngine);
       _appendLog(
         'Configuration valid (${activeCore.label}). This checks configuration, not DNS or server reachability.',
       );
@@ -667,8 +757,19 @@ class ConnectionController extends ChangeNotifier {
       if (Platform.isAndroid && _selected != null) {
         await _selectProfile(_selected!);
       }
-      await _activeEngine.start(_activeConfig);
-      if (_selected == null) return;
+      final engine = _activeEngine;
+      final plan = _activePlan;
+      if (engine is PlannedTunnelEngine && plan != null) {
+        await engine.startPlan(plan);
+      } else {
+        await engine.start(_activeConfig);
+      }
+      if (_selected == null) {
+        if (_activeEngine case final WindowsServiceEngine service) {
+          await service.confirm();
+        }
+        return;
+      }
       _appendLog(
         'Connection verification: ${activeCore.displayName}, DNS=${_dnsProvider.label}.',
       );
@@ -679,6 +780,9 @@ class ConnectionController extends ChangeNotifier {
         );
         _probeMilliseconds = elapsed.inMilliseconds;
         _probeProtocol = null;
+        if (_activeEngine case final WindowsServiceEngine service) {
+          await service.confirm();
+        }
       } catch (error) {
         if (_activeEngine case final AndroidTunnelEngine android) {
           await android.captureDiagnostics();
@@ -714,11 +818,21 @@ class ConnectionController extends ChangeNotifier {
     }
   }, errorScope: ConnectionErrorScope.settings);
 
-  Future<void> shutdown() => _cleanup ??= _shutdown();
+  Future<void> shutdown() =>
+      _cleanup ??= _shutdown().catchError((Object error, StackTrace stack) {
+        _cleanup = null;
+        Error.throwWithStackTrace(error, stack);
+      });
   Future<void> _shutdown() async {
     await _pending;
+    if (_windowsService != null) {
+      try {
+        await _activeEngine.stop();
+      } on WindowsServiceStopped {}
+    }
     await _engine.dispose();
     await _xrayEngine.dispose();
+    await _windowsService?.dispose();
     for (final subscription in _logs) {
       await subscription.cancel();
     }

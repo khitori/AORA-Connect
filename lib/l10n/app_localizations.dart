@@ -112,6 +112,24 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
+  String get startup;
+
+  String get manualStart;
+
+  String get startWithWindows;
+
+  String get startWithWindowsHelp;
+
+  String get startMinimized;
+
+  String get startMinimizedHelp;
+
+  String get startupConnectionHelp;
+
+  String get startupLoadFailed;
+
+  String get startupSaveFailed;
+
   /// No description provided for @language.
   ///
   /// In en, this message translates to:

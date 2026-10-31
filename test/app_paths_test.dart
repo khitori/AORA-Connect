@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aoravpn/storage/app_paths.dart';
+import 'package:aoravpn/storage/windows_installation.dart';
 
 void main() {
   test(
@@ -26,11 +27,22 @@ void main() {
       throwsStateError,
     );
   });
-  test('Development data stays inside the project build directory', () {
+  test('Development shares installed storage and helpers', () {
     if (!Platform.isWindows) return;
     expect(
-      AppPaths.windowsRoot.path.replaceAll('\\', '/'),
-      endsWith('/build/dev-data'),
+      AppPaths.windowsRoot.absolute.path,
+      WindowsInstallation.root.absolute.path,
     );
+    expect(
+      AppPaths.windowsHelper('aoravpn_service').replaceAll('\\', '/'),
+      endsWith('/AORAConnect/app/aoravpn_service.exe'),
+    );
+    final programFiles = Platform.environment['ProgramW6432'];
+    if (programFiles != null) {
+      expect(
+        AppPaths.windowsRoot.absolute.path,
+        Directory('$programFiles/AORAConnect').absolute.path,
+      );
+    }
   });
 }

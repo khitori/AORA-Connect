@@ -10,6 +10,37 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get startup => 'Startup';
+
+  @override
+  String get manualStart => 'Start manually';
+
+  @override
+  String get startWithWindows => 'Start with Windows';
+
+  @override
+  String get startWithWindowsHelp =>
+      'Open the installed app when you sign in to Windows.';
+
+  @override
+  String get startMinimized => 'Start minimized';
+
+  @override
+  String get startMinimizedHelp =>
+      'Keep the app in the system tray when it starts.';
+
+  @override
+  String get startupConnectionHelp =>
+      'Opening the app does not connect the VPN automatically.';
+
+  @override
+  String get startupLoadFailed => 'Could not load startup settings. Try again.';
+
+  @override
+  String get startupSaveFailed =>
+      'Could not save startup settings. Refresh and try again.';
+
+  @override
   String get language => 'Language';
 
   @override

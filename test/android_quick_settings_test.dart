@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'dart:convert';
 
+import 'support/runtime_session.dart';
+
 import 'package:aoravpn/controllers/connection_controller.dart';
 import 'package:aoravpn/core/android_quick_settings.dart';
 import 'package:aoravpn/core/android_tunnel_engine.dart';
@@ -59,6 +61,7 @@ void main() {
     final xray = AndroidTunnelEngine(core: CoreKind.xray);
     await Future.wait([engine.ready, xray.ready]);
     connection = ConnectionController(
+      sessionCreator: createTestRuntimeSession,
       engine: engine,
       xrayEngine: xray,
       subscriptionLoader: (_) async =>

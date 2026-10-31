@@ -14,8 +14,10 @@ import '../components/core_logs.dart';
 import '../components/language_settings.dart';
 import '../components/statistics_panel.dart';
 import '../components/updates_panel.dart';
+import '../components/windows_startup_settings.dart';
 import '../controllers/connection_controller.dart';
 import '../controllers/statistics_controller.dart';
+import '../controllers/windows_startup_controller.dart';
 import '../core/android_quick_settings.dart';
 import '../core/android_tunnel_engine.dart';
 import '../core/connection_mode.dart';
@@ -35,11 +37,13 @@ class SettingsPage extends StatelessWidget {
     required this.statistics,
     this.updates,
     this.onInstallUpdate,
+    this.startup,
   });
   final ConnectionController connection;
   final StatisticsController statistics;
   final UpdateController? updates;
   final Future<void> Function()? onInstallUpdate;
+  final WindowsStartupController? startup;
 
   bool _allowEdit(BuildContext context, String action) => allowConnectionEdit(
     context,
@@ -116,6 +120,10 @@ class SettingsPage extends StatelessWidget {
     children: [
       const LanguageSettings(),
       const SizedBox(height: 12),
+      if (Platform.isWindows && startup != null) ...[
+        WindowsStartupSettings(controller: startup!),
+        const SizedBox(height: 12),
+      ],
       AppExpansionCard(
         title: context.l10n.core,
         storageId: 'core',

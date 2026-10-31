@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'dart:async';
+
+import 'support/runtime_session.dart';
+
 import 'dart:ui' as ui;
 
 import 'package:aoravpn/components/app_notification.dart';
@@ -62,6 +65,7 @@ void main() {
     loads = 0;
     engine = _Engine();
     connection = ConnectionController(
+      sessionCreator: createTestRuntimeSession,
       engine: engine,
       xrayEngine: _Engine(),
       subscriptionLoader: (_) async {
@@ -390,8 +394,7 @@ void main() {
       await tester.runAsync(
         () => connection.addSubscription('https://test.invalid/sub'),
       );
-      input.text =
-          'https://new.invalid/sub';
+      input.text = 'https://new.invalid/sub';
       var clipboardReads = 0;
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(SystemChannels.platform, (call) async {

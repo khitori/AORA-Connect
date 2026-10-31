@@ -10,6 +10,38 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
+  String get startup => 'Démarrage';
+
+  @override
+  String get manualStart => 'Démarrage manuel';
+
+  @override
+  String get startWithWindows => 'Démarrer avec Windows';
+
+  @override
+  String get startWithWindowsHelp =>
+      'Ouvrir l’application installée à l’ouverture de la session Windows.';
+
+  @override
+  String get startMinimized => 'Démarrer en mode réduit';
+
+  @override
+  String get startMinimizedHelp =>
+      'Placer l’application dans la zone de notification au démarrage.';
+
+  @override
+  String get startupConnectionHelp =>
+      'L’ouverture de l’application ne connecte pas automatiquement le VPN.';
+
+  @override
+  String get startupLoadFailed =>
+      'Impossible de charger les paramètres de démarrage. Réessayez.';
+
+  @override
+  String get startupSaveFailed =>
+      'Impossible d’enregistrer les paramètres de démarrage. Actualisez et réessayez.';
+
+  @override
   String get language => 'Langue';
 
   @override

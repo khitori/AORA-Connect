@@ -27,7 +27,7 @@ add_custom_target(aoravpn_windows_helpers ALL
   COMMENT "Building Rust Windows helpers"
   VERBATIM
 )
-foreach(HELPER aoravpn_core_host aoravpn_core_console aoravpn_server_ping aoravpn_kill_switch aoravpn_update)
+foreach(HELPER aoravpn_core_host aoravpn_core_console aoravpn_server_ping aoravpn_kill_switch aoravpn_update aoravpn_service)
   add_custom_command(TARGET aoravpn_windows_helpers POST_BUILD
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
       "${RUST_TARGET_DIR}/x86_64-pc-windows-msvc/${RUST_OUTPUT_PROFILE}/${HELPER}.exe"
@@ -38,6 +38,17 @@ foreach(HELPER aoravpn_core_host aoravpn_core_console aoravpn_server_ping aoravp
     DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT Runtime)
 endforeach()
 add_dependencies(${BINARY_NAME} aoravpn_windows_helpers)
+
+add_custom_target(aoravpn_prepare_shared_service
+  COMMAND powershell.exe -NoProfile -ExecutionPolicy Bypass -File
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../tool/prepare_windows_service.ps1"
+    -SourceDirectory "${RUST_TARGET_DIR}/x86_64-pc-windows-msvc/${RUST_OUTPUT_PROFILE}"
+    -Configuration "$<CONFIG>"
+  DEPENDS aoravpn_windows_helpers
+  COMMENT "Checking the shared installed Windows service"
+  VERBATIM
+)
+add_dependencies(${BINARY_NAME} aoravpn_prepare_shared_service)
 
 add_custom_target(aoravpn_rust_runner ALL
   COMMAND "${CMAKE_COMMAND}" -E env
@@ -55,7 +66,7 @@ add_dependencies(${BINARY_NAME} aoravpn_rust_runner)
 set(RUST_RUNNER_LIBRARY "${RUST_TARGET_DIR}/x86_64-pc-windows-msvc/${RUST_OUTPUT_PROFILE}/aora_windows_helpers.lib")
 target_link_libraries(${BINARY_NAME} PRIVATE "${RUST_RUNNER_LIBRARY}"
   kernel32 user32 advapi32 bcrypt userenv ntdll ws2_32 iphlpapi fwpuclnt
-  shell32 ole32 oleaut32 rpcrt4 crypt32 gdi32 dwmapi
+  shell32 ole32 oleaut32 propsys runtimeobject wtsapi32 rpcrt4 crypt32 gdi32 dwmapi
   libcmt libvcruntime libucrt)
 
 target_link_options(${BINARY_NAME} PRIVATE

@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'dart:async';
+
+import 'support/runtime_session.dart';
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -12,12 +15,15 @@ import 'package:aoravpn/theme/app_theme.dart';
 import 'package:aoravpn/controllers/connection_controller.dart';
 import 'package:aoravpn/core/tunnel_engine.dart';
 import 'package:aoravpn/core/connection_mode.dart';
+import 'package:aoravpn/core/connection_plan.dart';
 import 'package:aoravpn/profiles/hysteria_profile.dart';
 import 'package:aoravpn/profiles/subscription_loader.dart';
 import 'package:aoravpn/profiles/xray_vless_profile.dart';
 import 'package:aoravpn/core/core_kind.dart';
 import 'package:aoravpn/core/dns_provider.dart';
 import 'package:aoravpn/core/kill_switch.dart';
+import 'package:aoravpn/core/ping_type.dart';
+import 'package:aoravpn/core/windows_service_engine.dart';
 import 'package:aoravpn/storage/app_settings_store.dart';
 import 'package:aoravpn/routing/routing_policy.dart';
 
@@ -82,6 +88,20 @@ class StartingEngine extends ControlledEngine {
   }
 }
 
+class PlannedEngine extends ControlledEngine implements PlannedTunnelEngine {
+  final plans = <ConnectionPlan>[];
+  @override
+  Future<void> validatePlan(ConnectionPlan plan) async {
+    if (rejectValidation) throw StateError('Rejected plan');
+    plans.add(plan);
+  }
+
+  @override
+  Future<void> startPlan(ConnectionPlan plan) async {
+    throw StateError('This test must not start a VPN.');
+  }
+}
+
 class MemoryKillSwitch implements KillSwitch {
   bool armed = false;
   int disarmCalls = 0;
@@ -115,10 +135,96 @@ class MemoryKillSwitch implements KillSwitch {
 
 void main() {
   test(
+    'Planned engines receive choices without client configuration files',
+    () async {
+      final engine = PlannedEngine();
+      final controller = ConnectionController(
+        sessionCreator: () async =>
+            throw StateError('Planned engines must not create client files.'),
+        engine: engine,
+        settingsStore: MemorySettingsStore(),
+      );
+      try {
+        await controller.addSubscription(
+          'hy2://dummy@127.0.0.1:443?sni=example.com',
+        );
+        expect(controller.error, isNull);
+        expect(engine.lastValidatedPath, isNull);
+        expect(engine.plans.single.outbound['server'], '127.0.0.1');
+        await controller.setDnsProvider(DnsProvider.quad9);
+        expect(engine.plans.last.dnsProvider, DnsProvider.quad9);
+        await controller.setMode(ConnectionMode.proxy);
+        expect(engine.plans.last.mode, ConnectionMode.proxy);
+        await controller.validate();
+        expect(controller.error, isNull);
+        expect(engine.validationCalls, 0);
+        engine.rejectValidation = true;
+        await controller.setDnsProvider(DnsProvider.google);
+        expect(controller.error, isNotNull);
+        expect(controller.dnsProvider, DnsProvider.quad9);
+        expect(engine.lastValidatedPath, isNull);
+      } finally {
+        await controller.shutdown();
+        controller.dispose();
+      }
+    },
+  );
+  test(
+    'A service startup failure does not discard saved preferences',
+    () async {
+      final store = MemorySettingsStore()
+        ..data = const AppSettingsData(
+          subscriptions: [SavedSubscription('https://provider.example/sub')],
+          activeSubscriptionUrl: 'https://provider.example/sub',
+          mode: ConnectionMode.proxy,
+          dnsProvider: DnsProvider.quad9,
+          pingType: PingType.tcp,
+          statisticsEnabled: true,
+          killSwitchEnabled: false,
+          routingPolicy: RoutingPolicy(enabled: false),
+        );
+      final client = WindowsServiceClient(
+        ensureStarted: () async => throw StateError('Service unavailable'),
+        request: (_) async => throw StateError('Unexpected request'),
+      );
+      final controller = ConnectionController(
+        sessionCreator: createTestRuntimeSession,
+        engine: ControlledEngine(),
+        settingsStore: store,
+        windowsService: client,
+      );
+      try {
+        await controller.restore();
+        expect(controller.subscriptions, hasLength(1));
+        expect(
+          controller.activeSubscriptionUrl,
+          store.data.activeSubscriptionUrl,
+        );
+        expect(controller.mode, ConnectionMode.proxy);
+        expect(controller.dnsProvider, DnsProvider.quad9);
+        expect(controller.pingType, PingType.tcp);
+        expect(controller.statisticsEnabled, isTrue);
+        expect(controller.killSwitchEnabled, isFalse);
+        expect(controller.routingPolicy.enabled, isFalse);
+        expect(
+          controller.errorFor(ConnectionErrorScope.connection),
+          contains('Service unavailable'),
+        );
+        expect(controller.errorFor(ConnectionErrorScope.subscriptions), isNull);
+        expect(controller.canEdit, isFalse);
+        expect(store.data.statisticsEnabled, isTrue);
+      } finally {
+        await controller.shutdown();
+        controller.dispose();
+      }
+    },
+  );
+  test(
     'Early core readiness does not display Connected before startup finishes',
     () async {
       final engine = StartingEngine();
       final controller = ConnectionController(
+        sessionCreator: createTestRuntimeSession,
         engine: engine,
         configPath: 'unused.json',
       );
@@ -151,6 +257,7 @@ void main() {
           routingPolicy: RoutingPolicy(direction: RoutingAction.vpn),
         );
       final controller = ConnectionController(
+        sessionCreator: createTestRuntimeSession,
         engine: engine,
         settingsStore: store,
         subscriptionLoader: (_) async => SubscriptionLoadResult(
@@ -185,6 +292,7 @@ void main() {
     () async {
       final engine = ControlledEngine();
       final controller = ConnectionController(
+        sessionCreator: createTestRuntimeSession,
         engine: engine,
         configPath: 'unused.json',
       );
@@ -215,6 +323,7 @@ void main() {
       var rejectFetch = false;
       var expiry = DateTime.utc(2027, 5, 7);
       final controller = ConnectionController(
+        sessionCreator: createTestRuntimeSession,
         engine: engine,
         settingsStore: store,
         subscriptionLoader: (_) async {
@@ -266,6 +375,7 @@ void main() {
       final engine = ControlledEngine();
       final store = MemorySettingsStore();
       final controller = ConnectionController(
+        sessionCreator: createTestRuntimeSession,
         engine: engine,
         settingsStore: store,
       );
@@ -325,6 +435,7 @@ void main() {
       final engine = ControlledEngine();
       final store = MemorySettingsStore();
       final controller = ConnectionController(
+        sessionCreator: createTestRuntimeSession,
         engine: engine,
         settingsStore: store,
         subscriptionLoader: (_) async => SubscriptionLoadResult(
@@ -370,6 +481,7 @@ void main() {
       final engine = ControlledEngine();
       final store = MemorySettingsStore();
       final controller = ConnectionController(
+        sessionCreator: createTestRuntimeSession,
         engine: engine,
         settingsStore: store,
         subscriptionLoader: (_) async => SubscriptionLoadResult(
@@ -423,6 +535,7 @@ void main() {
     var loads = 0;
     final engine = ControlledEngine();
     final controller = ConnectionController(
+      sessionCreator: createTestRuntimeSession,
       engine: engine,
       settingsStore: store,
       killSwitch: guard,
@@ -468,6 +581,7 @@ void main() {
     final singBox = ControlledEngine();
     final xray = ControlledEngine();
     final controller = ConnectionController(
+      sessionCreator: createTestRuntimeSession,
       engine: singBox,
       xrayEngine: xray,
       subscriptionLoader: (_) async => SubscriptionLoadResult(
@@ -539,6 +653,7 @@ void main() {
         );
 
     final first = ConnectionController(
+      sessionCreator: createTestRuntimeSession,
       engine: ControlledEngine(),
       settingsStore: store,
       subscriptionLoader: load,
@@ -557,6 +672,7 @@ void main() {
     first.dispose();
 
     final restored = ConnectionController(
+      sessionCreator: createTestRuntimeSession,
       engine: ControlledEngine(),
       settingsStore: store,
       subscriptionLoader: load,
@@ -580,6 +696,7 @@ void main() {
   test('Validation failure exposes an error and re-enables controls', () async {
     final engine = ControlledEngine()..rejectValidation = true;
     final controller = ConnectionController(
+      sessionCreator: createTestRuntimeSession,
       engine: engine,
       configPath: 'test.json',
     );
@@ -599,6 +716,7 @@ void main() {
 
   test('Subscription failure is scoped to Subscriptions', () async {
     final controller = ConnectionController(
+      sessionCreator: createTestRuntimeSession,
       engine: ControlledEngine(),
       subscriptionLoader: (_) async =>
           throw const FormatException('Unsupported link option.'),
@@ -620,6 +738,7 @@ void main() {
       final gate = Completer<void>();
       final engine = ControlledEngine()..validationGate = gate;
       final controller = ConnectionController(
+        sessionCreator: createTestRuntimeSession,
         engine: engine,
         configPath: 'test.json',
       );

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:ui' show AppExitResponse;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'components/app_notification.dart';
@@ -12,6 +13,7 @@ import 'components/floating_bottom_navigation.dart';
 import 'controllers/connection_controller.dart';
 import 'controllers/node_ping_controller.dart';
 import 'controllers/statistics_controller.dart';
+import 'controllers/windows_startup_controller.dart';
 import 'core/desktop_window.dart';
 import 'core/tunnel_engine.dart';
 import 'l10n/l10n.dart';
@@ -21,6 +23,7 @@ import 'pages/routing_page.dart';
 import 'pages/settings_page.dart';
 import 'pages/subscriptions_page.dart';
 import 'storage/app_settings_store.dart';
+import 'storage/platform_settings_stores.dart';
 import 'theme/app_theme.dart';
 import 'updates/android_updates.dart';
 import 'updates/update_controller.dart';
@@ -48,7 +51,7 @@ class _MyAppState extends State<MyApp> {
   late final LocaleController _locale =
       widget.localeController ??
       LocaleController(
-        store: widget.engine == null ? FileLanguageStore() : null,
+        store: widget.engine == null ? createLanguageStore() : null,
       );
 
   @override
@@ -101,6 +104,7 @@ class _AppShellState extends State<_AppShell> {
   late final AppLifecycleListener _lifecycle;
   final _window = DesktopWindow();
   UpdateController? _updates;
+  WindowsStartupController? _startup;
   String? _announcedUpdate;
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   Future<void>? _exitCleanup;
@@ -131,11 +135,16 @@ class _AppShellState extends State<_AppShell> {
       configPath: widget.configPath,
       settingsStore:
           widget.settingsStore ??
-          (widget.engine == null ? FileAppSettingsStore() : null),
+          (widget.engine == null ? createAppSettingsStore() : null),
     );
     _statistics = StatisticsController(_connection);
     _pings = NodePingController(_connection);
-    if (widget.engine == null && (_window.supported || Platform.isAndroid)) {
+    if (widget.engine == null && Platform.isWindows) {
+      _startup = WindowsStartupController();
+    }
+    if (widget.engine == null &&
+        (_window.supported || Platform.isAndroid) &&
+        (!Platform.isWindows || kReleaseMode)) {
       _updates = UpdateController()..addListener(_updateChanged);
       unawaited(_updates!.initialize());
     }
@@ -167,10 +176,14 @@ class _AppShellState extends State<_AppShell> {
     );
   }
 
-  Future<void> _cleanupForExit() => _exitCleanup ??= (() async {
-    await _pings.shutdown();
-    await _connection.shutdown();
-  })();
+  Future<void> _cleanupForExit() => _exitCleanup ??=
+      (() async {
+        await _pings.shutdown();
+        await _connection.shutdown();
+      })().catchError((Object error, StackTrace stack) {
+        _exitCleanup = null;
+        Error.throwWithStackTrace(error, stack);
+      });
 
   void _updateChanged() {
     if (!mounted) return;
@@ -255,6 +268,7 @@ class _AppShellState extends State<_AppShell> {
     _connection.removeListener(_syncTray);
     _updates?.removeListener(_updateChanged);
     _updates?.dispose();
+    _startup?.dispose();
     _window.dispose();
     _lifecycle.dispose();
     _subscriptionUrl.dispose();
@@ -353,6 +367,7 @@ class _AppShellState extends State<_AppShell> {
                 connection: _connection,
                 statistics: _statistics,
                 updates: _updates,
+                startup: _startup,
                 onInstallUpdate: _updates == null ? null : _installUpdate,
               ),
               _AppPage.routing => RoutingPage(connection: _connection),

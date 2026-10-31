@@ -59,6 +59,8 @@ class LocaleController extends ChangeNotifier with WidgetsBindingObserver {
           (locale) => locale.toLanguageTag() == _language,
         );
   bool _disposed = false;
+  bool restoreFailed = false;
+  bool _observing = false;
   bool _changed = false;
   Future<void> _writes = Future.value();
   Future<void>? _initialization;
@@ -67,12 +69,31 @@ class LocaleController extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> _restore() async {
     if (_disposed) return;
-    WidgetsBinding.instance.addObserver(this);
+    if (!_observing) {
+      WidgetsBinding.instance.addObserver(this);
+      _observing = true;
+    }
     if (store == null) return;
-    final saved = await store?.read();
+    String? saved;
+    try {
+      saved = await store?.read();
+      restoreFailed = false;
+    } catch (_) {
+      if (!_disposed && !_changed) {
+        restoreFailed = true;
+        notifyListeners();
+      }
+      return;
+    }
     if (_disposed || _changed) return;
     _language = supportedLanguage(saved);
     notifyListeners();
+  }
+
+  Future<void> reload() async {
+    if (_disposed) return;
+    _changed = false;
+    await _restore();
   }
 
   static String? supportedLanguage(String? language) =>
@@ -104,6 +125,7 @@ class LocaleController extends ChangeNotifier with WidgetsBindingObserver {
       await store?.write(language);
       if (_disposed) return;
       _language = language;
+      restoreFailed = false;
       notifyListeners();
     });
     _writes = operation;

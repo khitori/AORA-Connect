@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'dart:async';
 
+import 'support/runtime_session.dart';
+
 import 'package:flutter/material.dart';
 import 'package:aoravpn/core/desktop_window.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -178,9 +180,7 @@ void main() {
     await tester.tap(find.text('Through tunnel'));
     await tester.pumpAndSettle();
     expect(
-      find.text(
-        'No items yet. Everything goes through the tunnel.',
-      ),
+      find.text('No items yet. Everything goes through the tunnel.'),
       findsOneWidget,
     );
     await tester.tap(find.byType(AppSelect<RoutingAction>));
@@ -191,9 +191,7 @@ void main() {
     await tester.tap(find.text('Bypassing tunnel'));
     await tester.pumpAndSettle();
     expect(
-      find.text(
-        'No items yet. Everything goes through the tunnel.',
-      ),
+      find.text('No items yet. Everything goes through the tunnel.'),
       findsOneWidget,
     );
     await tester.tap(find.text('Add rule'));
@@ -287,6 +285,7 @@ void main() {
     final engine = FakeEngine();
     final input = TextEditingController();
     final controller = ConnectionController(
+      sessionCreator: createTestRuntimeSession,
       engine: engine,
       subscriptionLoader: (_) async => SubscriptionLoadResult(
         profiles: List.generate(
@@ -339,6 +338,7 @@ void main() {
     final xrayEngine = FakeEngine();
     final input = TextEditingController();
     final controller = ConnectionController(
+      sessionCreator: createTestRuntimeSession,
       engine: engine,
       xrayEngine: xrayEngine,
       subscriptionLoader: (_) async => SubscriptionLoadResult(

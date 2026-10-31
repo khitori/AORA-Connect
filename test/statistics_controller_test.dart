@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'dart:async';
 
+import 'support/runtime_session.dart';
+
 import 'package:aoravpn/controllers/connection_controller.dart';
 import 'package:aoravpn/controllers/statistics_controller.dart';
 import 'package:aoravpn/core/tunnel_engine.dart';
@@ -44,6 +46,7 @@ void main() {
   ) async {
     final engine = _FakeEngine();
     final connection = ConnectionController(
+      sessionCreator: createTestRuntimeSession,
       engine: engine,
       subscriptionLoader: (_) async => SubscriptionLoadResult(
         profiles: [
@@ -110,6 +113,7 @@ void main() {
     () async {
       final engine = _FakeEngine();
       final connection = ConnectionController(
+        sessionCreator: createTestRuntimeSession,
         engine: engine,
         subscriptionLoader: (_) async => SubscriptionLoadResult(
           profiles: [
@@ -145,6 +149,7 @@ void main() {
     () async {
       final engine = _FakeEngine();
       final connection = ConnectionController(
+        sessionCreator: createTestRuntimeSession,
         engine: engine,
         subscriptionLoader: (_) async => SubscriptionLoadResult(
           profiles: [

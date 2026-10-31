@@ -32,6 +32,7 @@ struct Window {
     controller: *mut c_void,
     smoke: bool,
     first_frame: bool,
+    start_minimized: bool,
     controls: controls::Controls,
     icons: Option<WindowIcons>,
 }
@@ -135,7 +136,7 @@ unsafe extern "C" fn first_frame(data: *mut c_void) {
     }
     if (*state).smoke {
         SetTimer((*state).hwnd, 1, 250, None);
-    } else {
+    } else if !(*state).start_minimized || !(*state).controls.add_tray((*state).hwnd) {
         ShowWindow((*state).hwnd, SW_SHOWNORMAL);
     }
 }
@@ -346,6 +347,8 @@ fn run(instance: HINSTANCE) -> Result<i32, Box<dyn std::error::Error>> {
             controller: null_mut(),
             smoke,
             first_frame: false,
+            start_minimized: !smoke && !args.iter().any(|arg| arg == "--show")
+                && crate::startup::minimized().unwrap_or(false),
             controls: controls::Controls::default(),
             icons: None,
         });
@@ -384,7 +387,7 @@ fn run(instance: HINSTANCE) -> Result<i32, Box<dyn std::error::Error>> {
         let aot = wide(data.join("app.so"));
         let dart_args: Vec<_> = args
             .iter()
-            .filter(|arg| *arg != "--runner-smoke-test")
+            .filter(|arg| !matches!(arg.as_str(), "--runner-smoke-test" | "--startup" | "--show"))
             .map(|arg| CString::new(arg.as_str()))
             .collect::<Result<_, _>>()?;
         let pointers: Vec<_> = dart_args.iter().map(|arg| arg.as_ptr()).collect();

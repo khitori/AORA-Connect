@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'dart:async';
+
+import 'support/runtime_session.dart';
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -96,6 +99,7 @@ class _LocalProfile extends ServerProfile {
 
 Future<ConnectionController> _connection(int count) async {
   final connection = ConnectionController(
+    sessionCreator: createTestRuntimeSession,
     engine: _Engine(),
     xrayEngine: _Engine(),
     subscriptionLoader: (_) async => SubscriptionLoadResult(
@@ -294,11 +298,11 @@ void main() {
         request.response.statusCode = 204;
         try {
           await request.response.close();
-        } on IOException {
-        }
+        } on IOException {}
       });
       final engines = <WindowsCoreEngine>[];
       final service = NodePingService(
+        sessionCreator: createTestRuntimeSession,
         helperPath: helper.absolute.path,
         targetUrl: Uri.parse('http://127.0.0.1:${server.port}/check'),
         engineFactory: (executable, kind) {
@@ -372,6 +376,7 @@ void main() {
           await request.response.close();
         });
         final service = NodePingService(
+          sessionCreator: createTestRuntimeSession,
           helperPath: helper.absolute.path,
           targetUrl: Uri.parse('http://127.0.0.1:${server.port}/check'),
           engineFactory: (executable, kind) {

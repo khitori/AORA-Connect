@@ -2,6 +2,19 @@
 use std::{env, fs, path::PathBuf};
 
 fn main() {
+    println!("cargo:rerun-if-env-changed=AORA_SERVICE_FIXTURE_ID");
+    let scm_fixture = env::var_os("CARGO_FEATURE_SERVICE_SCM_FIXTURE").is_some();
+    if scm_fixture {
+        assert!(env::var_os("CARGO_FEATURE_SERVICE_FIXTURE").is_none());
+        assert!(env::var_os("CARGO_FEATURE_MIGRATION_FIXTURE").is_none());
+        assert!(env::var_os("CARGO_FEATURE_PORTABLE").is_none());
+        assert!(env::var_os("CARGO_FEATURE_RUNNER").is_none());
+    }
+    if env::var_os("CARGO_FEATURE_SERVICE_FIXTURE").is_some() || scm_fixture {
+        let id = env::var("AORA_SERVICE_FIXTURE_ID").expect("Service fixtures require a unique ID");
+        assert!(id.len() == 32 && id.chars().all(|c| c.is_ascii_hexdigit()));
+        println!("cargo:rustc-env=AORA_SERVICE_FIXTURE_ID={id}");
+    }
     println!("cargo:rerun-if-env-changed=AORA_MIGRATION_FIXTURE_ROOT");
     if env::var_os("CARGO_FEATURE_MIGRATION_FIXTURE").is_some() {
         let root = env::var("AORA_MIGRATION_FIXTURE_ROOT").expect("Migration fixtures require an isolated root");
@@ -23,6 +36,11 @@ fn main() {
         .find_map(|line| line.strip_prefix("version:"))
         .unwrap()
         .trim();
+    println!("cargo:rerun-if-env-changed=AORA_SERVICE_FIXTURE_VERSION");
+    let fixture_version = env::var("AORA_SERVICE_FIXTURE_VERSION").ok();
+    let version = if scm_fixture { fixture_version.as_deref().unwrap_or(version) } else { version };
+    let parts: Vec<_> = version.split(['.', '+']).collect();
+    assert!(parts.len() == 4 && parts.iter().all(|part| !part.is_empty() && part.chars().all(|c| c.is_ascii_digit()) && part.parse::<u32>().is_ok()));
     println!("cargo:rustc-env=AORA_APP_VERSION={version}");
     println!("cargo:rerun-if-env-changed=AORA_FLUTTER_HEADER");
     println!("cargo:rerun-if-env-changed=AORA_PLUGIN_REGISTRANT");

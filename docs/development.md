@@ -43,7 +43,26 @@ powershell -ExecutionPolicy Bypass -File .\tool\run_windows.ps1
 
 The script requests elevation and runs Flutter. Alternatively, run `flutter run -d windows` from an elevated terminal or IDE.
 
-Development builds resolve core binaries from the project directory. Windows release builds use the unified app storage root instead.
+Install AORA Connect once before Windows development. Development and release
+share the service, cores and settings under `Program Files\AORAConnect`.
+The project core folders above supply packaging and isolated integration tests.
+The Flutter development interface runs from the project and retains hot reload.
+
+A normal debug/profile build automatically prepares changed service helpers in
+the installed folder, requesting administrator approval when needed. Close the
+installed app (including its tray icon) and disconnect first. Unchanged helpers
+are reused. There is one service and one settings folder, so development edits
+change your actual saved configuration. Windows development mode hides the
+public updater. Application preferences and language are read and saved through
+the shared service. VPN configurations are also built and stored by the service
+from restricted connection plans. Proxy-based server checks use separate service
+core sessions; ordinary ICMP/TCP probes stay in the client. The interface still
+needs elevation for update storage and startup operations. See [Windows service development](windows-service.md) for the
+preparation and rollback behavior.
+
+Controller and ping tests explicitly create isolated temporary sessions. They
+do not write profiles into the installed runtime directory, whose ordinary
+account permissions are removed during service preparation.
 
 ## Build the installer and update metadata
 

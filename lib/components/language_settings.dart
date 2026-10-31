@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
 import '../l10n/locale_controller.dart';
+import 'app_action_button.dart';
 import 'app_expansion_card.dart';
 import 'app_notification.dart';
 import 'app_select.dart';
@@ -22,6 +23,17 @@ class LanguageSettings extends StatelessWidget {
           : LocaleController.nativeName(controller.language!),
       icon: Icons.translate_rounded,
       children: [
+        if (controller.restoreFailed) ...[
+          Text(
+            context.l10n.notAvailable,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+          AppActionButton(
+            onPressed: controller.reload,
+            label: context.l10n.refresh,
+          ),
+          const SizedBox(height: 8),
+        ],
         Text(
           context.l10n.interfaceLanguage,
           style: Theme.of(context).textTheme.titleMedium,

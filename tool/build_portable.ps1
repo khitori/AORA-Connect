@@ -39,7 +39,7 @@ try {
 } finally { Pop-Location }
 Copy-Item -LiteralPath (Join-Path $rustProject 'Cargo.lock') -Destination (Join-Path $app 'licenses/rust/Cargo.lock')
 Copy-Item -LiteralPath (Join-Path $rustProject 'LICENSE-FlutterWindowsRunner.txt') -Destination (Join-Path $app 'licenses/LICENSE-FlutterWindowsRunner.txt')
-foreach ($helper in @('aoravpn_core_host','aoravpn_core_console','aoravpn_server_ping','aoravpn_kill_switch','aoravpn_update','aoravpn_migrate')) {
+foreach ($helper in @('aoravpn_core_host','aoravpn_core_console','aoravpn_server_ping','aoravpn_kill_switch','aoravpn_update','aoravpn_migrate','aoravpn_service')) {
   Copy-Item -LiteralPath (Join-Path $helperBuild "x86_64-pc-windows-msvc/release/$helper.exe") -Destination $app -Force
 }
 foreach ($folder in @('sing-box-1.14.2-windows-amd64','xray-v26.9.30-windows-64')) {

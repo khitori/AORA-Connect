@@ -10,6 +10,38 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
+  String get startup => 'Startverhalten';
+
+  @override
+  String get manualStart => 'Manuell starten';
+
+  @override
+  String get startWithWindows => 'Mit Windows starten';
+
+  @override
+  String get startWithWindowsHelp =>
+      'Die installierte App bei der Anmeldung bei Windows öffnen.';
+
+  @override
+  String get startMinimized => 'Minimiert starten';
+
+  @override
+  String get startMinimizedHelp =>
+      'Die App beim Start im Infobereich anzeigen.';
+
+  @override
+  String get startupConnectionHelp =>
+      'Beim Öffnen der App wird die VPN-Verbindung nicht automatisch hergestellt.';
+
+  @override
+  String get startupLoadFailed =>
+      'Die Starteinstellungen konnten nicht geladen werden. Versuche es erneut.';
+
+  @override
+  String get startupSaveFailed =>
+      'Die Starteinstellungen konnten nicht gespeichert werden. Aktualisiere die Anzeige und versuche es erneut.';
+
+  @override
   String get language => 'Sprache';
 
   @override

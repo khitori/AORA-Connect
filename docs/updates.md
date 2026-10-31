@@ -25,6 +25,11 @@ No mirror is required or configured by default.
 
 ## User workflows
 
+Windows service work is staged separately; see
+[Windows service development](windows-service.md) for its current checkpoint and
+verification limits. Windows release builds now use the service for VPN core
+control; startup controls and removal of UI elevation are later checkpoints.
+
 - Download `AORAConnect-Setup.exe` and run it to install or upgrade. Close the
   existing app first, including its tray instance. The installer waits for the
   app/portable launcher to close and does not forcibly terminate the VPN core.

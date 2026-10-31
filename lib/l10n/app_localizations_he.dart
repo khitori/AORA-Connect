@@ -10,6 +10,37 @@ class AppLocalizationsHe extends AppLocalizations {
   AppLocalizationsHe([String locale = 'he']) : super(locale);
 
   @override
+  String get startup => 'הפעלה';
+
+  @override
+  String get manualStart => 'הפעלה ידנית';
+
+  @override
+  String get startWithWindows => 'הפעלה עם Windows';
+
+  @override
+  String get startWithWindowsHelp =>
+      'פתיחת היישום המותקן בעת הכניסה ל־Windows.';
+
+  @override
+  String get startMinimized => 'הפעלה ממוזערת';
+
+  @override
+  String get startMinimizedHelp => 'השארת היישום במגש המערכת בעת ההפעלה.';
+
+  @override
+  String get startupConnectionHelp =>
+      'פתיחת היישום אינה מחברת את ה־VPN אוטומטית.';
+
+  @override
+  String get startupLoadFailed =>
+      'לא ניתן לטעון את הגדרות ההפעלה. יש לנסות שוב.';
+
+  @override
+  String get startupSaveFailed =>
+      'לא ניתן לשמור את הגדרות ההפעלה. יש לרענן ולנסות שוב.';
+
+  @override
   String get language => 'שפה';
 
   @override

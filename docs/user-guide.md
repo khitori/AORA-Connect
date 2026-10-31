@@ -135,7 +135,7 @@ Settings, subscriptions, routing rules, language and update preferences migrate
 into the Program Files root. Conflicting
 settings and unrelated files are retained for recovery. Windows installation,
 updates and the current client require administrator rights. Development builds
-use `build/dev-data` inside the source project, independently of the installed app.
+use the same installed settings and service; changes in development affect the installed app's configuration too.
 
 Older settings in `%APPDATA%\AORAVPN\app-state.json` migrate when the new settings file does not already exist. The old file is removed only after verifying its replacement; unrelated files and the old folder are left untouched.
 

@@ -4,15 +4,18 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 
-import '../core/project_directory.dart';
+import 'windows_installation.dart';
 
 class AppPaths {
   static Directory get windowsRoot {
     if (!kReleaseMode) {
-      return Directory('${findProjectDirectory().path}/build/dev-data');
+      return WindowsInstallation.root;
     }
     return windowsInstalledRoot(Platform.resolvedExecutable);
   }
+
+  static String windowsHelper(String name) =>
+      '${windowsRoot.path}/app/$name.exe';
 
   static Directory windowsInstalledRoot(String executable) {
     final appDirectory = File(executable).absolute.parent;

@@ -10,6 +10,38 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
+  String get startup => 'Inicio';
+
+  @override
+  String get manualStart => 'Inicio manual';
+
+  @override
+  String get startWithWindows => 'Iniciar con Windows';
+
+  @override
+  String get startWithWindowsHelp =>
+      'Abrir la aplicación instalada al iniciar sesión en Windows.';
+
+  @override
+  String get startMinimized => 'Iniciar minimizada';
+
+  @override
+  String get startMinimizedHelp =>
+      'Mantener la aplicación en la bandeja del sistema al iniciarse.';
+
+  @override
+  String get startupConnectionHelp =>
+      'Abrir la aplicación no conecta la VPN automáticamente.';
+
+  @override
+  String get startupLoadFailed =>
+      'No se pudieron cargar los ajustes de inicio. Inténtalo de nuevo.';
+
+  @override
+  String get startupSaveFailed =>
+      'No se pudieron guardar los ajustes de inicio. Actualiza e inténtalo de nuevo.';
+
+  @override
   String get language => 'Idioma';
 
   @override

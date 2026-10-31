@@ -5,6 +5,8 @@ pub mod network;
 #[cfg(feature = "runner")]
 pub mod runner;
 pub mod updates;
+pub mod service;
+pub mod startup;
 
 pub fn installation_root() -> std::io::Result<std::path::PathBuf> {
     #[cfg(feature = "migration-fixture")]

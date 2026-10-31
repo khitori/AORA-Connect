@@ -10,6 +10,37 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get startup => 'بدء التشغيل';
+
+  @override
+  String get manualStart => 'التشغيل يدويًا';
+
+  @override
+  String get startWithWindows => 'التشغيل مع Windows';
+
+  @override
+  String get startWithWindowsHelp =>
+      'فتح التطبيق المثبّت عند تسجيل الدخول إلى Windows.';
+
+  @override
+  String get startMinimized => 'التشغيل مصغّرًا';
+
+  @override
+  String get startMinimizedHelp => 'إبقاء التطبيق في منطقة الإعلام عند تشغيله.';
+
+  @override
+  String get startupConnectionHelp =>
+      'فتح التطبيق لا يؤدي إلى الاتصال بشبكة VPN تلقائيًا.';
+
+  @override
+  String get startupLoadFailed =>
+      'تعذّر تحميل إعدادات بدء التشغيل. حاول مرة أخرى.';
+
+  @override
+  String get startupSaveFailed =>
+      'تعذّر حفظ إعدادات بدء التشغيل. حدّث البيانات وحاول مرة أخرى.';
+
+  @override
   String get language => 'اللغة';
 
   @override

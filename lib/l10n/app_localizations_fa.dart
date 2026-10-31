@@ -10,6 +10,38 @@ class AppLocalizationsFa extends AppLocalizations {
   AppLocalizationsFa([String locale = 'fa']) : super(locale);
 
   @override
+  String get startup => 'راه‌اندازی';
+
+  @override
+  String get manualStart => 'اجرای دستی';
+
+  @override
+  String get startWithWindows => 'اجرا همراه با Windows';
+
+  @override
+  String get startWithWindowsHelp =>
+      'باز کردن برنامهٔ نصب‌شده هنگام ورود به Windows.';
+
+  @override
+  String get startMinimized => 'اجرا به‌صورت کوچک‌شده';
+
+  @override
+  String get startMinimizedHelp =>
+      'هنگام اجرا، برنامه در سینی سیستم قرار بگیرد.';
+
+  @override
+  String get startupConnectionHelp =>
+      'باز کردن برنامه باعث اتصال خودکار VPN نمی‌شود.';
+
+  @override
+  String get startupLoadFailed =>
+      'بارگیری تنظیمات راه‌اندازی ممکن نشد. دوباره تلاش کنید.';
+
+  @override
+  String get startupSaveFailed =>
+      'ذخیرهٔ تنظیمات راه‌اندازی ممکن نشد. تازه‌سازی کنید و دوباره تلاش کنید.';
+
+  @override
   String get language => 'زبان';
 
   @override

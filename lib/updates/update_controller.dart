@@ -10,6 +10,8 @@ import '../l10n/app_localizations.dart';
 import '../l10n/directional_text.dart';
 import '../l10n/localized_exception.dart';
 import '../storage/app_paths.dart';
+import '../storage/platform_settings_stores.dart';
+import '../storage/update_preferences_store.dart';
 import 'android_updates.dart';
 import 'update_cache.dart';
 
@@ -81,6 +83,7 @@ class UpdateController extends ChangeNotifier {
     this.runtimeDirectory,
     UpdatePlatform? platform,
     String? helperPath,
+    UpdatePreferencesStore? preferencesStore,
   }) : platform =
            platform ??
            (Platform.isAndroid
@@ -90,7 +93,10 @@ class UpdateController extends ChangeNotifier {
                : UpdatePlatform.unsupported),
        helperPath =
            helperPath ??
-           '${File(Platform.resolvedExecutable).parent.path}/aoravpn_update.exe';
+           '${File(Platform.resolvedExecutable).parent.path}/aoravpn_update.exe',
+       _preferencesStore =
+           preferencesStore ??
+           createUpdatePreferencesStore(directory: preferencesDirectory);
   static const githubSource =
       'https://github.com/khitori/AORA-Connect/releases/latest/download/aora-update.json';
   static const androidGithubSource =
@@ -105,6 +111,25 @@ class UpdateController extends ChangeNotifier {
   final Future<Directory> Function()? sessionCreator;
   final Directory? runtimeDirectory;
   final String helperPath;
+  final UpdatePreferencesStore _preferencesStore;
+  bool _preferencesLoaded = false;
+  Future<void>? _preferencesTail;
+
+  Future<void> _serializePreferences(Future<void> Function() action) {
+    final operation = _preferencesTail?.then((_) => action()) ?? action();
+    final tail = operation.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace _) {},
+    );
+    _preferencesTail = tail;
+    unawaited(
+      tail.then((_) {
+        if (identical(_preferencesTail, tail)) _preferencesTail = null;
+      }),
+    );
+    return operation;
+  }
+
   String currentVersion = '';
   String get displayVersion =>
       currentVersion.isEmpty ? 'Loading…' : currentVersion.split('+').first;
@@ -147,12 +172,11 @@ class UpdateController extends ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
-  Future<File> _preferences() async {
-    final directory =
-        preferencesDirectory ??
-        Directory('${(await AppPaths.root()).path}/settings');
-    await directory.create(recursive: true);
-    return File('${directory.path}/updates.json');
+  Future<void> _loadPreferences() async {
+    final saved = await _preferencesStore.read();
+    automaticChecks = saved.automaticChecks;
+    additionalSources = saved.sources;
+    _preferencesLoaded = true;
   }
 
   Future<Directory> _session() async {
@@ -177,8 +201,7 @@ class UpdateController extends ChangeNotifier {
         _phase = UpdatePhase.ready;
       }
       if (isAndroid && verifier == null) await AndroidUpdates.cleanup();
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   Future<void> _releaseSessions() async {
@@ -241,15 +264,7 @@ class UpdateController extends ChangeNotifier {
           if (!_disposed && !busy && !installing) await _cleanup();
         });
       }
-      final file = await _preferences();
-      if (await file.exists()) {
-        final json = jsonDecode(await file.readAsString()) as Map;
-        automaticChecks = json['automaticChecks'] != false;
-        additionalSources = [
-          for (final source in json['sources'] as List? ?? [])
-            updateUrl(source as String).toString(),
-        ];
-      }
+      await _serializePreferences(_loadPreferences);
       _changed();
       if (automaticChecks &&
           checkAutomatically &&
@@ -263,21 +278,31 @@ class UpdateController extends ChangeNotifier {
     }
   }
 
-  Future<void> setPreferences({bool? automatic, List<String>? sources}) async {
-    final parsed = sources == null
-        ? additionalSources
-        : [for (final source in sources) updateUrl(source.trim()).toString()];
-    final value = automatic ?? automaticChecks;
-    final file = await _preferences();
-    final temporary = File('${file.path}.tmp');
-    await temporary.writeAsString(
-      jsonEncode({'automaticChecks': value, 'sources': parsed}),
-      flush: true,
-    );
-    await temporary.rename(file.path);
-    automaticChecks = value;
-    additionalSources = parsed;
-    _changed();
+  Future<void> setPreferences({bool? automatic, List<String>? sources}) {
+    List<String>? parsedInput;
+    try {
+      parsedInput = sources == null
+          ? null
+          : [for (final source in sources) updateUrl(source.trim()).toString()];
+    } catch (error, stack) {
+      return Future.error(error, stack);
+    }
+    return _serializePreferences(() async {
+      if (!_preferencesLoaded) await _loadPreferences();
+      final parsed = parsedInput ?? additionalSources;
+      final value = automatic ?? automaticChecks;
+      try {
+        await _preferencesStore.write(
+          UpdatePreferencesData(automaticChecks: value, sources: parsed),
+        );
+      } catch (_) {
+        _preferencesLoaded = false;
+        rethrow;
+      }
+      automaticChecks = value;
+      additionalSources = parsed;
+      _changed();
+    });
   }
 
   Future<void> _perform(Future<void> Function() action) async {
