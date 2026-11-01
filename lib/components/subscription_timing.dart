@@ -48,7 +48,7 @@ class SubscriptionTiming extends StatelessWidget {
           child: _card(
             context,
             title: context.l10n.expires,
-            icon: Icons.event_outlined,
+            icon: Icons.event_rounded,
             value: expiresAt == null
                 ? context.l10n.notProvided
                 : _date(context, expiresAt!),
@@ -74,7 +74,6 @@ class SubscriptionTiming extends StatelessWidget {
     decoration: BoxDecoration(
       color: AppColors.card,
       borderRadius: BorderRadius.circular(AppTheme.controlRadius),
-      border: Border.all(color: AppColors.lineStrong),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,

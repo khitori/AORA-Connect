@@ -184,7 +184,7 @@ class SettingsPage extends StatelessWidget {
         subtitle: connection.mode == ConnectionMode.tun
             ? context.l10n.vpnTun
             : context.l10n.localProxy,
-        icon: Icons.lan_outlined,
+        icon: Icons.lan_rounded,
         children: [
           Text(
             context.l10n.connectionMode,
@@ -284,7 +284,7 @@ class SettingsPage extends StatelessWidget {
           title: context.l10n.quickSettings,
           storageId: 'quickSettings',
           subtitle: context.l10n.quickSettingsSubtitle,
-          icon: Icons.dashboard_customize_outlined,
+          icon: Icons.dashboard_customize_rounded,
           children: [
             Text(context.l10n.quickSettingsHelp),
             const SizedBox(height: 8),
@@ -303,7 +303,7 @@ class SettingsPage extends StatelessWidget {
       AppExpansionCard(
         title: 'DNS',
         subtitle: connection.dnsProvider.label,
-        icon: Icons.dns_outlined,
+        icon: Icons.dns_rounded,
         children: [
           Text(
             context.l10n.dnsServer,

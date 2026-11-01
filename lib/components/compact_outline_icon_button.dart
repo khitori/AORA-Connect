@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import 'window_controls.dart';
 
+/// The app's small single-icon action, drawn as a round island like the
+/// top bar's Settings button.
 class CompactOutlineIconButton extends StatelessWidget {
   const CompactOutlineIconButton({
     super.key,
@@ -16,20 +18,6 @@ class CompactOutlineIconButton extends StatelessWidget {
   final VoidCallback? onPressed;
 
   @override
-  Widget build(BuildContext context) => Tooltip(
-    message: tooltip,
-    child: SizedBox(
-      height: 30,
-      width: 30,
-      child: OutlinedButton(
-        style: OutlinedButton.styleFrom(
-          padding: EdgeInsets.zero,
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-        onPressed: onPressed,
-        child: Icon(icon, size: 18, color: AppColors.muted500),
-      ),
-    ),
-  );
+  Widget build(BuildContext context) =>
+      RoundIconButton(tooltip: tooltip, icon: icon, onPressed: onPressed);
 }

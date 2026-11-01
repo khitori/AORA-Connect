@@ -220,7 +220,9 @@ class _MorphingMenuShellState<T> extends State<MorphingMenuShell<T>>
                                 icon: AnimatedSwitcher(
                                   duration: const Duration(milliseconds: 180),
                                   child: Icon(
-                                    _open ? Icons.close : Icons.menu,
+                                    _open
+                                        ? Icons.close_rounded
+                                        : Icons.menu_rounded,
                                     key: ValueKey(_open),
                                     size: 20,
                                   ),

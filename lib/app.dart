@@ -8,8 +8,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'components/app_notification.dart';
-import 'components/compact_outline_icon_button.dart';
 import 'components/floating_bottom_navigation.dart';
+import 'components/window_controls.dart';
 import 'controllers/connection_controller.dart';
 import 'controllers/node_ping_controller.dart';
 import 'controllers/statistics_controller.dart';
@@ -256,10 +256,11 @@ class _AppShellState extends State<_AppShell> {
     }
   }
 
-  Widget _settingsButton() => CompactOutlineIconButton(
+  Widget _settingsButton() => RoundIconButton(
     key: const ValueKey('open-settings'),
     tooltip: context.l10n.settings,
     icon: Icons.settings_outlined,
+    selected: _page == _AppPage.settings,
     onPressed: () => setState(() => _page = _AppPage.settings),
   );
 
@@ -295,17 +296,12 @@ class _AppShellState extends State<_AppShell> {
       actions: _window.supported
           ? [
               _settingsButton(),
-              const SizedBox(width: 6),
-              CompactOutlineIconButton(
-                tooltip: context.l10n.hideToTray,
-                icon: Icons.minimize_rounded,
-                onPressed: () => _windowAction('tray'),
-              ),
-              const SizedBox(width: 6),
-              CompactOutlineIconButton(
-                tooltip: context.l10n.closeApp,
-                icon: Icons.close_rounded,
-                onPressed: () => _windowAction('close'),
+              const SizedBox(width: 4),
+              WindowControls(
+                hideTooltip: context.l10n.hideToTray,
+                closeTooltip: context.l10n.closeApp,
+                onHide: () => _windowAction('tray'),
+                onClose: () => _windowAction('close'),
               ),
               const SizedBox(width: 24),
             ]
@@ -381,16 +377,16 @@ class _AppShellState extends State<_AppShell> {
             onSelected: (page) => setState(() => _page = page),
             destinations: [
               FloatingNavigationDestination(
-                _AppPage.subscriptions,
-                context.l10n.subscriptions,
-                Icons.link_rounded,
-                id: 'subscriptions',
-              ),
-              FloatingNavigationDestination(
                 _AppPage.connection,
                 context.l10n.connection,
                 Icons.power_settings_new_rounded,
                 id: 'connection',
+              ),
+              FloatingNavigationDestination(
+                _AppPage.subscriptions,
+                context.l10n.subscriptions,
+                Icons.link_rounded,
+                id: 'subscriptions',
               ),
               FloatingNavigationDestination(
                 _AppPage.routing,

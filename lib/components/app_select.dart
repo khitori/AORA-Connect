@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../theme/glass_surface.dart';
+import 'unfold_icon.dart';
 
 class AppSelect<T> extends StatefulWidget {
   const AppSelect({
@@ -25,6 +28,8 @@ class AppSelect<T> extends StatefulWidget {
     this.borderRadius = const BorderRadius.all(
       Radius.circular(AppTheme.controlRadius),
     ),
+    this.menuRadius = AppTheme.controlRadius,
+    this.centerText,
   });
   final T? value;
   final List<DropdownMenuItem<T>> items;
@@ -37,8 +42,20 @@ class AppSelect<T> extends StatefulWidget {
   final bool Function()? onBeforeOpen;
   final Object? tapRegionGroupId;
   final bool readOnly;
+
+  /// Draws the field like outlined buttons and the navigation panel: white
+  /// with two borders ([GlassBorder]). Without it the field is borderless.
   final bool showOutline;
   final BorderRadius borderRadius;
+
+  /// Corner radius of the opened list.
+  final double menuRadius;
+
+  /// Centers the selected value in the field and the items in the open list.
+  /// Outlined fields are centered by default; borderless ones (such as the
+  /// server row) keep their content at the leading edge, full width.
+  final bool? centerText;
+  bool get _centered => centerText ?? showOutline;
 
   @override
   State<AppSelect<T>> createState() => _AppSelectState<T>();
@@ -47,6 +64,7 @@ class AppSelect<T> extends StatefulWidget {
 class _AppSelectState<T> extends State<AppSelect<T>>
     with SingleTickerProviderStateMixin {
   final _focusNode = FocusNode();
+  final _menuFocus = FocusNode(debugLabel: 'AppSelect menu');
   final _defaultGroup = Object();
   late final AnimationController _menuAnimation;
   OverlayEntry? _menuEntry;
@@ -61,7 +79,7 @@ class _AppSelectState<T> extends State<AppSelect<T>>
       if (_open &&
           event is KeyDownEvent &&
           event.logicalKey == LogicalKeyboardKey.escape) {
-        _hide();
+        _hide(restoreFocus: true);
         return KeyEventResult.handled;
       }
       return KeyEventResult.ignored;
@@ -88,10 +106,14 @@ class _AppSelectState<T> extends State<AppSelect<T>>
     _menuEntry?.dispose();
     _menuAnimation.dispose();
     _focusNode.dispose();
+    _menuFocus.dispose();
     super.dispose();
   }
 
-  void _hide([T? selected]) {
+  /// Closes the menu. Focus returns to the field only for keyboard closing:
+  /// focused fields show the hover color, so after a mouse click it looked
+  /// as if the field stayed hovered.
+  void _hide({T? selected, bool restoreFocus = false}) {
     if (!_open) return;
     _menuEntry?.remove();
     _menuEntry?.dispose();
@@ -99,7 +121,11 @@ class _AppSelectState<T> extends State<AppSelect<T>>
     _menuAnimation.stop();
     setState(() => _open = false);
     widget.onOpenChanged?.call(false);
-    _focusNode.requestFocus();
+    if (restoreFocus) {
+      _focusNode.requestFocus();
+    } else {
+      _focusNode.unfocus();
+    }
     if (selected != null) {
       if (widget.onBeforeOpen?.call() == false) return;
       widget.onChanged?.call(selected);
@@ -150,68 +176,91 @@ class _AppSelectState<T> extends State<AppSelect<T>>
                   child: SizeTransition(
                     sizeFactor: _menuAnimation,
                     alignment: Alignment.topCenter,
-                    child: Material(
-                      key: const ValueKey('app-select-menu'),
-                      elevation: 0,
-                      shadowColor: Colors.transparent,
-                      surfaceTintColor: Colors.transparent,
-                      color: Theme.of(context).colorScheme.surfaceContainer,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.controlRadius,
+                    // Frosted glass: translucent, blurring what is behind it.
+                    child: CustomPaint(
+                      foregroundPainter: GlassEdgePainter(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            widget.menuRadius,
+                          ),
                         ),
-                        side: BorderSide(color: AppColors.lineStrong),
+                        cornerWidth: widget.menuRadius,
+                        outline: AppColors.line,
                       ),
-                      clipBehavior: Clip.antiAlias,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(maxHeight: availableHeight),
-                        child: Focus(
-                          autofocus: true,
-                          onKeyEvent: (_, event) {
-                            if (event is KeyDownEvent &&
-                                event.logicalKey == LogicalKeyboardKey.escape) {
-                              _hide();
-                              return KeyEventResult.handled;
-                            }
-                            return KeyEventResult.ignored;
-                          },
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            padding: EdgeInsets.zero,
-                            itemCount: widget.items.length,
-                            itemBuilder: (_, index) {
-                              final item = widget.items[index];
-                              return InkWell(
-                                overlayColor: AppTheme.controlOverlayColor,
-                                onTap: item.enabled
-                                    ? () => _hide(item.value)
-                                    : null,
-                                child: Container(
-                                  constraints: const BoxConstraints(
-                                    minHeight: 40,
-                                  ),
-                                  alignment: AlignmentDirectional.centerStart,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
-                                  color: item.value == widget.value
-                                      ? AppTheme.selectedSurface
-                                      : null,
-                                  child: DefaultTextStyle(
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium!
-                                        .copyWith(
-                                          color: item.enabled
-                                              ? null
-                                              : Theme.of(context).disabledColor,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(widget.menuRadius),
+                        child: BackdropFilter(
+                          filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                          child: Material(
+                            key: const ValueKey('app-select-menu'),
+                            elevation: 0,
+                            shadowColor: Colors.transparent,
+                            surfaceTintColor: Colors.transparent,
+                            color: AppColors.menuGlass,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxHeight: availableHeight,
+                              ),
+                              child: Focus(
+                                focusNode: _menuFocus,
+                                onKeyEvent: (_, event) {
+                                  if (event is KeyDownEvent &&
+                                      event.logicalKey ==
+                                          LogicalKeyboardKey.escape) {
+                                    _hide(restoreFocus: true);
+                                    return KeyEventResult.handled;
+                                  }
+                                  return KeyEventResult.ignored;
+                                },
+                                child: ListView.builder(
+                                  shrinkWrap: true,
+                                  padding: EdgeInsets.zero,
+                                  itemCount: widget.items.length,
+                                  itemBuilder: (_, index) {
+                                    final item = widget.items[index];
+                                    return _withSeparator(
+                                      index,
+                                      InkWell(
+                                        overlayColor:
+                                            AppTheme.controlOverlayColor,
+                                        onTap: item.enabled
+                                            ? () => _hide(selected: item.value)
+                                            : null,
+                                        child: Container(
+                                          constraints: const BoxConstraints(
+                                            minHeight: 44,
+                                          ),
+                                          alignment: widget._centered
+                                              ? Alignment.center
+                                              : AlignmentDirectional
+                                                    .centerStart,
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal:
+                                                widget.horizontalPadding,
+                                            vertical: 10,
+                                          ),
+                                          color: item.value == widget.value
+                                              ? AppTheme.selectedSurface
+                                              : null,
+                                          child: DefaultTextStyle(
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleMedium!
+                                                .copyWith(
+                                                  color: item.enabled
+                                                      ? null
+                                                      : Theme.of(context)
+                                                            .disabledColor,
+                                                ),
+                                            child: item.child,
+                                          ),
                                         ),
-                                    child: item.child,
-                                  ),
+                                      ),
+                                    );
+                                  },
                                 ),
-                              );
-                            },
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -226,12 +275,35 @@ class _AppSelectState<T> extends State<AppSelect<T>>
     );
     Overlay.of(context, rootOverlay: true).insert(_menuEntry!);
     _menuAnimation.forward(from: 0);
+    // Explicit, not autofocus: autofocus is skipped while anything else in the
+    // window has focus, which left Escape without a handler.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _open) _menuFocus.requestFocus();
+    });
   }
+
+  /// Draws the item separator over the top edge of every row but the first.
+  /// A separate 1 px row would have no background and show as a light gap
+  /// between selected or hovered rows.
+  Widget _withSeparator(int index, Widget row) => index == 0
+      ? row
+      : Stack(
+          children: [
+            row,
+            Positioned(
+              top: 0,
+              left: widget.horizontalPadding,
+              right: widget.horizontalPadding,
+              height: 1,
+              child: IgnorePointer(child: ColoredBox(color: AppColors.line)),
+            ),
+          ],
+        );
 
   @override
   Widget build(BuildContext context) {
     final selected = widget.items.where((item) => item.value == widget.value);
-    return TapRegion(
+    final field = TapRegion(
       groupId: _group,
       child: Semantics(
         button: true,
@@ -242,7 +314,9 @@ class _AppSelectState<T> extends State<AppSelect<T>>
           child: InkWell(
             focusNode: _focusNode,
             overlayColor: AppTheme.controlOverlayColor,
-            borderRadius: widget.borderRadius,
+            borderRadius: widget.showOutline
+                ? BorderRadius.circular(AppTheme.controlRadius)
+                : widget.borderRadius,
             onTap: _enabled
                 ? () {
                     if (_open) {
@@ -254,13 +328,15 @@ class _AppSelectState<T> extends State<AppSelect<T>>
                 : null,
             child: Ink(
               height: widget.height,
-              decoration: BoxDecoration(
-                color: AppColors.card,
-                borderRadius: widget.borderRadius,
-                border: widget.showOutline
-                    ? Border.all(color: AppColors.lineStrong)
-                    : null,
-              ),
+              decoration: widget.showOutline
+                  ? null
+                  : BoxDecoration(
+                      color: AppColors.card,
+                      borderRadius: widget.borderRadius,
+                      border: widget.showOutline
+                          ? Border.all(color: AppColors.lineStrong)
+                          : null,
+                    ),
               child: SizedBox(
                 child: Padding(
                   padding: EdgeInsets.symmetric(
@@ -268,6 +344,8 @@ class _AppSelectState<T> extends State<AppSelect<T>>
                   ),
                   child: Row(
                     children: [
+                      // Balances the arrow so centered text is truly centered.
+                      if (widget._centered) const SizedBox(width: 24),
                       Expanded(
                         child: DefaultTextStyle(
                           style: Theme.of(context).textTheme.titleMedium!
@@ -276,16 +354,27 @@ class _AppSelectState<T> extends State<AppSelect<T>>
                                     ? Theme.of(context).disabledColor
                                     : null,
                               ),
-                          child: selected.isEmpty
-                              ? widget.hint ?? const SizedBox.shrink()
-                              : widget.selectedChild ?? selected.first.child,
+                          // Only centered fields are wrapped: other values
+                          // (like the server row) must keep the full width.
+                          child: Builder(
+                            builder: (context) {
+                              final value = selected.isEmpty
+                                  ? widget.hint ?? const SizedBox.shrink()
+                                  : widget.selectedChild ??
+                                        selected.first.child;
+                              return widget._centered
+                                  ? Center(child: value)
+                                  : value;
+                            },
+                          ),
                         ),
                       ),
-                      Icon(
-                        _open ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                      // Same indicator as the Settings sections.
+                      UnfoldIcon(
+                        open: _open,
                         color: !_enabled
                             ? Theme.of(context).disabledColor
-                            : null,
+                            : AppColors.muted500,
                       ),
                     ],
                   ),
@@ -294,6 +383,22 @@ class _AppSelectState<T> extends State<AppSelect<T>>
             ),
           ),
         ),
+      ),
+    );
+    // Outlined fields get the two-border style; the field itself is clear.
+    if (!widget.showOutline) return field;
+    // Material draws the shape's borders over the content, so hover
+    // highlights stay under them.
+    return SizedBox(
+      height: widget.height,
+      child: Material(
+        color: AppColors.card,
+        shape: GlassBorder(
+          radius: AppTheme.controlRadius,
+          side: BorderSide(color: AppColors.lineStrong),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: field,
       ),
     );
   }

@@ -5,6 +5,12 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../theme/glass_surface.dart';
+
+const _itemHeight = 58.0;
+const _gap = 8.0;
+const _motion = Duration(milliseconds: 320);
+const _curve = Curves.easeOutCubic;
 
 class FloatingBottomNavigation<T> extends StatelessWidget {
   const FloatingBottomNavigation({
@@ -19,52 +25,91 @@ class FloatingBottomNavigation<T> extends StatelessWidget {
   final ValueChanged<T> onSelected;
 
   @override
-  Widget build(BuildContext context) => SafeArea(
-    top: false,
-    minimum: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-    child: DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.islandShadow,
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: AppColors.glass.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.lineStrong),
+  Widget build(BuildContext context) {
+    final index = destinations.indexWhere((item) => item.value == selected);
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          shape: const StadiumBorder(),
+          shadows: [
+            BoxShadow(
+              color: AppColors.islandShadow,
+              blurRadius: 18,
+              offset: const Offset(0, 6),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(6),
-              child: Row(
-                children: [
-                  for (var index = 0; index < destinations.length; index++) ...[
-                    if (index > 0) const SizedBox(width: 8),
-                    Expanded(
-                      child: _NavigationItem<T>(
-                        destination: destinations[index],
-                        selected: destinations[index].value == selected,
-                        onTap: () => onSelected(destinations[index].value),
-                      ),
-                    ),
-                  ],
-                ],
+          ],
+        ),
+        // Grey outline plus the white glass edge, drawn over the content.
+        child: CustomPaint(
+          foregroundPainter: GlassEdgePainter(
+            const StadiumBorder(),
+            outline: AppColors.lineStrong,
+          ),
+          child: ClipPath(
+            clipper: const ShapeBorderClipper(shape: StadiumBorder()),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+              child: ColoredBox(
+                color: AppColors.glass.withValues(alpha: 0.5),
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final count = destinations.length;
+                      final width =
+                          (constraints.maxWidth - _gap * (count - 1)) / count;
+                      return SizedBox(
+                        height: _itemHeight,
+                        child: Stack(
+                          children: [
+                            // The glass highlight glides to the selected page.
+                            // It fades out on pages without a tab (Settings).
+                            AnimatedPositionedDirectional(
+                              duration: _motion,
+                              curve: _curve,
+                              top: 0,
+                              bottom: 0,
+                              width: width,
+                              start: (index < 0 ? 0 : index) * (width + _gap),
+                              child: AnimatedOpacity(
+                                duration: _motion,
+                                curve: _curve,
+                                opacity: index < 0 ? 0 : 1,
+                                child: const GlassSurface(
+                                  child: SizedBox.expand(),
+                                ),
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                for (var i = 0; i < count; i++) ...[
+                                  if (i > 0) const SizedBox(width: _gap),
+                                  Expanded(
+                                    child: _NavigationItem<T>(
+                                      destination: destinations[i],
+                                      selected: i == index,
+                                      onTap: () =>
+                                          onSelected(destinations[i].value),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class FloatingNavigationDestination<T> {
@@ -97,40 +142,72 @@ class _NavigationItem<T> extends StatelessWidget {
     key: ValueKey(
       'bottom-nav-${destination.id ?? destination.label.toLowerCase()}',
     ),
-    color: selected ? AppTheme.selectedSurface : Colors.transparent,
-    borderRadius: BorderRadius.circular(18),
+    // Transparent: the sliding glass highlight shows the selected page.
+    type: MaterialType.transparency,
+    shape: const StadiumBorder(),
     clipBehavior: Clip.antiAlias,
+    // No ripple or pressed tint: the gliding glass is the click feedback, and
+    // a grey flash before it arrived looked strange. Unselected tabs keep the
+    // hover tint; the selected one never tints its glass.
     child: InkWell(
+      // A new InkWell when selection changes: the old one would keep the
+      // hover highlight it already drew while the cursor stays still.
+      key: ValueKey(selected),
       onTap: onTap,
-      overlayColor: AppTheme.controlOverlayColor,
+      splashFactory: NoSplash.splashFactory,
+      highlightColor: Colors.transparent,
+      overlayColor: WidgetStateProperty.resolveWith(
+        (states) =>
+            !selected &&
+                (states.contains(WidgetState.hovered) ||
+                    states.contains(WidgetState.focused))
+            ? AppTheme.controlOverlayColor.resolve({WidgetState.hovered})
+            : Colors.transparent,
+      ),
       child: Semantics(
         selected: selected,
         button: true,
         child: SizedBox(
-          height: 58,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                destination.icon,
-                size: 22,
-                color: selected ? AppColors.accent : AppColors.muted500,
-              ),
-              const SizedBox(height: 3),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    destination.label,
-                    maxLines: 1,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: selected ? AppColors.ink : AppColors.muted500,
+          height: _itemHeight,
+          // Color and glow fade in together with the moving highlight.
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(end: selected ? 1 : 0),
+            duration: _motion,
+            curve: _curve,
+            builder: (context, on, _) => Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  destination.icon,
+                  size: 22,
+                  color: Color.lerp(AppColors.muted500, AppColors.accent, on),
+                  shadows: [
+                    Shadow(
+                      color: AppColors.accent.withValues(alpha: 0.55 * on),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      destination.label,
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Color.lerp(
+                          AppColors.muted500,
+                          AppColors.ink,
+                          on,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

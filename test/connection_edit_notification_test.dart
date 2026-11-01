@@ -5,6 +5,7 @@ import 'support/runtime_session.dart';
 
 import 'dart:ui' as ui;
 
+import 'package:aoravpn/components/window_controls.dart';
 import 'package:aoravpn/components/app_notification.dart';
 import 'package:aoravpn/components/connection_edit_notification.dart';
 import 'package:aoravpn/components/app_select.dart';
@@ -421,13 +422,13 @@ void main() {
       expect(tester.widget<TextField>(find.byType(TextField)).enabled, isFalse);
       expect(
         tester
-            .widget<OutlinedButton>(find.widgetWithText(OutlinedButton, 'Add'))
+            .widget<IslandButton>(find.widgetWithText(IslandButton, 'Add'))
             .onPressed,
         isNull,
       );
       expect(
         tester
-            .widget<OutlinedButton>(
+            .widget<RoundIconButton>(
               find.byKey(const ValueKey('paste-subscription')),
             )
             .onPressed,
@@ -443,7 +444,7 @@ void main() {
       );
       await tap(tester, find.byType(TextField), message);
       await tap(tester, find.byTooltip('Paste from clipboard'), message);
-      await tap(tester, find.widgetWithText(OutlinedButton, 'Add'), message);
+      await tap(tester, find.widgetWithText(IslandButton, 'Add'), message);
       await tap(
         tester,
         find.byKey(const ValueKey('saved-subscription-select')),

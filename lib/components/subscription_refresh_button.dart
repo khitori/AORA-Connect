@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../controllers/connection_controller.dart';
 import '../l10n/l10n.dart';
-import 'compact_outline_icon_button.dart';
 import 'connection_edit_notification.dart';
+import 'window_controls.dart';
 
 class SubscriptionRefreshButton extends StatelessWidget {
   const SubscriptionRefreshButton({
@@ -18,9 +18,10 @@ class SubscriptionRefreshButton extends StatelessWidget {
   final bool enabled;
   final ConnectionErrorScope errorScope;
 
-  @override
-  Widget build(BuildContext context) => CompactOutlineIconButton(
+  /// The bare action, for grouping inside an [IconIsland] with other actions.
+  Widget action(BuildContext context) => IslandAction(
     tooltip: context.l10n.refreshSubscription,
+    active: connection.refreshing,
     icon: Icons.refresh_rounded,
     onPressed:
         enabled && !connection.busy && connection.activeSubscriptionUrl != null
@@ -39,4 +40,7 @@ class SubscriptionRefreshButton extends StatelessWidget {
           }
         : null,
   );
+
+  @override
+  Widget build(BuildContext context) => IconIsland(children: [action(context)]);
 }

@@ -25,7 +25,7 @@ class ConnectionControls extends StatelessWidget {
           Expanded(
             child: AppActionButton(
               onPressed: onValidate,
-              icon: Icons.fact_check_outlined,
+              icon: Icons.fact_check_rounded,
               label: context.l10n.validate,
             ),
           ),

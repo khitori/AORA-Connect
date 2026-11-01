@@ -5,6 +5,9 @@ import '../core/tunnel_engine.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 
+const _size = 184.0;
+const _transition = Duration(milliseconds: 320);
+
 class ConnectionButton extends StatelessWidget {
   const ConnectionButton({
     super.key,
@@ -26,72 +29,160 @@ class ConnectionButton extends StatelessWidget {
         : running
         ? context.l10n.disconnect
         : context.l10n.connect;
-    return SizedBox(
-      width: 184,
-      height: 184,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 320),
-        curve: Curves.easeOutCubic,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            center: const Alignment(-0.35, -0.4),
-            radius: 1.25,
-            colors: running
-                ? [AppColors.accent, AppColors.accentDark]
-                : [AppColors.card, AppColors.paperDark],
-          ),
-          border: Border.all(
-            color: running ? AppColors.accentDark : AppColors.lineStrong,
-          ),
-          boxShadow: running
-              ? [
-                  BoxShadow(
-                    color: AppColors.accent.withValues(alpha: 0.2),
-                    blurRadius: 22,
-                    spreadRadius: 1,
-                    offset: const Offset(0, 5),
+    return SizedBox.square(
+      dimension: _size,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Surface: soft off-white glass when idle, red when connected.
+          AnimatedContainer(
+            duration: _transition,
+            curve: Curves.easeOutCubic,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                center: const Alignment(-0.35, -0.4),
+                radius: 1.25,
+                colors: running
+                    ? [AppColors.accent, AppColors.accentDark]
+                    : [_glass, _glass],
+              ),
+              // Connected: an even red glow all around, like the glowing
+              // icons. Faded in and out by AnimatedContainer.
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.accent.withValues(
+                    alpha: running ? 0.45 : 0,
                   ),
-                ]
-              : const [],
-        ),
-        child: FilledButton(
-          style: FilledButton.styleFrom(
-            shape: const CircleBorder(),
-            padding: const EdgeInsets.all(24),
-            foregroundColor: running ? AppColors.card : AppColors.muted600,
-            backgroundColor: Colors.transparent,
-            disabledBackgroundColor: Colors.transparent,
-            shadowColor: Colors.transparent,
-            elevation: 0,
-            side: BorderSide.none,
+                  blurRadius: 32,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
           ),
-          onPressed: busy ? null : onPressed,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 56,
-                height: 56,
-                child: Center(
-                  child: busy
-                      ? const SizedBox(
-                          width: 40,
-                          height: 40,
-                          child: CircularProgressIndicator(strokeWidth: 3),
-                        )
-                      : const Icon(Icons.power_settings_new, size: 56),
+          // Inner shade and light that give the surface its glass depth,
+          // tuned for the off-white idle surface and the red connected one.
+          IgnorePointer(
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(end: running ? 1 : 0),
+              duration: _transition,
+              curve: Curves.easeOutCubic,
+              builder: (context, connected, _) =>
+                  CustomPaint(painter: _GlassPainter(connected)),
+            ),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              shape: const CircleBorder(),
+              padding: const EdgeInsets.all(24),
+              foregroundColor: running ? AppColors.card : AppColors.muted500,
+              backgroundColor: Colors.transparent,
+              disabledBackgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              elevation: 0,
+              side: BorderSide.none,
+            ),
+            onPressed: busy ? null : onPressed,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: Center(
+                    child: busy
+                        ? const SizedBox(
+                            width: 36,
+                            height: 36,
+                            child: CircularProgressIndicator(strokeWidth: 3),
+                          )
+                        : const Icon(Icons.power_settings_new_rounded, size: 44),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // The outline is drawn last, over the glass and hover, so no light
+          // line can appear between them on the curved edge.
+          IgnorePointer(
+            child: AnimatedContainer(
+              duration: _transition,
+              curve: Curves.easeOutCubic,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: running ? AppColors.accentDark : AppColors.lineStrong,
                 ),
               ),
-              const SizedBox(height: 12),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(label, maxLines: 1, softWrap: false),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
+
+  /// A little lighter than the page, so the button reads as glass over it.
+  static Color get _glass => Color.lerp(AppColors.paper, AppColors.card, 0.15)!;
+}
+
+/// Soft inner shadows: shade along the left edge and light along the
+/// lower-right edge, clipped to the circle. [connected] blends from the
+/// idle (0) to the red (1) colors.
+class _GlassPainter extends CustomPainter {
+  const _GlassPainter(this.connected);
+
+  final double connected;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final circle = Offset.zero & size;
+    canvas.save();
+    canvas.clipPath(Path()..addOval(circle));
+    void inner(Color color, Offset shift, double blur) {
+      final edge = Path()
+        ..fillType = PathFillType.evenOdd
+        ..addRect(circle.inflate(blur * 4))
+        ..addOval(circle.shift(shift));
+      canvas.drawPath(
+        edge,
+        Paint()
+          ..color = color
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, blur),
+      );
+    }
+
+    inner(
+      Color.lerp(
+        AppColors.ink.withValues(alpha: 0.12),
+        AppColors.ink.withValues(alpha: 0.28),
+        connected,
+      )!,
+      const Offset(8, 3),
+      11,
+    );
+    inner(
+      Color.lerp(
+        Colors.white,
+        Colors.white.withValues(alpha: 0.38),
+        connected,
+      )!,
+      const Offset(-7, -8),
+      9,
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_GlassPainter oldDelegate) =>
+      oldDelegate.connected != connected;
 }

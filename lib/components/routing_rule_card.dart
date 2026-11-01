@@ -46,7 +46,7 @@ class RoutingRuleCard extends StatelessWidget {
 
   IconData get _fallbackIcon => switch (rule.match) {
     RoutingMatch.application => Icons.apps_rounded,
-    RoutingMatch.ip => Icons.lan_outlined,
+    RoutingMatch.ip => Icons.lan_rounded,
     _ => Icons.language_rounded,
   };
 
@@ -197,7 +197,7 @@ class RoutingRuleCard extends StatelessWidget {
                       message: context.l10n.editRule,
                       child: TextButton.icon(
                         onPressed: editingEnabled ? onEdit : null,
-                        icon: const Icon(Icons.edit_outlined, size: 16),
+                        icon: const Icon(Icons.edit_rounded, size: 16),
                         label: Text(context.l10n.edit),
                         style: TextButton.styleFrom(
                           foregroundColor: AppColors.muted500,

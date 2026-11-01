@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
+import 'glass_surface.dart';
 
 abstract final class AppTheme {
   static const controlRadius = 12.0;
@@ -71,7 +72,7 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(controlRadius),
           borderSide: BorderSide(color: color, width: width),
         );
-    return ThemeData(
+    final theme = ThemeData(
       useMaterial3: true,
       colorScheme: colors,
       scaffoldBackgroundColor: AppColors.paper,
@@ -91,8 +92,12 @@ abstract final class AppTheme {
           visualDensity: VisualDensity.standard,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           foregroundColor: AppColors.ink,
+          // The selection style, like outlined dropdowns: white with the grey
+          // outline and the white edge inside it. Island-style buttons use
+          // IslandButton or RoundIconButton instead.
+          backgroundColor: AppColors.card,
           side: BorderSide(color: AppColors.lineStrong),
-          shape: shape,
+          shape: const GlassBorder(radius: controlRadius),
         ).copyWith(overlayColor: controlOverlayColor),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -154,6 +159,24 @@ abstract final class AppTheme {
         actionTextColor: AppColors.card,
         behavior: SnackBarBehavior.floating,
         shape: shape,
+      ),
+    );
+    // Outlined buttons share the selection fields' text and grey icons, so a
+    // button like "Add rule" reads the same as a dropdown next to it.
+    return theme.copyWith(
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: theme.outlinedButtonTheme.style!.copyWith(
+          // The type scale's sizes are not part of theme.textTheme yet while
+          // the theme is built, so take titleMedium from the scale itself.
+          textStyle: WidgetStatePropertyAll(
+            Typography.material2021().englishLike.titleMedium,
+          ),
+          iconColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.disabled)
+                ? AppColors.muted300
+                : AppColors.muted500,
+          ),
+        ),
       ),
     );
   }

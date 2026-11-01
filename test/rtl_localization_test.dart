@@ -57,7 +57,7 @@ void main() {
       );
       final thumb = find.descendant(
         of: alignment,
-        matching: find.byType(Container),
+        matching: find.byKey(const ValueKey('app-toggle-knob')),
       );
       return tester.getCenter(thumb).dx;
     }

@@ -7,8 +7,33 @@ import 'package:aoravpn/theme/app_colors.dart';
 
 void main() {
   testWidgets(
-    'Borderless toggle keeps the same thumb size and supports keyboard',
+    'Glass toggle: groove stays, knob turns red glass, keyboard works',
     (tester) async {
+      List<Color> trackColors() =>
+          ((tester
+                              .widget<AnimatedContainer>(
+                                find.byType(AnimatedContainer),
+                              )
+                              .decoration
+                          as BoxDecoration)
+                      .gradient!
+                  as LinearGradient)
+              .colors;
+      final knob = find.byKey(const ValueKey('app-toggle-knob'));
+      List<Color> knobColors() =>
+          ((tester
+                              .widget<DecoratedBox>(
+                                find.descendant(
+                                  of: knob,
+                                  matching: find.byType(DecoratedBox),
+                                ),
+                              )
+                              .decoration
+                          as ShapeDecoration)
+                      .gradient!
+                  as LinearGradient)
+              .colors;
+      const groove = [AppColors.toggleGrooveTop, AppColors.toggleGrooveBottom];
       var value = false;
       await tester.pumpWidget(
         MaterialApp(
@@ -22,29 +47,16 @@ void main() {
           ),
         ),
       );
-      final track = tester.widget<AnimatedContainer>(
-        find.byType(AnimatedContainer),
-      );
-      expect((track.decoration as BoxDecoration).border, isNull);
-      expect((track.decoration as BoxDecoration).color, AppColors.lineStrong);
+      expect(trackColors(), groove);
+      expect(knobColors(), [AppColors.glassTop, AppColors.glassBottom]);
       expect(tester.getSize(find.byType(AppToggle)), const Size(48, 48));
-      final thumb = find.descendant(
-        of: find.byType(AnimatedAlign),
-        matching: find.byType(Container),
-      );
-      expect(tester.getSize(thumb), const Size(20, 20));
+      expect(tester.getSize(knob), const Size(18, 18));
       await tester.tap(find.byType(AppToggle));
       await tester.pumpAndSettle();
       expect(value, isTrue);
-      expect(tester.getSize(thumb), const Size(20, 20));
-      expect(
-        (tester
-                    .widget<AnimatedContainer>(find.byType(AnimatedContainer))
-                    .decoration
-                as BoxDecoration)
-            .color,
-        AppColors.accent,
-      );
+      expect(tester.getSize(knob), const Size(18, 18));
+      expect(trackColors(), groove);
+      expect(knobColors(), [AppColors.accentDark, AppColors.accent]);
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
       await tester.pump();
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import 'dart:async';
 
+import 'package:aoravpn/components/window_controls.dart';
+import 'package:aoravpn/theme/glass_surface.dart';
 import 'package:aoravpn/components/subscription_input.dart';
 import 'package:aoravpn/components/connection_controls.dart';
 import 'package:aoravpn/controllers/connection_controller.dart';
@@ -196,45 +198,34 @@ void main() {
     }
   }
 
-  testWidgets(
-    'paste is a separate left-hand button with input-matching corners',
-    (tester) async {
-      final controller = TextEditingController();
-      addTearDown(controller.dispose);
-      await input(tester, controller, () {});
-      final pasteFinder = find.byKey(const ValueKey('paste-subscription'));
-      final paste = tester.getRect(pasteFinder);
-      final field = tester.getRect(find.byType(TextField));
-      final add = tester.getRect(find.widgetWithText(OutlinedButton, 'Add'));
+  testWidgets('paste and add are top-bar islands around the field', (
+    tester,
+  ) async {
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+    await input(tester, controller, () {});
+    final pasteFinder = find.byKey(const ValueKey('paste-subscription'));
+    final addFinder = find.widgetWithText(IslandButton, 'Add');
+    final paste = tester.getRect(pasteFinder);
+    final field = tester.getRect(find.byType(TextField));
+    final add = tester.getRect(addFinder);
+    // The same 32 px glass islands as Settings and Refresh.
+    expect(paste.size, const Size(32, 32));
+    expect(add.height, 32);
+    for (final island in [pasteFinder, addFinder]) {
       expect(
-        paste.size,
-        const Size(AppTheme.controlHeight, AppTheme.controlHeight),
+        find.descendant(of: island, matching: find.byType(GlassSurface)),
+        findsOneWidget,
       );
-      expect(field.left - paste.right, 8);
-      expect(add.left - field.right, 8);
-      expect(paste.top, field.top);
-      expect(paste.bottom, field.bottom);
-      final fieldWidget = tester.widget<TextField>(find.byType(TextField));
-      expect(fieldWidget.decoration!.suffixIcon, isNull);
-      final shape =
-          tester
-                  .widget<Material>(
-                    find.descendant(
-                      of: pasteFinder,
-                      matching: find.byType(Material),
-                    ),
-                  )
-                  .shape!
-              as RoundedRectangleBorder;
-      final inputBorder =
-          Theme.of(tester.element(pasteFinder))
-                  .inputDecorationTheme
-                  .enabledBorder!
-              as OutlineInputBorder;
-      expect(shape.borderRadius, inputBorder.borderRadius);
-      expect(tester.takeException(), isNull);
-    },
-  );
+    }
+    expect(field.left - paste.right, 8);
+    expect(add.left - field.right, 8);
+    expect(paste.center.dy, closeTo(field.center.dy, 0.5));
+    expect(add.center.dy, closeTo(field.center.dy, 0.5));
+    final fieldWidget = tester.widget<TextField>(find.byType(TextField));
+    expect(fieldWidget.decoration!.suffixIcon, isNull);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('paste fills compact field but never imports automatically', (
     tester,
@@ -288,7 +279,7 @@ void main() {
       await input(tester, controller, () {}, enabled: false);
       expect(
         tester
-            .widget<OutlinedButton>(
+            .widget<RoundIconButton>(
               find.byKey(const ValueKey('paste-subscription')),
             )
             .onPressed,
@@ -353,7 +344,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Copy diagnostics'));
       expect(find.byType(ConnectionControls), findsOneWidget);
-      expect(find.byIcon(Icons.fact_check_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.fact_check_rounded), findsOneWidget);
       expect(
         find.descendant(
           of: find.byType(ConnectionControls),

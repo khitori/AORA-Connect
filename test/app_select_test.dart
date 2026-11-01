@@ -5,6 +5,43 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:aoravpn/components/app_select.dart';
 
 void main() {
+  testWidgets('Mouse selection leaves the field unfocused; Escape refocuses', (
+    tester,
+  ) async {
+    int? chosen;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, setState) => AppSelect<int>(
+              value: chosen ?? 0,
+              items: [
+                for (var i = 0; i < 3; i++)
+                  DropdownMenuItem(value: i, child: Text('Item $i')),
+              ],
+              onChanged: (value) => setState(() => chosen = value),
+            ),
+          ),
+        ),
+      ),
+    );
+    bool fieldFocused() =>
+        Focus.of(tester.element(find.byIcon(Icons.expand_more_rounded)))
+            .hasPrimaryFocus;
+
+    await tester.tap(find.byType(AppSelect<int>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Item 2').last);
+    await tester.pumpAndSettle();
+    expect(chosen, 2);
+    expect(fieldFocused(), isFalse);
+
+    await tester.tap(find.byType(AppSelect<int>));
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(fieldFocused(), isTrue);
+  });
   testWidgets('Popup uses compact rows without outer vertical padding', (
     tester,
   ) async {
@@ -29,10 +66,10 @@ void main() {
       of: find.text('Compact 1'),
       matching: find.byType(InkWell),
     );
-    expect(tester.getSize(row).height, 40);
+    expect(tester.getSize(row).height, 44);
     expect(
       tester.getSize(find.byKey(const ValueKey('app-select-menu'))).height,
-      160,
+      4 * 44, // separators are drawn over the rows
     );
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();

@@ -157,6 +157,10 @@ class ConnectionController extends ChangeNotifier {
   bool get killSwitchAvailable => supported && _mode == ConnectionMode.tun;
   String? get selectedServerAddress => _selectedServerAddress;
   bool get busy => _busy;
+
+  /// True only while a subscription refresh runs, unlike the general [busy].
+  bool get refreshing => _refreshing;
+  bool _refreshing = false;
   String? get error => _error;
   String? errorFor(ConnectionErrorScope scope) =>
       _errorScope == scope ? _error : null;
@@ -496,6 +500,16 @@ class ConnectionController extends ChangeNotifier {
     String url, {
     ConnectionErrorScope errorScope = ConnectionErrorScope.subscriptions,
   }) => _perform(() async {
+    _refreshing = true;
+    _changed();
+    try {
+      await _refreshSubscription(url);
+    } finally {
+      _refreshing = false;
+    }
+  }, errorScope: errorScope);
+
+  Future<void> _refreshSubscription(String url) async {
     if (url == _activeSubscriptionUrl) {
       await _activate(url, refresh: true);
       await _persist();
@@ -514,7 +528,7 @@ class ConnectionController extends ChangeNotifier {
       ];
       await _persist();
     }
-  }, errorScope: errorScope);
+  }
 
   Future<void> removeSubscription(String url) => _perform(() async {
     _subscriptions = _subscriptions.where((entry) => entry.url != url).toList();

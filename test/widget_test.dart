@@ -11,6 +11,7 @@ import 'package:aoravpn/app.dart';
 import 'package:aoravpn/components/app_select.dart';
 import 'package:aoravpn/components/app_expansion_card.dart';
 import 'package:aoravpn/components/app_toggle.dart';
+import 'package:aoravpn/components/window_controls.dart';
 import 'package:aoravpn/core/tunnel_engine.dart';
 import 'package:aoravpn/core/connection_mode.dart';
 import 'package:aoravpn/core/core_kind.dart';
@@ -96,9 +97,17 @@ void main() {
     expect(settings.right, lessThan(tray.left));
     expect(settings.center.dy, closeTo(tray.center.dy, 0.1));
     expect(find.byTooltip('Open menu'), findsNothing);
-    expect(settings.size, close.size);
+    expect(settings.width, settings.height);
+    expect(tray.size, close.size);
+    final controls = tester.getRect(find.byType(WindowControls));
+    expect(controls.height, settings.height);
+    expect(
+      controls.contains(tray.center) && controls.contains(close.center),
+      isTrue,
+    );
+    expect(controls.contains(settings.center), isFalse);
     expect(tester.widget<AppBar>(find.byType(AppBar)).bottom, isNull);
-    expect(find.byIcon(Icons.minimize_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsOneWidget);
     expect(tray.right, lessThan(close.left));
     await tester.tap(find.byTooltip('Hide to tray'));
     await tester.pumpAndSettle();

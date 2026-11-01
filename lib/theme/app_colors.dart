@@ -31,10 +31,23 @@ abstract final class AppColors {
   static Color get divider => hsl(60, 4.7, 83.1);
   static Color get accent => hsl(2.7, 78.5, 49.2);
   static Color get accentDark => hsl(2.6, 80.4, 40);
+  // Icons of actions that are currently working (refreshing, checking).
+  static const active = Color.fromARGB(255, 255, 56, 60);
   static Color get protocolHysteria2 => hsl(268, 54, 43);
   static Color get protocolVless => hsl(213, 69, 40);
   static Color get protocolTrojan => hsl(27, 76, 39);
   static Color get protocolShadowsocks => hsl(169, 65, 32);
   static Color get protocolVmess => hsl(288, 49, 39);
   static Color get islandShadow => ink.withValues(alpha: 0.06);
+
+  // Glass surface for clickable foreground elements (see GlassSurface).
+  static const glassTop = Color(0xFFE6E6E6);
+  static const glassBottom = Color(0xFFFFFFFF);
+  static Color get glassEdge => card.withValues(alpha: 0.75);
+  static const glassShadow = Color(0x1A000000); // black, 10%
+  // Off-state toggle track: a groove, darker at the top.
+  static const toggleGrooveTop = Color(0xFFDADADA);
+  static const toggleGrooveBottom = Color(0xFFEDEDED);
+  // Opened dropdown menus: translucent white over a backdrop blur.
+  static Color get menuGlass => card.withValues(alpha: 0.35);
 }

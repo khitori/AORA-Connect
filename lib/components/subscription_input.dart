@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../l10n/l10n.dart';
 import '../profiles/subscription_loader.dart';
+import 'window_controls.dart';
 import '../theme/app_theme.dart';
 import 'app_notification.dart';
 
@@ -60,23 +61,14 @@ class _SubscriptionInputState extends State<SubscriptionInput> {
   Widget build(BuildContext context) => SizedBox(
     height: AppTheme.controlHeight,
     child: Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Tooltip(
-          message: context.l10n.pasteClipboard,
-          child: SizedBox(
-            width: AppTheme.controlHeight,
-            child: OutlinedButton(
-              key: const ValueKey('paste-subscription'),
-              style: OutlinedButton.styleFrom(
-                padding: EdgeInsets.zero,
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              onPressed: widget.enabled && !_reading ? _paste : null,
-              child: const Icon(Icons.content_paste_rounded, size: 18),
-            ),
-          ),
+        // Paste and Add are islands, the same component as Settings and
+        // Refresh in the top bar.
+        RoundIconButton(
+          key: const ValueKey('paste-subscription'),
+          tooltip: context.l10n.pasteClipboard,
+          icon: Icons.content_paste_rounded,
+          onPressed: widget.enabled && !_reading ? _paste : null,
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -93,7 +85,7 @@ class _SubscriptionInputState extends State<SubscriptionInput> {
           ),
         ),
         const SizedBox(width: 8),
-        OutlinedButton(onPressed: widget.onLoad, child: Text(context.l10n.add)),
+        IslandButton(label: context.l10n.add, onPressed: widget.onLoad),
       ],
     ),
   );

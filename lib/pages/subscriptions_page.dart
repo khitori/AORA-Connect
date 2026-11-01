@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../components/window_controls.dart';
 import '../components/app_select.dart';
 import '../components/compact_outline_icon_button.dart';
 import '../components/connection_edit_notification.dart';
@@ -87,7 +88,6 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
                   child: OutlinedButton(
                     key: const ValueKey('add-subscription-toggle'),
                     style: OutlinedButton.styleFrom(
-                      alignment: AlignmentDirectional.centerStart,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                     ),
                     onPressed: () {
@@ -96,6 +96,7 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
                       }
                     },
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
                           _addExpanded
@@ -106,7 +107,6 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
                         Flexible(
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
-                            alignment: AlignmentDirectional.centerStart,
                             child: Text(
                               context.l10n.addSubscription,
                               maxLines: 1,
@@ -364,7 +364,6 @@ class _SavedSubscriptionSelector extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.card,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.lineStrong),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -372,7 +371,7 @@ class _SavedSubscriptionSelector extends StatelessWidget {
                   Row(
                     children: [
                       Icon(
-                        Icons.description_outlined,
+                        Icons.description_rounded,
                         size: 16,
                         color: AppColors.muted500,
                       ),
@@ -428,36 +427,31 @@ class _SubscriptionLinkButton extends StatelessWidget {
   final String? url;
 
   @override
-  Widget build(BuildContext context) => Tooltip(
-    message: url == null
+  Widget build(BuildContext context) => IslandButton(
+    tooltip: url == null
         ? context.l10n.linkNotProvided(label)
         : context.l10n.openLink(label),
-    child: OutlinedButton.icon(
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-      ),
-      onPressed: url == null
-          ? null
-          : () async {
-              try {
-                if (!await launchUrl(
-                  Uri.parse(url!),
-                  mode: LaunchMode.externalApplication,
-                )) {
-                  throw StateError('Could not open link.');
-                }
-              } catch (_) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(context.l10n.openNamedLinkFailed(label)),
-                    ),
-                  );
-                }
+    icon: icon,
+    label: label,
+    onPressed: url == null
+        ? null
+        : () async {
+            try {
+              if (!await launchUrl(
+                Uri.parse(url!),
+                mode: LaunchMode.externalApplication,
+              )) {
+                throw StateError('Could not open link.');
               }
-            },
-      icon: Icon(icon, size: 18),
-      label: Text(label),
-    ),
+            } catch (_) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(context.l10n.openNamedLinkFailed(label)),
+                  ),
+                );
+              }
+            }
+          },
   );
 }
