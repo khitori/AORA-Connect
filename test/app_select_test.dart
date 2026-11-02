@@ -26,7 +26,7 @@ void main() {
       ),
     );
     bool fieldFocused() =>
-        Focus.of(tester.element(find.byIcon(Icons.expand_more_rounded)))
+        Focus.of(tester.element(find.byIcon(Icons.chevron_right_rounded)))
             .hasPrimaryFocus;
 
     await tester.tap(find.byType(AppSelect<int>));

@@ -94,12 +94,16 @@ class ServerNodeDetails extends StatelessWidget {
       final nameRow = Row(
         children: [
           Expanded(child: name),
-          if (ping != null) ...[const SizedBox(width: 8), ping],
+          if (ping != null) ...[
+            const SizedBox(width: 8),
+            ping,
+            // In the selected row the select's arrow follows. Its glyph starts
+            // 9 px into the icon, so 3 px more makes the visible gap 12 px,
+            // like the one between "Last check" and its island above.
+            if (compact) const SizedBox(width: 3),
+          ],
         ],
       );
-      if (compact) {
-        return nameRow;
-      }
       return nameRow;
     },
   );

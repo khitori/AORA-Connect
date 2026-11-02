@@ -394,6 +394,11 @@ void main() {
           await tester.pumpAndSettle();
           await tester.tap(find.byKey(const ValueKey('language-selector')));
           await tester.pumpAndSettle();
+          // Later languages can sit below the open menu's visible part.
+          await tester.ensureVisible(
+            find.text(LocaleController.nativeName(code)),
+          );
+          await tester.pumpAndSettle();
           await tester.tap(find.text(LocaleController.nativeName(code)));
           await tester.pumpAndSettle();
           expect(find.text(strings.interfaceLanguage), findsOneWidget);

@@ -2,8 +2,11 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
-import 'app_action_button.dart';
+import '../theme/app_theme.dart';
+import 'window_controls.dart';
 
+/// Diagnostics actions as wide islands, like the top bar's buttons: Check and
+/// Test share a line, Copy diagnostics takes the whole line below.
 class ConnectionControls extends StatelessWidget {
   const ConnectionControls({
     super.key,
@@ -23,15 +26,17 @@ class ConnectionControls extends StatelessWidget {
       Row(
         children: [
           Expanded(
-            child: AppActionButton(
+            child: IslandButton(
+              expanded: true,
               onPressed: onValidate,
               icon: Icons.fact_check_rounded,
               label: context.l10n.validate,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppTheme.sectionButtonGap),
           Expanded(
-            child: AppActionButton(
+            child: IslandButton(
+              expanded: true,
               onPressed: onTest,
               icon: Icons.network_check_rounded,
               label: context.l10n.testConnection,
@@ -39,8 +44,9 @@ class ConnectionControls extends StatelessWidget {
           ),
         ],
       ),
-      const SizedBox(height: 8),
-      AppActionButton(
+      const SizedBox(height: AppTheme.sectionButtonGap),
+      IslandButton(
+        expanded: true,
         onPressed: onCopy,
         icon: Icons.copy_rounded,
         label: context.l10n.copyDiagnostics,

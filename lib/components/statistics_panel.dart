@@ -9,6 +9,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'app_expansion_card.dart';
 import 'app_toggle.dart';
+import 'settings_label.dart';
 
 class StatisticsPanel extends StatelessWidget {
   const StatisticsPanel({super.key, required this.statistics});
@@ -55,6 +56,8 @@ class StatisticsPanel extends StatelessWidget {
         subtitle: _subtitle(context),
         icon: Icons.show_chart_rounded,
         children: [
+          SettingsLabel(context.l10n.latencyLabel),
+          const SizedBox(height: AppTheme.sectionLabelGap),
           if (statistics.connection.selectedServerAddress != null) ...[
             Text(
               context.l10n.target(
@@ -66,7 +69,7 @@ class StatisticsPanel extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall
                   ?.copyWith(color: AppColors.muted500),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTheme.sectionGap),
           ],
           if (active) ...[
             Row(
@@ -99,7 +102,7 @@ class StatisticsPanel extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppTheme.sectionGap),
             Semantics(
               label:
                   '${context.l10n.pingHistory}${context.l10n.successfulChecks(statistics.successfulSamples.toString(), statistics.completedSamples.toString())}',
@@ -118,7 +121,7 @@ class StatisticsPanel extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTheme.sectionGap),
             Text(
               context.l10n.pingHistoryHelp,
               style: Theme.of(context).textTheme.bodySmall

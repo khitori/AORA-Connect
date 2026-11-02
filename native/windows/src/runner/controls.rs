@@ -168,6 +168,11 @@ unsafe extern "C" fn command(
             show(state);
             b"ok"
         }
+        // To the taskbar, unlike "tray", which hides the window entirely.
+        b"minimize" => {
+            ShowWindow(hwnd, SW_MINIMIZE);
+            b"ok"
+        }
         b"drag" if !(*state).smoke => {
             PostMessageW(hwnd, DRAG_MESSAGE, 0, 0);
             b"ok"

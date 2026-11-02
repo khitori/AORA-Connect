@@ -789,4 +789,68 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get checkSelectedServer => 'Tester le serveur sélectionné';
+
+  @override
+  String get startupBehaviorLabel => 'Comportement';
+
+  @override
+  String get latencyLabel => 'Latence';
+
+  @override
+  String get diagnosticToolsLabel => 'Outils';
+
+  @override
+  String get newSubscription => 'Abonnement';
+
+  @override
+  String get confirm => 'Confirmer';
+
+  @override
+  String get paste => 'Coller';
+
+  @override
+  String get addSubscriptionHelp =>
+      'Collez le lien de votre fournisseur VPN pour charger ses serveurs.';
+
+  @override
+  String get link => 'Lien';
+
+  @override
+  String get subscriptionErrorInvalidLink =>
+      'Ce n’est pas un lien d’abonnement. Copiez le lien complet qui commence par https://.';
+
+  @override
+  String subscriptionErrorHttp(String code) {
+    return 'Le serveur n’a pas renvoyé l’abonnement (erreur $code). Vérifiez le lien et que votre abonnement est actif.';
+  }
+
+  @override
+  String get subscriptionErrorEmpty =>
+      'L’abonnement ne contient aucun serveur. Il a peut-être expiré ou l’accès est bloqué.';
+
+  @override
+  String get subscriptionErrorUnsupported =>
+      'L’abonnement ne contient aucun serveur pris en charge par cette application.';
+
+  @override
+  String get subscriptionErrorNetwork =>
+      'Impossible de joindre le serveur. Vérifiez votre connexion Internet et réessayez.';
+
+  @override
+  String get subscriptionErrorTooLarge =>
+      'L’abonnement est trop volumineux pour être chargé.';
+
+  @override
+  String get minimizeApp => 'Réduire';
+
+  @override
+  String get routingRuleHelp =>
+      'Choisissez ce que la règle vérifie, puis saisissez l’application, le domaine ou l’adresse.';
+
+  @override
+  String get pickApplicationLabel => 'Ou choisissez une application';
+
+  @override
+  String get pickApplicationHelp =>
+      'Choisissez l’application à laquelle cette règle s’applique.';
 }

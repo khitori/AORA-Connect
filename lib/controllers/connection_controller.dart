@@ -164,6 +164,15 @@ class ConnectionController extends ChangeNotifier {
   String? get error => _error;
   String? errorFor(ConnectionErrorScope scope) =>
       _errorScope == scope ? _error : null;
+
+  /// Forgets the error shown for [scope], for example once the dialog that
+  /// showed it is closed. Errors of other scopes and running work stay.
+  void clearError(ConnectionErrorScope scope) {
+    if (_busy || _errorScope != scope || _error == null) return;
+    _error = null;
+    _changed();
+  }
+
   String? get probeResult => localizedProbeResult(AppLocalizationsEn());
   String? localizedProbeResult(AppLocalizations l10n) =>
       _probeMilliseconds == null

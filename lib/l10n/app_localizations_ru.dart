@@ -787,4 +787,68 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get checkSelectedServer => 'Проверить выбранный сервер';
+
+  @override
+  String get startupBehaviorLabel => 'Поведение';
+
+  @override
+  String get latencyLabel => 'Задержка';
+
+  @override
+  String get diagnosticToolsLabel => 'Инструменты';
+
+  @override
+  String get newSubscription => 'Подписка';
+
+  @override
+  String get confirm => 'Подтвердить';
+
+  @override
+  String get paste => 'Вставить';
+
+  @override
+  String get addSubscriptionHelp =>
+      'Вставьте ссылку от вашего VPN-провайдера, чтобы загрузить его серверы.';
+
+  @override
+  String get link => 'Ссылка';
+
+  @override
+  String get subscriptionErrorInvalidLink =>
+      'Это не ссылка на подписку. Скопируйте полную ссылку, начинающуюся с https://.';
+
+  @override
+  String subscriptionErrorHttp(String code) {
+    return 'Сервер не вернул подписку (ошибка $code). Проверьте ссылку и что подписка активна.';
+  }
+
+  @override
+  String get subscriptionErrorEmpty =>
+      'В подписке нет серверов. Возможно, она истекла или доступ заблокирован.';
+
+  @override
+  String get subscriptionErrorUnsupported =>
+      'В подписке нет серверов, которые поддерживает это приложение.';
+
+  @override
+  String get subscriptionErrorNetwork =>
+      'Не удалось связаться с сервером. Проверьте подключение к интернету и попробуйте ещё раз.';
+
+  @override
+  String get subscriptionErrorTooLarge =>
+      'Подписка слишком большая для загрузки.';
+
+  @override
+  String get minimizeApp => 'Свернуть';
+
+  @override
+  String get routingRuleHelp =>
+      'Выберите, что проверяет правило, и введите приложение, домен или адрес.';
+
+  @override
+  String get pickApplicationLabel => 'Или выберите приложение';
+
+  @override
+  String get pickApplicationHelp =>
+      'Выберите приложение, к которому будет применяться правило.';
 }

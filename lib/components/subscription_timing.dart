@@ -43,7 +43,7 @@ class SubscriptionTiming extends StatelessWidget {
                   ),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 12),
         Expanded(
           child: _card(
             context,
@@ -70,10 +70,13 @@ class SubscriptionTiming extends StatelessWidget {
     required String value,
     required String detail,
   }) => Container(
-    padding: const EdgeInsets.all(12),
+    padding: const EdgeInsets.symmetric(
+      horizontal: AppTheme.contentPadding,
+      vertical: 18,
+    ),
     decoration: BoxDecoration(
       color: AppColors.card,
-      borderRadius: BorderRadius.circular(AppTheme.controlRadius),
+      borderRadius: BorderRadius.circular(AppTheme.sectionRowRadius),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,7 +96,7 @@ class SubscriptionTiming extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Text(
           value,
           maxLines: 1,

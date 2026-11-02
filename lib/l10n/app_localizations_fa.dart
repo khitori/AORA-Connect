@@ -784,4 +784,68 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get checkSelectedServer => 'بررسی سرور انتخاب‌شده';
+
+  @override
+  String get startupBehaviorLabel => 'رفتار';
+
+  @override
+  String get latencyLabel => 'تأخیر';
+
+  @override
+  String get diagnosticToolsLabel => 'ابزارها';
+
+  @override
+  String get newSubscription => 'اشتراک';
+
+  @override
+  String get confirm => 'تأیید';
+
+  @override
+  String get paste => 'چسباندن';
+
+  @override
+  String get addSubscriptionHelp =>
+      'پیوند ارائه‌دهنده VPN خود را بچسبانید تا سرورهایش بارگیری شوند.';
+
+  @override
+  String get link => 'پیوند';
+
+  @override
+  String get subscriptionErrorInvalidLink =>
+      'این پیوند اشتراک نیست. پیوند کامل را که با https:// شروع می‌شود کپی کنید.';
+
+  @override
+  String subscriptionErrorHttp(String code) {
+    return 'سرور اشتراک را برنگرداند (خطای $code). پیوند و فعال بودن اشتراک خود را بررسی کنید.';
+  }
+
+  @override
+  String get subscriptionErrorEmpty =>
+      'این اشتراک هیچ سروری ندارد. ممکن است منقضی شده باشد یا دسترسی مسدود باشد.';
+
+  @override
+  String get subscriptionErrorUnsupported =>
+      'این اشتراک هیچ سروری ندارد که این برنامه از آن پشتیبانی کند.';
+
+  @override
+  String get subscriptionErrorNetwork =>
+      'دسترسی به سرور ممکن نشد. اتصال اینترنت خود را بررسی کنید و دوباره تلاش کنید.';
+
+  @override
+  String get subscriptionErrorTooLarge =>
+      'این اشتراک برای بارگیری بیش از حد بزرگ است.';
+
+  @override
+  String get minimizeApp => 'کوچک کردن';
+
+  @override
+  String get routingRuleHelp =>
+      'انتخاب کنید قانون به چه چیزی نگاه کند، سپس برنامه، دامنه یا نشانی را وارد کنید.';
+
+  @override
+  String get pickApplicationLabel => 'یا یک برنامه انتخاب کنید';
+
+  @override
+  String get pickApplicationHelp =>
+      'برنامه‌ای را که این قانون باید روی آن اعمال شود انتخاب کنید.';
 }

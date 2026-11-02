@@ -5,7 +5,7 @@ import 'support/runtime_session.dart';
 
 import 'dart:ui' as ui;
 
-import 'package:aoravpn/components/window_controls.dart';
+import 'package:aoravpn/components/app_dialog.dart';
 import 'package:aoravpn/components/app_notification.dart';
 import 'package:aoravpn/components/connection_edit_notification.dart';
 import 'package:aoravpn/components/app_select.dart';
@@ -262,7 +262,7 @@ void main() {
       await tap(tester, select, message);
       expect(find.byKey(const ValueKey('app-select-menu')), findsNothing);
       await tap(tester, find.text('Add rule'), message);
-      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(AppDialog), findsNothing);
       await tap(tester, toggle('Routing'), message);
       final firstCard = find.byType(RoutingRuleCard).first;
       expect(
@@ -419,21 +419,9 @@ void main() {
         find.text('Stop the connection before changing subscriptions.'),
         findsNothing,
       );
-      expect(tester.widget<TextField>(find.byType(TextField)).enabled, isFalse);
-      expect(
-        tester
-            .widget<IslandButton>(find.widgetWithText(IslandButton, 'Add'))
-            .onPressed,
-        isNull,
-      );
-      expect(
-        tester
-            .widget<RoundIconButton>(
-              find.byKey(const ValueKey('paste-subscription')),
-            )
-            .onPressed,
-        isNull,
-      );
+      // The link field is only in the Add subscription dialog, which does not
+      // open while connected.
+      expect(find.byType(TextField), findsNothing);
       expect(
         tester
             .widget<AppSelect<String>>(
@@ -442,9 +430,12 @@ void main() {
             .onChanged,
         isNull,
       );
-      await tap(tester, find.byType(TextField), message);
-      await tap(tester, find.byTooltip('Paste from clipboard'), message);
-      await tap(tester, find.widgetWithText(IslandButton, 'Add'), message);
+      await tap(
+        tester,
+        find.byKey(const ValueKey('add-subscription-toggle')),
+        message,
+      );
+      expect(find.byType(Dialog), findsNothing);
       await tap(
         tester,
         find.byKey(const ValueKey('saved-subscription-select')),
@@ -511,7 +502,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Add rule'));
       await tester.pumpAndSettle();
-      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.byType(AppDialog), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
     },
   );

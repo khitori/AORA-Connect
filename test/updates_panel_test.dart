@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aoravpn/components/updates_panel.dart';
 import 'package:aoravpn/components/app_action_button.dart';
+import 'package:aoravpn/components/app_dialog.dart';
 import 'package:aoravpn/components/app_toggle.dart';
 import 'package:aoravpn/controllers/connection_controller.dart';
 import 'package:aoravpn/core/tunnel_engine.dart';
@@ -86,7 +87,7 @@ Future<void> _expectClosed(WidgetTester tester) async {
   expect(tester.takeException(), isNull);
   await tester.pumpAndSettle();
   expect(tester.takeException(), isNull);
-  expect(find.byType(AlertDialog), findsNothing);
+  expect(find.byType(AppDialog), findsNothing);
 }
 
 void main() {
@@ -116,7 +117,7 @@ void main() {
     await tester.enterText(find.byType(TextField), 'http://invalid.example');
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
-    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(AppDialog), findsOneWidget);
     expect(
       find.text('Update sources must be HTTPS URLs without credentials.'),
       findsOneWidget,
@@ -163,7 +164,7 @@ void main() {
       );
       expect(check.width, fromFile.width);
       expect(check.top, fromFile.top);
-      expect(fromFile.left - check.right, 8);
+      expect(fromFile.left - check.right, AppTheme.sectionButtonGap);
       expect(check.height, AppTheme.controlHeight);
       expect(tester.getSize(find.byType(AppToggle)), const Size(48, 36));
       expect(
@@ -186,7 +187,7 @@ void main() {
       final cancelRect = tester.getRect(cancel);
       final saveRect = tester.getRect(save);
       expect(cancelRect.width, saveRect.width);
-      expect(saveRect.left - cancelRect.right, 8);
+      expect(saveRect.left - cancelRect.right, AppTheme.sectionButtonGap);
       expect(cancelRect.top, saveRect.top);
       expect(tester.takeException(), isNull);
       await tester.tap(find.text('Cancel'));

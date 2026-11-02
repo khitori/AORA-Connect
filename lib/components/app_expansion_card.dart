@@ -7,8 +7,7 @@ import '../theme/glass_surface.dart';
 import 'unfold_icon.dart';
 
 /// The same large corner radius whether collapsed or expanded.
-const _radius = 24.0;
-const _iconBoxRadius = 10.0;
+const _radius = AppTheme.sectionRadius;
 const _motion = Duration(milliseconds: 240);
 
 class AppExpansionCard extends StatefulWidget {
@@ -94,32 +93,38 @@ class _AppExpansionCardState extends State<AppExpansionCard>
         shape: RoundedRectangleBorder(borderRadius: radius),
         clipBehavior: Clip.antiAlias,
         child: Theme(
-          // No hover on the section header. Its contents get the normal
-          // theme back below, so their own controls keep hover.
+          // No hover on the section header, and 20 px between its icon and
+          // title. Its contents get the normal theme back below, so their own
+          // controls keep hover and their rows keep the normal gap.
           data: theme.copyWith(
             dividerColor: Colors.transparent,
             hoverColor: Colors.transparent,
+            listTileTheme: theme.listTileTheme.copyWith(horizontalTitleGap: 20),
           ),
           child: ExpansionTile(
             key: PageStorageKey('section-${widget.storageId ?? widget.title}'),
             controller: _expansion,
             initiallyExpanded: widget.initiallyExpanded,
             minTileHeight: 64,
+            // The header and the content are inset by the hoverable rows'
+            // padding, so the icon, separator, names and text line up with the
+            // text inside those rows.
             tilePadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 4,
+              horizontal: 16 + AppTheme.sectionPadding,
+              vertical: 8,
             ),
-            childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            childrenPadding: const EdgeInsets.fromLTRB(
+              16 + AppTheme.sectionPadding,
+              0,
+              16 + AppTheme.sectionPadding,
+              AppTheme.sectionContentTopPadding,
+            ),
             shape: RoundedRectangleBorder(borderRadius: radius),
             collapsedShape: RoundedRectangleBorder(borderRadius: radius),
             // Arrow down while collapsed, up while expanded.
             trailing: UnfoldIcon(open: open > 0.5),
-            // The icon box uses the islands' glass style.
+            // The icon box uses the islands' glass style and is fully round.
             leading: GlassSurface(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(_iconBoxRadius),
-              ),
-              cornerWidth: _iconBoxRadius,
               child: SizedBox(
                 width: 40,
                 height: 40,

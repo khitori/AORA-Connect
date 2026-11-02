@@ -9,6 +9,8 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'app_expansion_card.dart';
 import 'app_toggle.dart';
+import 'section_row_bleed.dart';
+import 'settings_label.dart';
 
 class WindowsStartupSettings extends StatefulWidget {
   const WindowsStartupSettings({super.key, required this.controller});
@@ -32,23 +34,28 @@ class _WindowsStartupSettingsState extends State<WindowsStartupSettings> {
     ValueChanged<bool> change,
   ) {
     final enabled = controller.loaded && !controller.busy;
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(AppTheme.controlRadius),
-      clipBehavior: Clip.antiAlias,
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.controlRadius),
-        ),
-        hoverColor: AppColors.ink.withValues(alpha: 0.06),
-        title: Text(title),
-        subtitle: Text(help),
-        onTap: enabled ? () => change(!value) : null,
-        trailing: AppToggle(
-          semanticLabel: title,
-          value: value,
-          onChanged: enabled ? change : null,
+    return SectionRowBleed(
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppTheme.sectionRowRadius),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: AppTheme.sectionPadding,
+            vertical: 8,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.sectionRowRadius),
+          ),
+          hoverColor: AppColors.ink.withValues(alpha: 0.06),
+          title: Text(title),
+          subtitle: Text(help),
+          onTap: enabled ? () => change(!value) : null,
+          trailing: AppToggle(
+            semanticLabel: title,
+            value: value,
+            onChanged: enabled ? change : null,
+          ),
         ),
       ),
     );
@@ -67,6 +74,8 @@ class _WindowsStartupSettingsState extends State<WindowsStartupSettings> {
           : context.l10n.manualStart,
       icon: Icons.launch_rounded,
       children: [
+        SettingsLabel(context.l10n.startupBehaviorLabel),
+        const SizedBox(height: AppTheme.sectionLabelGap),
         _toggle(
           context.l10n.startWithWindows,
           context.l10n.startWithWindowsHelp,
@@ -79,10 +88,8 @@ class _WindowsStartupSettingsState extends State<WindowsStartupSettings> {
           controller.startMinimized,
           (value) => controller.update(startMinimized: value),
         ),
-        const SizedBox(height: 8),
-        Text(context.l10n.startupConnectionHelp),
         if (controller.failed) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppTheme.sectionGap),
           Text(
             controller.loaded
                 ? context.l10n.startupSaveFailed

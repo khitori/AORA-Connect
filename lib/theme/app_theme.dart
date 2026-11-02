@@ -7,7 +7,36 @@ import 'glass_surface.dart';
 abstract final class AppTheme {
   static const controlRadius = 12.0;
   static const controlHeight = 36.0;
-  static const sectionContentTopPadding = 12.0;
+
+  /// The section rule: the space between elements in a section, the same as
+  /// above and below the header icon (8 padding plus (64 - 40) / 2). A
+  /// subsection name keeps [sectionLabelGap] to its control, and buttons in a
+  /// group keep [sectionButtonGap] between them.
+  static const sectionGap = 20.0;
+  static const sectionLabelGap = 12.0;
+  static const sectionButtonGap = 12.0;
+
+  /// Corner radius of section cards and dialogs.
+  static const sectionRadius = 38.0;
+
+  /// Space after a section's separator and below its content.
+  static const sectionContentTopPadding = sectionGap;
+
+  /// The main side padding inside white boxes: the main page's subscription
+  /// and server box with its dropdown, and the Subscriptions page boxes and
+  /// server rows. Section cards use [sectionPadding] instead.
+  static const contentPadding = 20.0;
+
+  /// Side padding in section cards (Settings, Routing). The hoverable rows
+  /// (selects, toggle rows) are padded by it, the rest of the content is inset
+  /// by it, and those rows reach back out by it ([SectionRowBleed]), so all
+  /// text lines up.
+  static const sectionPadding = 16.0;
+
+  /// Corner radius of taller hoverable rows in a section (toggle rows) and of
+  /// a plain select's open menu. Half the 48px height of a plain select, so
+  /// their corners curve the same as that select's pill ends.
+  static const sectionRowRadius = 24.0;
 
   static Color get selectedSurface => AppColors.ink.withValues(alpha: 0.06);
 
@@ -92,11 +121,11 @@ abstract final class AppTheme {
           visualDensity: VisualDensity.standard,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           foregroundColor: AppColors.ink,
-          // The selection style, like outlined dropdowns: white with the grey
-          // outline and the white edge inside it. Island-style buttons use
+          // The selection style, like outlined dropdowns: white with the white
+          // glass edge and no grey outline. Island-style buttons use
           // IslandButton or RoundIconButton instead.
           backgroundColor: AppColors.card,
-          side: BorderSide(color: AppColors.lineStrong),
+          side: BorderSide.none,
           shape: const GlassBorder(radius: controlRadius),
         ).copyWith(overlayColor: controlOverlayColor),
       ),
@@ -143,6 +172,8 @@ abstract final class AppTheme {
         errorBorder: inputBorder(AppColors.accentDark),
         focusedErrorBorder: inputBorder(AppColors.accentDark, width: 2),
       ),
+      // No dimming behind dialogs: the glass dialog stands out on its own.
+      dialogTheme: const DialogThemeData(barrierColor: Colors.transparent),
       dividerTheme: DividerThemeData(color: AppColors.divider, thickness: 1),
       iconTheme: IconThemeData(color: AppColors.ink),
       progressIndicatorTheme: ProgressIndicatorThemeData(

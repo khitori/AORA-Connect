@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aoravpn/components/installed_application_picker.dart';
+import 'package:aoravpn/components/pill_field.dart';
 import 'package:aoravpn/components/routing_rule_editor.dart';
 
 void main() {
@@ -70,11 +71,12 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await open(tester, (_) {});
-    expect(tester.getSize(find.byType(TextField)).width, 264);
+    // 360 wide window: 24 px around the dialog, 18 px padding inside it.
+    expect(tester.getSize(find.byType(PillFieldBox)).width, 276);
+    // Refresh sits above Cancel in the dialog's pill column.
     expect(
-      tester.getRect(find.text('Cancel')).left -
-          tester.getRect(find.text('Refresh')).right,
-      greaterThan(24),
+      tester.getRect(find.text('Refresh')).bottom,
+      lessThan(tester.getRect(find.text('Cancel')).top),
     );
     expect(tester.takeException(), isNull);
   });
@@ -100,12 +102,13 @@ void main() {
       );
       await tester.tap(find.text('Add'));
       await tester.pumpAndSettle();
-      expect(tester.getSize(find.byType(TextFormField)).width, 264);
+      // 360 wide window: 24 px around the dialog, 18 px padding inside it.
+      expect(tester.getSize(find.byType(PillFieldBox)).width, 276);
       expect(find.text('Choose application'), findsOneWidget);
+      // Save sits above Cancel in the dialog's pill column.
       expect(
-        tester.getRect(find.text('Save')).left -
-            tester.getRect(find.text('Cancel')).right,
-        greaterThan(24),
+        tester.getRect(find.text('Save')).bottom,
+        lessThan(tester.getRect(find.text('Cancel')).top),
       );
       expect(
         tester.getSize(find.text('Choose application')).height,

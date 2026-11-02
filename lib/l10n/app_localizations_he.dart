@@ -773,4 +773,66 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get checkSelectedServer => 'בדיקת השרת שנבחר';
+
+  @override
+  String get startupBehaviorLabel => 'התנהגות';
+
+  @override
+  String get latencyLabel => 'השהיה';
+
+  @override
+  String get diagnosticToolsLabel => 'כלים';
+
+  @override
+  String get newSubscription => 'מינוי';
+
+  @override
+  String get confirm => 'אישור';
+
+  @override
+  String get paste => 'הדבקה';
+
+  @override
+  String get addSubscriptionHelp =>
+      'הדביקו את הקישור מספק ה־VPN כדי לטעון את השרתים שלו.';
+
+  @override
+  String get link => 'קישור';
+
+  @override
+  String get subscriptionErrorInvalidLink =>
+      'זה לא קישור מינוי. העתיקו את הקישור המלא שמתחיל ב־https://.';
+
+  @override
+  String subscriptionErrorHttp(String code) {
+    return 'השרת לא החזיר את המינוי (שגיאה $code). בדקו את הקישור ושהמינוי שלכם פעיל.';
+  }
+
+  @override
+  String get subscriptionErrorEmpty =>
+      'אין שרתים במינוי. ייתכן שתוקפו פג או שהגישה חסומה.';
+
+  @override
+  String get subscriptionErrorUnsupported =>
+      'אין במינוי שרתים שהיישום הזה תומך בהם.';
+
+  @override
+  String get subscriptionErrorNetwork =>
+      'לא ניתן להתחבר לשרת. בדקו את החיבור לאינטרנט ונסו שוב.';
+
+  @override
+  String get subscriptionErrorTooLarge => 'המינוי גדול מדי לטעינה.';
+
+  @override
+  String get minimizeApp => 'מזעור';
+
+  @override
+  String get routingRuleHelp =>
+      'בחרו למה הכלל מתייחס, ואז הזינו את היישום, הדומיין או הכתובת.';
+
+  @override
+  String get pickApplicationLabel => 'או בחרו יישום';
+
+  @override
+  String get pickApplicationHelp => 'בחרו את היישום שהכלל הזה יחול עליו.';
 }

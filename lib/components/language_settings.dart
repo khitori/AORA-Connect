@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
 import '../l10n/locale_controller.dart';
+import '../theme/app_theme.dart';
 import 'app_action_button.dart';
 import 'app_expansion_card.dart';
 import 'app_notification.dart';
 import 'app_select.dart';
+import 'settings_label.dart';
 
 class LanguageSettings extends StatelessWidget {
   const LanguageSettings({super.key});
@@ -32,14 +34,12 @@ class LanguageSettings extends StatelessWidget {
             onPressed: controller.reload,
             label: context.l10n.refresh,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppTheme.sectionGap),
         ],
-        Text(
-          context.l10n.interfaceLanguage,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
+        SettingsLabel(context.l10n.interfaceLanguage),
+        const SizedBox(height: AppTheme.sectionLabelGap),
         AppSelect<String>(
+          plain: true,
           key: const ValueKey('language-selector'),
           value: controller.language ?? 'system',
           items: [

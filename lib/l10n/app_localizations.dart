@@ -1461,6 +1461,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Check selected server'**
   String get checkSelectedServer;
+
+  /// No description provided for @startupBehaviorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Behavior'**
+  String get startupBehaviorLabel;
+
+  /// No description provided for @latencyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Latency'**
+  String get latencyLabel;
+
+  /// No description provided for @diagnosticToolsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools'**
+  String get diagnosticToolsLabel;
+
+  /// No description provided for @newSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription'**
+  String get newSubscription;
+
+  /// No description provided for @confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirm;
+
+  /// No description provided for @paste.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get paste;
+
+  /// No description provided for @addSubscriptionHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the link from your VPN provider to load its servers.'**
+  String get addSubscriptionHelp;
+
+  /// No description provided for @link.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get link;
+
+  /// No description provided for @subscriptionErrorInvalidLink.
+  ///
+  /// In en, this message translates to:
+  /// **'This isn\'t a subscription link. Copy the full link that starts with https://.'**
+  String get subscriptionErrorInvalidLink;
+
+  /// No description provided for @subscriptionErrorHttp.
+  ///
+  /// In en, this message translates to:
+  /// **'The server didn\'t return the subscription (error {code}). Check the link and that your subscription is active.'**
+  String subscriptionErrorHttp(String code);
+
+  /// No description provided for @subscriptionErrorEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The subscription has no servers. It may have expired, or access is blocked.'**
+  String get subscriptionErrorEmpty;
+
+  /// No description provided for @subscriptionErrorUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'The subscription has no servers this app supports.'**
+  String get subscriptionErrorUnsupported;
+
+  /// No description provided for @subscriptionErrorNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach the server. Check your internet connection and try again.'**
+  String get subscriptionErrorNetwork;
+
+  /// No description provided for @subscriptionErrorTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'The subscription is too large to load.'**
+  String get subscriptionErrorTooLarge;
+
+  /// No description provided for @minimizeApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimize'**
+  String get minimizeApp;
+
+  /// No description provided for @routingRuleHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose what the rule looks at, then enter the app, domain or address.'**
+  String get routingRuleHelp;
+
+  /// No description provided for @pickApplicationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Or pick an app'**
+  String get pickApplicationLabel;
+
+  /// No description provided for @pickApplicationHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the app this rule should apply to.'**
+  String get pickApplicationHelp;
 }
 
 class _AppLocalizationsDelegate

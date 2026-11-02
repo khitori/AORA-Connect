@@ -793,4 +793,68 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get checkSelectedServer => 'Ausgewählten Server prüfen';
+
+  @override
+  String get startupBehaviorLabel => 'Verhalten';
+
+  @override
+  String get latencyLabel => 'Latenz';
+
+  @override
+  String get diagnosticToolsLabel => 'Werkzeuge';
+
+  @override
+  String get newSubscription => 'Abonnement';
+
+  @override
+  String get confirm => 'Bestätigen';
+
+  @override
+  String get paste => 'Einfügen';
+
+  @override
+  String get addSubscriptionHelp =>
+      'Füge den Link deines VPN-Anbieters ein, um seine Server zu laden.';
+
+  @override
+  String get link => 'Link';
+
+  @override
+  String get subscriptionErrorInvalidLink =>
+      'Das ist kein Abo-Link. Kopiere den vollständigen Link, der mit https:// beginnt.';
+
+  @override
+  String subscriptionErrorHttp(String code) {
+    return 'Der Server hat das Abonnement nicht geliefert (Fehler $code). Prüfe den Link und ob dein Abonnement aktiv ist.';
+  }
+
+  @override
+  String get subscriptionErrorEmpty =>
+      'Das Abonnement enthält keine Server. Es ist vielleicht abgelaufen oder der Zugriff ist gesperrt.';
+
+  @override
+  String get subscriptionErrorUnsupported =>
+      'Das Abonnement enthält keine Server, die diese App unterstützt.';
+
+  @override
+  String get subscriptionErrorNetwork =>
+      'Der Server ist nicht erreichbar. Prüfe deine Internetverbindung und versuche es erneut.';
+
+  @override
+  String get subscriptionErrorTooLarge =>
+      'Das Abonnement ist zu groß zum Laden.';
+
+  @override
+  String get minimizeApp => 'Minimieren';
+
+  @override
+  String get routingRuleHelp =>
+      'Wähle, worauf die Regel achtet, und gib dann App, Domain oder Adresse ein.';
+
+  @override
+  String get pickApplicationLabel => 'Oder App auswählen';
+
+  @override
+  String get pickApplicationHelp =>
+      'Wähle die App, für die diese Regel gelten soll.';
 }

@@ -8,7 +8,6 @@ import '../theme/app_theme.dart';
 import '../theme/glass_surface.dart';
 
 const _itemHeight = 58.0;
-const _gap = 8.0;
 const _motion = Duration(milliseconds: 320);
 const _curve = Curves.easeOutCubic;
 
@@ -42,10 +41,12 @@ class FloatingBottomNavigation<T> extends StatelessWidget {
           ],
         ),
         // Grey outline plus the white glass edge, drawn over the content.
+        // Both fade out over the rounded ends.
         child: CustomPaint(
           foregroundPainter: GlassEdgePainter(
             const StadiumBorder(),
             outline: AppColors.lineStrong,
+            fadeOutlineEnds: true,
           ),
           child: ClipPath(
             clipper: const ShapeBorderClipper(shape: StadiumBorder()),
@@ -58,8 +59,7 @@ class FloatingBottomNavigation<T> extends StatelessWidget {
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final count = destinations.length;
-                      final width =
-                          (constraints.maxWidth - _gap * (count - 1)) / count;
+                      final width = constraints.maxWidth / count;
                       return SizedBox(
                         height: _itemHeight,
                         child: Stack(
@@ -72,7 +72,7 @@ class FloatingBottomNavigation<T> extends StatelessWidget {
                               top: 0,
                               bottom: 0,
                               width: width,
-                              start: (index < 0 ? 0 : index) * (width + _gap),
+                              start: (index < 0 ? 0 : index) * width,
                               child: AnimatedOpacity(
                                 duration: _motion,
                                 curve: _curve,
@@ -84,8 +84,7 @@ class FloatingBottomNavigation<T> extends StatelessWidget {
                             ),
                             Row(
                               children: [
-                                for (var i = 0; i < count; i++) ...[
-                                  if (i > 0) const SizedBox(width: _gap),
+                                for (var i = 0; i < count; i++)
                                   Expanded(
                                     child: _NavigationItem<T>(
                                       destination: destinations[i],
@@ -94,7 +93,6 @@ class FloatingBottomNavigation<T> extends StatelessWidget {
                                           onSelected(destinations[i].value),
                                     ),
                                   ),
-                                ],
                               ],
                             ),
                           ],

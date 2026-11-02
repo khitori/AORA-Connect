@@ -152,49 +152,60 @@ void main() {
 
   for (final width in [280.0, 340.0]) {
     for (final scale in [1.0, 1.4]) {
-      testWidgets('Diagnostics matches Updates layout at $width / $scale', (
-        tester,
-      ) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppTheme.light,
-            home: MediaQuery(
-              data: MediaQueryData(textScaler: TextScaler.linear(scale)),
-              child: Scaffold(
-                body: Center(
-                  child: SizedBox(
-                    width: width,
-                    child: ConnectionControls(
-                      onValidate: () {},
-                      onTest: () {},
-                      onCopy: () {},
+      testWidgets(
+        'Diagnostics buttons are islands that fit at $width / $scale',
+        (tester) async {
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: AppTheme.light,
+              home: MediaQuery(
+                data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+                child: Scaffold(
+                  body: Center(
+                    child: SizedBox(
+                      width: width,
+                      child: ConnectionControls(
+                        onValidate: () {},
+                        onTest: () {},
+                        onCopy: () {},
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        );
-        final validate = tester.getRect(
-          find.widgetWithText(OutlinedButton, 'Check'),
-        );
-        final test = tester.getRect(
-          find.widgetWithText(OutlinedButton, 'Test'),
-        );
-        final copy = tester.getRect(
-          find.widgetWithText(OutlinedButton, 'Copy diagnostics'),
-        );
-        expect(validate.width, test.width);
-        expect(validate.height, AppTheme.controlHeight);
-        expect(test.top, validate.top);
-        expect(test.left - validate.right, 8);
-        expect(copy.left, validate.left);
-        expect(copy.right, test.right);
-        expect(copy.width, width);
-        expect(copy.top - validate.bottom, 8);
-        expect(copy.height, AppTheme.controlHeight);
-        expect(tester.takeException(), isNull);
-      });
+          );
+          for (final label in ['Check', 'Test', 'Copy diagnostics']) {
+            // The same glass islands as the top bar's buttons.
+            expect(
+              find.descendant(
+                of: find.widgetWithText(IslandButton, label),
+                matching: find.byType(GlassSurface),
+              ),
+              findsOneWidget,
+            );
+          }
+          final validate = tester.getRect(
+            find.widgetWithText(IslandButton, 'Check'),
+          );
+          final test = tester.getRect(
+            find.widgetWithText(IslandButton, 'Test'),
+          );
+          final copy = tester.getRect(
+            find.widgetWithText(IslandButton, 'Copy diagnostics'),
+          );
+          expect(validate.width, test.width);
+          expect(validate.height, 32);
+          expect(test.top, validate.top);
+          expect(test.left - validate.right, 12);
+          expect(copy.left, validate.left);
+          expect(copy.right, test.right);
+          expect(copy.width, width);
+          expect(copy.top - validate.bottom, 12);
+          expect(copy.height, 32);
+          expect(tester.takeException(), isNull);
+        },
+      );
     }
   }
 

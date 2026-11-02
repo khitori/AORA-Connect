@@ -126,18 +126,23 @@ class RoundIconButton extends StatelessWidget {
   );
 }
 
-/// Hide and Close grouped in one island.
+/// Minimize, Hide and Close grouped in one island. Minimize goes to the
+/// taskbar (arrow down); Hide goes to the system tray (arrow right).
 class WindowControls extends StatelessWidget {
   const WindowControls({
     super.key,
+    required this.minimizeTooltip,
     required this.hideTooltip,
     required this.closeTooltip,
+    required this.onMinimize,
     required this.onHide,
     required this.onClose,
   });
 
+  final String minimizeTooltip;
   final String hideTooltip;
   final String closeTooltip;
+  final VoidCallback? onMinimize;
   final VoidCallback? onHide;
   final VoidCallback? onClose;
 
@@ -145,8 +150,14 @@ class WindowControls extends StatelessWidget {
   Widget build(BuildContext context) => IconIsland(
     children: [
       IslandAction(
-        tooltip: hideTooltip,
+        tooltip: minimizeTooltip,
         icon: Icons.keyboard_arrow_down_rounded,
+        iconSize: 20,
+        onPressed: onMinimize,
+      ),
+      IslandAction(
+        tooltip: hideTooltip,
+        icon: Icons.keyboard_arrow_right_rounded,
         iconSize: 20,
         onPressed: onHide,
       ),
@@ -162,6 +173,7 @@ class WindowControls extends StatelessWidget {
 /// A text action in its own island, built exactly like the Settings and
 /// Refresh islands: the same glass, 32 px height and 4 px inset, with an
 /// inner pill that highlights on hover like the islands' inner circles.
+/// With [expanded] it fills the width it is given, its label centered.
 class IslandButton extends StatelessWidget {
   const IslandButton({
     super.key,
@@ -169,45 +181,61 @@ class IslandButton extends StatelessWidget {
     required this.onPressed,
     this.icon,
     this.tooltip,
+    this.expanded = false,
   });
 
   final String label;
   final IconData? icon;
   final String? tooltip;
   final VoidCallback? onPressed;
+  final bool expanded;
 
   @override
   Widget build(BuildContext context) {
     final color = onPressed == null ? AppColors.muted300 : AppColors.muted700;
-    final button = IconIsland(
+    Widget content = Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(
-          height: _innerSize,
-          child: InkWell(
-            customBorder: const StadiumBorder(),
-            overlayColor: AppTheme.controlOverlayColor,
-            onTap: onPressed,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (icon != null) ...[
-                    Icon(icon, size: 18, color: color),
-                    const SizedBox(width: 6),
-                  ],
-                  Text(
-                    label,
-                    style: Theme.of(context).textTheme.labelLarge
-                        ?.copyWith(color: color),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        if (icon != null) ...[
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 6),
+        ],
+        Text(
+          label,
+          maxLines: 1,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color),
         ),
       ],
     );
+    // A wide button shrinks a label too long for it instead of overflowing.
+    if (expanded) {
+      content = Center(
+        child: FittedBox(fit: BoxFit.scaleDown, child: content),
+      );
+    }
+    final pill = SizedBox(
+      height: _innerSize,
+      child: InkWell(
+        customBorder: const StadiumBorder(),
+        overlayColor: AppTheme.controlOverlayColor,
+        onTap: onPressed,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: content,
+        ),
+      ),
+    );
+    final button = expanded
+        ? SizedBox(
+            height: _height,
+            child: GlassSurface(
+              child: Padding(
+                padding: const EdgeInsets.all(_inset),
+                child: pill,
+              ),
+            ),
+          )
+        : IconIsland(children: [pill]);
     return tooltip == null ? button : Tooltip(message: tooltip, child: button);
   }
 }

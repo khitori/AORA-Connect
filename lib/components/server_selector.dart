@@ -6,17 +6,15 @@ import '../controllers/node_ping_controller.dart';
 import '../l10n/l10n.dart';
 import '../profiles/server_profile.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 import 'app_select.dart';
 import 'server_node_details.dart';
 import 'subscription_refresh_button.dart';
 import 'window_controls.dart';
 
-/// Corner radius of the subscription and server card.
-const _radius = 20.0;
-
-/// Same gap on both sides of the header and the server list, so the name,
-/// the Refresh/Ping island and the servers line up with each other.
-const _sidePadding = 24.0;
+/// Corner radius of the subscription and server card and its server list, the
+/// same as the pills and boxes on the Subscriptions page.
+const _radius = AppTheme.sectionRowRadius;
 
 /// The subscription header and the selected server row share one height.
 const _rowHeight = 60.0;
@@ -77,7 +75,7 @@ class _ServerSelectorState extends State<ServerSelector> {
                   Container(
                     height: _rowHeight,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: _sidePadding,
+                      horizontal: AppTheme.contentPadding,
                     ),
                     child: Row(
                       children: [
@@ -141,8 +139,8 @@ class _ServerSelectorState extends State<ServerSelector> {
                   Divider(
                     height: 1,
                     thickness: 1,
-                    indent: _sidePadding,
-                    endIndent: _sidePadding,
+                    indent: AppTheme.contentPadding,
+                    endIndent: AppTheme.contentPadding,
                     color: AppColors.line,
                   ),
                   AppSelect<ServerProfile>(
@@ -152,6 +150,7 @@ class _ServerSelectorState extends State<ServerSelector> {
                     height: _rowHeight,
                     readOnly: onChanged == null,
                     showOutline: false,
+                    hoverHighlight: false,
                     borderRadius: BorderRadius.vertical(
                       bottom: Radius.circular(_radius),
                     ),
@@ -165,7 +164,7 @@ class _ServerSelectorState extends State<ServerSelector> {
                           ),
                         ),
                     ],
-                    horizontalPadding: _sidePadding,
+                    horizontalPadding: AppTheme.contentPadding,
                     menuRadius: _radius,
                     selectedChild: selected == null
                         ? null

@@ -779,4 +779,67 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get checkSelectedServer => 'فحص الخادم المحدد';
+
+  @override
+  String get startupBehaviorLabel => 'السلوك';
+
+  @override
+  String get latencyLabel => 'زمن الاستجابة';
+
+  @override
+  String get diagnosticToolsLabel => 'الأدوات';
+
+  @override
+  String get newSubscription => 'الاشتراك';
+
+  @override
+  String get confirm => 'تأكيد';
+
+  @override
+  String get paste => 'لصق';
+
+  @override
+  String get addSubscriptionHelp => 'الصق الرابط من مزوّد VPN لتحميل خوادمه.';
+
+  @override
+  String get link => 'الرابط';
+
+  @override
+  String get subscriptionErrorInvalidLink =>
+      'هذا ليس رابط اشتراك. انسخ الرابط الكامل الذي يبدأ بـ https://.';
+
+  @override
+  String subscriptionErrorHttp(String code) {
+    return 'لم يُرجع الخادم الاشتراك (الخطأ $code). تحقق من الرابط ومن أن اشتراكك نشط.';
+  }
+
+  @override
+  String get subscriptionErrorEmpty =>
+      'لا يحتوي الاشتراك على خوادم. ربما انتهت صلاحيته أو تم حظر الوصول.';
+
+  @override
+  String get subscriptionErrorUnsupported =>
+      'لا يحتوي الاشتراك على خوادم يدعمها هذا التطبيق.';
+
+  @override
+  String get subscriptionErrorNetwork =>
+      'تعذّر الوصول إلى الخادم. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.';
+
+  @override
+  String get subscriptionErrorTooLarge =>
+      'الاشتراك كبير جدًا بحيث لا يمكن تحميله.';
+
+  @override
+  String get minimizeApp => 'تصغير';
+
+  @override
+  String get routingRuleHelp =>
+      'اختر ما تطابقه القاعدة، ثم أدخل التطبيق أو النطاق أو العنوان.';
+
+  @override
+  String get pickApplicationLabel => 'أو اختر تطبيقًا';
+
+  @override
+  String get pickApplicationHelp =>
+      'اختر التطبيق الذي ستنطبق عليه هذه القاعدة.';
 }

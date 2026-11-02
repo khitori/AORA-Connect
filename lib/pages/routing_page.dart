@@ -8,12 +8,15 @@ import '../components/app_select.dart';
 import '../components/app_toggle.dart';
 import '../components/connection_edit_notification.dart';
 import '../components/installed_application_picker.dart';
+import '../components/pill_button.dart';
 import '../components/routing_rule_card.dart';
 import '../components/routing_rule_editor.dart';
+import '../components/settings_label.dart';
 import '../controllers/connection_controller.dart';
 import '../l10n/l10n.dart';
 import '../routing/routing_policy.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 
 class RoutingPage extends StatefulWidget {
   const RoutingPage({
@@ -134,10 +137,11 @@ class _RoutingPageState extends State<RoutingPage> {
                     ),
                   ),
                   children: [
-                    Text(context.l10n.routeListedItems),
-                    const SizedBox(height: 8),
+                    SettingsLabel(context.l10n.routeListedItems),
+                    const SizedBox(height: AppTheme.sectionLabelGap),
                     _editControl(
                       AppSelect<RoutingAction>(
+                        plain: true,
                         onBeforeOpen: _allowEdit,
                         value: policy.direction,
                         items: [
@@ -162,24 +166,15 @@ class _RoutingPageState extends State<RoutingPage> {
                             : null,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      !policy.rules.any((rule) => rule.enabled)
-                          ? context.l10n.emptyThroughTunnel
-                          : policy.direction == RoutingAction.vpn
-                          ? context.l10n.listedThroughTunnel
-                          : context.l10n.listedBypassTunnel,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(context.l10n.useTunRouting),
                   ],
                 ),
                 const SizedBox(height: _sectionGap),
+                // The same white 48 px pill as "Add subscription".
                 _editControl(
-                  OutlinedButton.icon(
+                  PillButton(
+                    label: context.l10n.addRule,
+                    color: AppColors.card,
                     onPressed: connection.canEdit ? () => _edit(context) : null,
-                    icon: const Icon(Icons.add_rounded),
-                    label: Text(context.l10n.addRule),
                   ),
                 ),
                 if (!policy.enabled)

@@ -5,6 +5,7 @@ import '../l10n/l10n.dart';
 import '../routing/routing_policy.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../theme/glass_surface.dart';
 import 'app_toggle.dart';
 import 'connection_edit_notification.dart';
 import 'installed_application_picker.dart';
@@ -68,7 +69,7 @@ class RoutingRuleCard extends StatelessWidget {
         maximumSize: const Size(36, 36),
         padding: EdgeInsets.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: const CircleBorder(),
       ),
     ),
     available: onPressed != null,
@@ -80,11 +81,11 @@ class RoutingRuleCard extends StatelessWidget {
     final subtitle = application != null
         ? rule.target
         : rule.match.localizedLabel(context.l10n);
+    // No border, and the Subscriptions page rows' rounding.
     return Material(
       color: AppColors.card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTheme.controlRadius),
-        side: BorderSide(color: AppColors.line),
+        borderRadius: BorderRadius.circular(AppTheme.sectionRowRadius),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -95,26 +96,29 @@ class RoutingRuleCard extends StatelessWidget {
             padding: const EdgeInsetsDirectional.fromSTEB(14, 10, 12, 10),
             child: Row(
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: AppColors.paper,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: application?.icon == null
-                      ? Icon(_fallbackIcon, size: 24, color: AppColors.muted500)
-                      : Image.memory(
-                          application!.icon!,
-                          width: 32,
-                          height: 32,
-                          errorBuilder: (_, _, _) => Icon(
+                // The section headers' round glass icon box.
+                GlassSurface(
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    padding: const EdgeInsets.all(6),
+                    child: application?.icon == null
+                        ? Icon(
                             _fallbackIcon,
                             size: 24,
                             color: AppColors.muted500,
+                          )
+                        : Image.memory(
+                            application!.icon!,
+                            width: 32,
+                            height: 32,
+                            errorBuilder: (_, _, _) => Icon(
+                              _fallbackIcon,
+                              size: 24,
+                              color: AppColors.muted500,
+                            ),
                           ),
-                        ),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -206,9 +210,7 @@ class RoutingRuleCard extends StatelessWidget {
                           visualDensity: VisualDensity.standard,
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                          shape: const StadiumBorder(),
                         ),
                       ),
                     ),

@@ -8,6 +8,7 @@ import 'package:aoravpn/core/desktop_window.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aoravpn/controllers/node_ping_controller.dart';
 import 'package:aoravpn/app.dart';
+import 'package:aoravpn/components/app_dialog.dart';
 import 'package:aoravpn/components/app_select.dart';
 import 'package:aoravpn/components/app_expansion_card.dart';
 import 'package:aoravpn/components/app_toggle.dart';
@@ -63,6 +64,9 @@ class WindowCleanupEngine extends FakeEngine {
   }
 }
 
+const _invalidLinkError =
+    "This isn't a subscription link. Copy the full link that starts with https://.";
+
 void main() {
   testWidgets('Compact window buttons send tray and close commands', (
     tester,
@@ -92,9 +96,12 @@ void main() {
     final settings = tester.getRect(
       find.byKey(const ValueKey('open-settings')),
     );
+    final minimize = tester.getRect(find.byTooltip('Minimize'));
     final tray = tester.getRect(find.byTooltip('Hide to tray'));
     final close = tester.getRect(find.byTooltip('Close app'));
-    expect(settings.right, lessThan(tray.left));
+    expect(settings.right, lessThan(minimize.left));
+    expect(minimize.right, lessThan(tray.left));
+    expect(minimize.size, tray.size);
     expect(settings.center.dy, closeTo(tray.center.dy, 0.1));
     expect(find.byTooltip('Open menu'), findsNothing);
     expect(settings.width, settings.height);
@@ -107,8 +114,13 @@ void main() {
     );
     expect(controls.contains(settings.center), isFalse);
     expect(tester.widget<AppBar>(find.byType(AppBar)).bottom, isNull);
+    // Minimize points down (taskbar), Hide points right (tray).
     expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.keyboard_arrow_right_rounded), findsOneWidget);
     expect(tray.right, lessThan(close.left));
+    await tester.tap(find.byTooltip('Minimize'));
+    await tester.pumpAndSettle();
+    expect(commands, contains('minimize'));
     await tester.tap(find.byTooltip('Hide to tray'));
     await tester.pumpAndSettle();
     expect(commands, contains('tray'));
@@ -190,7 +202,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       find.text('No items yet. Everything goes through the tunnel.'),
-      findsOneWidget,
+      findsNothing,
     );
     await tester.tap(find.byType(AppSelect<RoutingAction>));
     await tester.pumpAndSettle();
@@ -200,8 +212,12 @@ void main() {
     await tester.tap(find.text('Bypassing tunnel'));
     await tester.pumpAndSettle();
     expect(
-      find.text('No items yet. Everything goes through the tunnel.'),
-      findsOneWidget,
+      tester
+          .widget<AppSelect<RoutingAction>>(
+            find.byType(AppSelect<RoutingAction>),
+          )
+          .value,
+      RoutingAction.direct,
     );
     await tester.tap(find.text('Add rule'));
     await tester.pumpAndSettle();
@@ -209,7 +225,7 @@ void main() {
     expect(find.text('Choose application'), findsOneWidget);
     expect(
       find.descendant(
-        of: find.byType(AlertDialog),
+        of: find.byType(AppDialog),
         matching: find.byType(AppSelect<RoutingAction>),
       ),
       findsNothing,
@@ -391,9 +407,10 @@ void main() {
     expect(find.byType(TextField), findsNothing);
     await tester.tap(find.byKey(const ValueKey('add-subscription-toggle')));
     await tester.pumpAndSettle();
+    expect(find.byType(Dialog), findsOneWidget);
     expect(find.byType(TextField), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'draft-link');
-    await tester.tap(find.byKey(const ValueKey('add-subscription-toggle')));
+    await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(find.byType(TextField), findsNothing);
     expect(input.text, 'draft-link');
@@ -467,6 +484,8 @@ void main() {
       find.byType(TextField),
       'https://example.test/sub/demo',
     );
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
     expect(find.byType(AppSelect<ConnectionMode>), findsNothing);
     expect(find.byKey(const ValueKey('bottom-nav-settings')), findsNothing);
     await _openSettings(tester);
@@ -515,6 +534,8 @@ void main() {
     expect(find.text('Local proxy'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('bottom-nav-subscriptions')));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('add-subscription-toggle')));
+    await tester.pumpAndSettle();
     expect(
       tester.widget<TextField>(find.byType(TextField)).controller!.text,
       'https://example.test/sub/demo',
@@ -524,7 +545,7 @@ void main() {
     await engine.messages.close();
   });
 
-  testWidgets('Subscription errors appear only on Subscriptions', (
+  testWidgets('Subscription errors show in the dialog and clear on close', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(420, 740);
@@ -538,24 +559,26 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('add-subscription-toggle')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'not-a-link');
-    await tester.tap(find.text('Add'));
+    await tester.tap(find.text('Confirm'));
     await tester.pumpAndSettle();
+    // Shown in the dialog, which stays open.
     expect(
-      find.text('FormatException: Enter a valid HTTPS subscription URL.'),
+      find.descendant(
+        of: find.byType(Dialog),
+        matching: find.text(_invalidLinkError),
+      ),
       findsOneWidget,
     );
+    // Closing the dialog clears it, here and on every other page.
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.text(_invalidLinkError), findsNothing);
     await tester.tap(find.byKey(const ValueKey('bottom-nav-connection')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('FormatException'), findsNothing);
+    expect(find.text(_invalidLinkError), findsNothing);
     await _openSettings(tester);
     await tester.pumpAndSettle();
-    expect(find.textContaining('FormatException'), findsNothing);
-    await tester.tap(find.byKey(const ValueKey('bottom-nav-subscriptions')));
-    await tester.pumpAndSettle();
-    expect(
-      find.text('FormatException: Enter a valid HTTPS subscription URL.'),
-      findsOneWidget,
-    );
+    expect(find.text(_invalidLinkError), findsNothing);
     await tester.pumpWidget(const SizedBox());
     await engine.changes.close();
     await engine.messages.close();

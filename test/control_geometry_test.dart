@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aoravpn/components/app_action_button.dart';
 import 'package:aoravpn/components/app_select.dart';
+import 'package:aoravpn/components/pill_button.dart';
 import 'package:aoravpn/components/routing_rule_editor.dart';
 import 'package:aoravpn/theme/app_theme.dart';
 
@@ -28,8 +29,10 @@ void main() {
     );
     await tester.tap(find.text('Open editor'));
     await tester.pumpAndSettle();
+    // The select and the application button are the dialog's 48 px pills;
+    // the value field keeps the control height for now.
     final select = find.byWidgetPredicate((widget) => widget is AppSelect);
-    expect(tester.getSize(select).height, AppTheme.controlHeight);
+    expect(tester.getSize(select).height, 48);
     final field = find.byType(TextFormField);
     expect(tester.getSize(field).height, AppTheme.controlHeight);
     double paintedInputHeight() =>
@@ -39,12 +42,9 @@ void main() {
     expect(paintedInputHeight(), AppTheme.controlHeight);
     final button = find.ancestor(
       of: find.text('Choose application'),
-      matching: find.byType(OutlinedButton),
+      matching: find.byType(PillButton),
     );
-    final material = find
-        .descendant(of: button, matching: find.byType(Material))
-        .first;
-    expect(tester.getSize(material).height, AppTheme.controlHeight);
+    expect(tester.getSize(button).height, 48);
     await tester.enterText(field, 'example.exe');
     await tester.pumpAndSettle();
     expect(tester.getSize(field).height, AppTheme.controlHeight);

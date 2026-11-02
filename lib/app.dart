@@ -298,8 +298,10 @@ class _AppShellState extends State<_AppShell> {
               _settingsButton(),
               const SizedBox(width: 4),
               WindowControls(
+                minimizeTooltip: context.l10n.minimizeApp,
                 hideTooltip: context.l10n.hideToTray,
                 closeTooltip: context.l10n.closeApp,
+                onMinimize: () => _windowAction('minimize'),
                 onHide: () => _windowAction('tray'),
                 onClose: () => _windowAction('close'),
               ),

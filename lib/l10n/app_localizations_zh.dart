@@ -744,4 +744,60 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get checkSelectedServer => '检查所选服务器';
+
+  @override
+  String get startupBehaviorLabel => '行为';
+
+  @override
+  String get latencyLabel => '延迟';
+
+  @override
+  String get diagnosticToolsLabel => '工具';
+
+  @override
+  String get newSubscription => '订阅';
+
+  @override
+  String get confirm => '确认';
+
+  @override
+  String get paste => '粘贴';
+
+  @override
+  String get addSubscriptionHelp => '粘贴 VPN 服务商提供的链接以加载其服务器。';
+
+  @override
+  String get link => '链接';
+
+  @override
+  String get subscriptionErrorInvalidLink => '这不是订阅链接。请复制以 https:// 开头的完整链接。';
+
+  @override
+  String subscriptionErrorHttp(String code) {
+    return '服务器未返回订阅（错误 $code）。请检查链接以及订阅是否有效。';
+  }
+
+  @override
+  String get subscriptionErrorEmpty => '订阅中没有服务器。可能已过期，或访问被阻止。';
+
+  @override
+  String get subscriptionErrorUnsupported => '订阅中没有本应用支持的服务器。';
+
+  @override
+  String get subscriptionErrorNetwork => '无法连接到服务器。请检查网络连接后重试。';
+
+  @override
+  String get subscriptionErrorTooLarge => '订阅过大，无法加载。';
+
+  @override
+  String get minimizeApp => '最小化';
+
+  @override
+  String get routingRuleHelp => '选择规则要匹配的内容，然后输入应用、域名或地址。';
+
+  @override
+  String get pickApplicationLabel => '或选择应用';
+
+  @override
+  String get pickApplicationHelp => '选择此规则要应用到的应用。';
 }

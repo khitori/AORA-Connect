@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../theme/glass_surface.dart';
-import 'unfold_icon.dart';
+import 'section_row_bleed.dart';
 
 class AppSelect<T> extends StatefulWidget {
   const AppSelect({
@@ -30,11 +30,27 @@ class AppSelect<T> extends StatefulWidget {
     ),
     this.menuRadius = AppTheme.controlRadius,
     this.centerText,
+    this.hoverHighlight = true,
+    this.plain = false,
+    this.pill = false,
+    this.fieldColor,
   });
   final T? value;
   final List<DropdownMenuItem<T>> items;
   final ValueChanged<T?>? onChanged;
   final double horizontalPadding;
+
+  // Plain rows and pill fields share the 48 px pill: its side padding, value
+  // text, and a menu with the same corners and 48 px items.
+  bool get _pill => plain || pill;
+
+  // Plain rows use the section row padding, so their value lines up with the
+  // section content; the row reaches out by the same amount.
+  double get _sidePadding =>
+      _pill ? AppTheme.sectionPadding : horizontalPadding;
+
+  // A pill's menu has the same corners as the pill's ends.
+  double get _menuRadius => _pill ? AppTheme.sectionRowRadius : menuRadius;
   final double height;
   final Widget? hint;
   final Widget? selectedChild;
@@ -43,8 +59,8 @@ class AppSelect<T> extends StatefulWidget {
   final Object? tapRegionGroupId;
   final bool readOnly;
 
-  /// Draws the field like outlined buttons and the navigation panel: white
-  /// with two borders ([GlassBorder]). Without it the field is borderless.
+  /// Draws the field like outlined buttons: white with the white glass edge
+  /// ([GlassBorder]), no grey outline. Without it the field is borderless.
   final bool showOutline;
   final BorderRadius borderRadius;
 
@@ -55,7 +71,25 @@ class AppSelect<T> extends StatefulWidget {
   /// Outlined fields are centered by default; borderless ones (such as the
   /// server row) keep their content at the leading edge, full width.
   final bool? centerText;
-  bool get _centered => centerText ?? showOutline;
+  bool get _centered => centerText ?? (showOutline && !plain);
+
+  /// Tints the field while the mouse is over it. Pressed and keyboard focus
+  /// tints stay either way.
+  final bool hoverHighlight;
+
+  /// The Settings row: no field around it, the value at the leading edge with
+  /// the same side padding as the menu items, and the arrow at the end. It
+  /// tints as a pill on hover.
+  final bool plain;
+
+  /// The Settings row's 48 px pill as a white outlined field (with
+  /// [showOutline]), for selects outside sections. Its text stays centered
+  /// unless [centerText] says otherwise.
+  final bool pill;
+
+  /// Fill of an outlined field; white when not given. Glass dialogs pass
+  /// their see-through gray ([AppColors.glassControl]).
+  final Color? fieldColor;
 
   @override
   State<AppSelect<T>> createState() => _AppSelectState<T>();
@@ -67,6 +101,7 @@ class _AppSelectState<T> extends State<AppSelect<T>>
   final _menuFocus = FocusNode(debugLabel: 'AppSelect menu');
   final _defaultGroup = Object();
   late final AnimationController _menuAnimation;
+  late final CurvedAnimation _menuCurve;
   OverlayEntry? _menuEntry;
   Object get _group => widget.tapRegionGroupId ?? _defaultGroup;
   bool _open = false;
@@ -86,7 +121,13 @@ class _AppSelectState<T> extends State<AppSelect<T>>
     };
     _menuAnimation = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 160),
+      duration: const Duration(milliseconds: 180),
+      reverseDuration: const Duration(milliseconds: 120),
+    );
+    _menuCurve = CurvedAnimation(
+      parent: _menuAnimation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
     );
   }
 
@@ -102,8 +143,8 @@ class _AppSelectState<T> extends State<AppSelect<T>>
 
   @override
   void dispose() {
-    _menuEntry?.remove();
-    _menuEntry?.dispose();
+    _removeMenu();
+    _menuCurve.dispose();
     _menuAnimation.dispose();
     _focusNode.dispose();
     _menuFocus.dispose();
@@ -115,11 +156,13 @@ class _AppSelectState<T> extends State<AppSelect<T>>
   /// as if the field stayed hovered.
   void _hide({T? selected, bool restoreFocus = false}) {
     if (!_open) return;
-    _menuEntry?.remove();
-    _menuEntry?.dispose();
-    _menuEntry = null;
-    _menuAnimation.stop();
     setState(() => _open = false);
+    // The menu plays its opening backwards, ignoring the pointer, and is
+    // removed afterwards. Reopening meanwhile replaces it at once.
+    final closing = _menuEntry?..markNeedsBuild();
+    _menuAnimation.reverse().whenCompleteOrCancel(() {
+      if (!_open && identical(_menuEntry, closing)) _removeMenu();
+    });
     widget.onOpenChanged?.call(false);
     if (restoreFocus) {
       _focusNode.requestFocus();
@@ -130,6 +173,12 @@ class _AppSelectState<T> extends State<AppSelect<T>>
       if (widget.onBeforeOpen?.call() == false) return;
       widget.onChanged?.call(selected);
     }
+  }
+
+  void _removeMenu() {
+    _menuEntry?.remove();
+    _menuEntry?.dispose();
+    _menuEntry = null;
   }
 
   Future<void> _show() async {
@@ -148,7 +197,16 @@ class _AppSelectState<T> extends State<AppSelect<T>>
     if (!mounted || !_enabled) return;
     if (widget.onBeforeOpen?.call() == false) return;
     final box = context.findRenderObject()! as RenderBox;
-    final anchor = box.localToGlobal(Offset.zero) & box.size;
+    var anchor = box.localToGlobal(Offset.zero) & box.size;
+    // The list lines up with the reached-out row, not its slot.
+    if (widget.plain) {
+      anchor = Rect.fromLTRB(
+        anchor.left - AppTheme.sectionPadding,
+        anchor.top,
+        anchor.right + AppTheme.sectionPadding,
+        anchor.bottom,
+      );
+    }
     final media = MediaQuery.of(context);
     final top = anchor.bottom + 4;
     final availableHeight =
@@ -157,6 +215,7 @@ class _AppSelectState<T> extends State<AppSelect<T>>
         top -
         12;
     if (availableHeight <= 0) return;
+    _removeMenu();
     setState(() => _open = true);
     widget.onOpenChanged?.call(true);
     _menuEntry = OverlayEntry(
@@ -171,95 +230,118 @@ class _AppSelectState<T> extends State<AppSelect<T>>
               child: TapRegion(
                 groupId: _group,
                 onTapOutside: (_) => _hide(),
-                child: FadeTransition(
-                  opacity: _menuAnimation,
-                  child: SizeTransition(
-                    sizeFactor: _menuAnimation,
-                    alignment: Alignment.topCenter,
-                    // Frosted glass: translucent, blurring what is behind it.
-                    child: CustomPaint(
-                      foregroundPainter: GlassEdgePainter(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            widget.menuRadius,
-                          ),
-                        ),
-                        cornerWidth: widget.menuRadius,
-                        outline: AppColors.line,
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(widget.menuRadius),
-                        child: BackdropFilter(
-                          filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                          child: Material(
-                            key: const ValueKey('app-select-menu'),
-                            elevation: 0,
-                            shadowColor: Colors.transparent,
-                            surfaceTintColor: Colors.transparent,
-                            color: AppColors.menuGlass,
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                maxHeight: availableHeight,
-                              ),
-                              child: Focus(
-                                focusNode: _menuFocus,
-                                onKeyEvent: (_, event) {
-                                  if (event is KeyDownEvent &&
-                                      event.logicalKey ==
-                                          LogicalKeyboardKey.escape) {
-                                    _hide(restoreFocus: true);
-                                    return KeyEventResult.handled;
-                                  }
-                                  return KeyEventResult.ignored;
-                                },
-                                child: ListView.builder(
-                                  shrinkWrap: true,
-                                  padding: EdgeInsets.zero,
-                                  itemCount: widget.items.length,
-                                  itemBuilder: (_, index) {
-                                    final item = widget.items[index];
-                                    return _withSeparator(
-                                      index,
-                                      InkWell(
-                                        overlayColor:
-                                            AppTheme.controlOverlayColor,
-                                        onTap: item.enabled
-                                            ? () => _hide(selected: item.value)
-                                            : null,
-                                        child: Container(
-                                          constraints: const BoxConstraints(
-                                            minHeight: 44,
-                                          ),
-                                          alignment: widget._centered
-                                              ? Alignment.center
-                                              : AlignmentDirectional
-                                                    .centerStart,
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal:
-                                                widget.horizontalPadding,
-                                            vertical: 10,
-                                          ),
-                                          color: item.value == widget.value
-                                              ? AppTheme.selectedSurface
-                                              : null,
-                                          child: DefaultTextStyle(
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .titleMedium!
-                                                .copyWith(
-                                                  color: item.enabled
-                                                      ? null
-                                                      : Theme.of(context)
-                                                            .disabledColor,
-                                                ),
-                                            child: item.child,
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
+                child: IgnorePointer(
+                  ignoring: !_open,
+                  // Pops out of the field: grows from 90% at its top edge
+                  // while dropping the last few pixels into place.
+                  child: AnimatedBuilder(
+                    animation: _menuCurve,
+                    builder: (_, child) {
+                      final t = _menuCurve.value;
+                      return Transform.translate(
+                        offset: Offset(0, -6 * (1 - t)),
+                        child: Transform.scale(
+                          scale: 0.9 + 0.1 * t,
+                          alignment: Alignment.topCenter,
+                          child: CustomPaint(
+                            foregroundPainter: GlassEdgePainter(
+                              RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  widget._menuRadius,
                                 ),
                               ),
+                              cornerWidth: widget._menuRadius,
+                              outline: AppColors.line,
+                              opacity: t,
+                            ),
+                            // Frosted glass: translucent, blurring what is
+                            // behind it. The blur grows with the fade instead
+                            // of sitting inside it: a blur inside a fading
+                            // layer has nothing behind it to blur.
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(
+                                widget._menuRadius,
+                              ),
+                              child: BackdropFilter(
+                                filter: ui.ImageFilter.blur(
+                                  sigmaX: 6 * t,
+                                  sigmaY: 6 * t,
+                                ),
+                                child: child,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                    child: FadeTransition(
+                      opacity: _menuCurve,
+                      child: Material(
+                        key: const ValueKey('app-select-menu'),
+                        elevation: 0,
+                        shadowColor: Colors.transparent,
+                        surfaceTintColor: Colors.transparent,
+                        color: AppColors.menuGlass,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: availableHeight,
+                          ),
+                          child: Focus(
+                            focusNode: _menuFocus,
+                            onKeyEvent: (_, event) {
+                              if (event is KeyDownEvent &&
+                                  event.logicalKey ==
+                                      LogicalKeyboardKey.escape) {
+                                _hide(restoreFocus: true);
+                                return KeyEventResult.handled;
+                              }
+                              return KeyEventResult.ignored;
+                            },
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              padding: EdgeInsets.zero,
+                              itemCount: widget.items.length,
+                              itemBuilder: (_, index) {
+                                final item = widget.items[index];
+                                return _withSeparator(
+                                  index,
+                                  InkWell(
+                                    overlayColor: AppTheme.controlOverlayColor,
+                                    onTap: item.enabled
+                                        ? () => _hide(selected: item.value)
+                                        : null,
+                                    child: Container(
+                                      // A plain row's items are as tall as
+                                      // the row itself.
+                                      constraints: BoxConstraints(
+                                        minHeight: widget._pill ? 48 : 44,
+                                      ),
+                                      alignment: widget._centered
+                                          ? Alignment.center
+                                          : AlignmentDirectional.centerStart,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: widget._sidePadding,
+                                        vertical: 10,
+                                      ),
+                                      color: item.value == widget.value
+                                          ? AppTheme.selectedSurface
+                                          : null,
+                                      child: DefaultTextStyle(
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium!
+                                            .copyWith(
+                                              color: item.enabled
+                                                  ? null
+                                                  : Theme.of(context)
+                                                        .disabledColor,
+                                            ),
+                                        child: item.child,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         ),
@@ -292,8 +374,8 @@ class _AppSelectState<T> extends State<AppSelect<T>>
             row,
             Positioned(
               top: 0,
-              left: widget.horizontalPadding,
-              right: widget.horizontalPadding,
+              left: widget._sidePadding,
+              right: widget._sidePadding,
               height: 1,
               child: IgnorePointer(child: ColoredBox(color: AppColors.line)),
             ),
@@ -313,7 +395,18 @@ class _AppSelectState<T> extends State<AppSelect<T>>
           type: MaterialType.transparency,
           child: InkWell(
             focusNode: _focusNode,
-            overlayColor: AppTheme.controlOverlayColor,
+            overlayColor: widget.hoverHighlight
+                ? AppTheme.controlOverlayColor
+                : WidgetStateProperty.resolveWith(
+                    (states) =>
+                        states.contains(WidgetState.hovered) &&
+                            !states.contains(WidgetState.pressed) &&
+                            !states.contains(WidgetState.focused)
+                        ? Colors.transparent
+                        : AppTheme.controlOverlayColor.resolve(states),
+                  ),
+            // Pills tint as a pill.
+            customBorder: widget._pill ? const StadiumBorder() : null,
             borderRadius: widget.showOutline
                 ? BorderRadius.circular(AppTheme.controlRadius)
                 : widget.borderRadius,
@@ -327,20 +420,17 @@ class _AppSelectState<T> extends State<AppSelect<T>>
                   }
                 : null,
             child: Ink(
-              height: widget.height,
-              decoration: widget.showOutline
+              height: widget._pill ? 48 : widget.height,
+              decoration: widget.showOutline || widget.plain
                   ? null
                   : BoxDecoration(
                       color: AppColors.card,
                       borderRadius: widget.borderRadius,
-                      border: widget.showOutline
-                          ? Border.all(color: AppColors.lineStrong)
-                          : null,
                     ),
               child: SizedBox(
                 child: Padding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: widget.horizontalPadding,
+                    horizontal: widget._sidePadding,
                   ),
                   child: Row(
                     children: [
@@ -350,8 +440,18 @@ class _AppSelectState<T> extends State<AppSelect<T>>
                         child: DefaultTextStyle(
                           style: Theme.of(context).textTheme.titleMedium!
                               .copyWith(
+                                fontSize: widget._pill ? 16 : null,
+                                // Settings rows are regular; a pill field's
+                                // chosen value is bold.
+                                fontWeight: widget.plain
+                                    ? FontWeight.w400
+                                    : widget.pill
+                                    ? FontWeight.w600
+                                    : null,
                                 color: !_enabled
                                     ? Theme.of(context).disabledColor
+                                    : widget._pill
+                                    ? AppColors.selectValue
                                     : null,
                               ),
                           // Only centered fields are wrapped: other values
@@ -369,12 +469,17 @@ class _AppSelectState<T> extends State<AppSelect<T>>
                           ),
                         ),
                       ),
-                      // Same indicator as the Settings sections.
-                      UnfoldIcon(
-                        open: _open,
-                        color: !_enabled
-                            ? Theme.of(context).disabledColor
-                            : AppColors.muted500,
+                      // Points right, and down at the list while it is open.
+                      AnimatedRotation(
+                        turns: _open ? 0.25 : 0,
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeOutCubic,
+                        child: Icon(
+                          Icons.chevron_right_rounded,
+                          color: !_enabled
+                              ? Theme.of(context).disabledColor
+                              : AppColors.muted500,
+                        ),
                       ),
                     ],
                   ),
@@ -386,17 +491,21 @@ class _AppSelectState<T> extends State<AppSelect<T>>
       ),
     );
     // Outlined fields get the two-border style; the field itself is clear.
+    if (widget.plain) return SectionRowBleed(child: field);
     if (!widget.showOutline) return field;
     // Material draws the shape's borders over the content, so hover
     // highlights stay under them.
     return SizedBox(
-      height: widget.height,
+      height: widget._pill ? 48 : widget.height,
       child: Material(
-        color: AppColors.card,
-        shape: GlassBorder(
-          radius: AppTheme.controlRadius,
-          side: BorderSide(color: AppColors.lineStrong),
-        ),
+        color: widget.fieldColor ?? AppColors.card,
+        // A pill field is plain white, without the glass edge.
+        shape: widget._pill
+            ? const StadiumBorder()
+            : const GlassBorder(
+                radius: AppTheme.controlRadius,
+                side: BorderSide.none,
+              ),
         clipBehavior: Clip.antiAlias,
         child: field,
       ),

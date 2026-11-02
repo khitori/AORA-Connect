@@ -63,11 +63,24 @@ class GlassSurface extends StatelessWidget {
 class GlassEdgePainter extends CustomPainter {
   /// [cornerWidth] is how far the rounded ends reach in from each side;
   /// by default half the height, which fits pills and circles.
-  const GlassEdgePainter(this.shape, {this.cornerWidth, this.outline});
+  const GlassEdgePainter(
+    this.shape, {
+    this.cornerWidth,
+    this.outline,
+    this.opacity = 1,
+    this.fadeOutlineEnds = false,
+  });
 
   final OutlinedBorder shape;
   final double? cornerWidth;
   final Color? outline;
+
+  /// Fades both borders, for surfaces that animate in.
+  final double opacity;
+
+  /// Fades the [outline] out over the rounded ends like the white edge,
+  /// leaving it only on the straight top and bottom.
+  final bool fadeOutlineEnds;
   static const _width = 1.5;
   static const _outlineWidth = 1.0;
 
@@ -78,38 +91,47 @@ class GlassEdgePainter extends CustomPainter {
         ? 0.5
         : ((cornerWidth ?? size.height / 2) / size.width).clamp(0.0, 0.5);
     if (outline case final color?) {
+      final line = color.withValues(alpha: color.a * opacity);
+      final paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = _outlineWidth
+        ..color = line;
+      if (fadeOutlineEnds) paint.shader = _endFade(line, fade, bounds);
       canvas.drawPath(
         shape.getOuterPath(bounds.deflate(_outlineWidth / 2)),
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = _outlineWidth
-          ..color = color,
+        paint,
       );
       bounds = bounds.deflate(_outlineWidth);
     }
-    final edge = AppColors.glassEdge;
+    final glassEdge = AppColors.glassEdge;
+    final edge = glassEdge.withValues(alpha: glassEdge.a * opacity);
     canvas.drawPath(
       shape.getOuterPath(bounds.deflate(_width / 2)),
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = _width
-        ..shader = LinearGradient(
-          colors: [
-            edge.withValues(alpha: 0),
-            edge,
-            edge,
-            edge.withValues(alpha: 0),
-          ],
-          stops: [0, fade, 1 - fade, 1],
-        ).createShader(bounds),
+        ..shader = _endFade(edge, fade, bounds),
     );
   }
+
+  static Shader _endFade(Color color, double fade, Rect bounds) =>
+      LinearGradient(
+        colors: [
+          color.withValues(alpha: 0),
+          color,
+          color,
+          color.withValues(alpha: 0),
+        ],
+        stops: [0, fade, 1 - fade, 1],
+      ).createShader(bounds);
 
   @override
   bool shouldRepaint(GlassEdgePainter oldDelegate) =>
       oldDelegate.shape != shape ||
       oldDelegate.cornerWidth != cornerWidth ||
-      oldDelegate.outline != outline;
+      oldDelegate.outline != outline ||
+      oldDelegate.opacity != opacity ||
+      oldDelegate.fadeOutlineEnds != fadeOutlineEnds;
 }
 
 /// The navigation panel's two borders as a reusable [OutlinedBorder]: the

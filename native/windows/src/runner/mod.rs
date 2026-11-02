@@ -324,7 +324,7 @@ fn run(instance: HINSTANCE) -> Result<i32, Box<dyn std::error::Error>> {
             left: 0,
             top: 0,
             right: (420 * dpi / 96) as i32,
-            bottom: (740 * dpi / 96) as i32,
+            bottom: (800 * dpi / 96) as i32,
         };
         if AdjustWindowRectExForDpi(&mut frame, style, 0, 0, dpi) == 0 {
             return Err(io::Error::last_os_error().into());

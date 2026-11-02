@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../components/window_controls.dart';
+import '../components/app_dialog.dart';
 import '../components/app_select.dart';
 import '../components/compact_outline_icon_button.dart';
 import '../components/connection_edit_notification.dart';
+import '../components/pill_button.dart';
 import '../components/server_node_details.dart';
+import '../components/subscription_error.dart';
 import '../components/subscription_input.dart';
 import '../components/subscription_refresh_button.dart';
 import '../components/subscription_timing.dart';
@@ -15,6 +18,7 @@ import '../controllers/node_ping_controller.dart';
 import '../l10n/l10n.dart';
 import '../storage/app_settings_store.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 
 class SubscriptionsPage extends StatefulWidget {
   const SubscriptionsPage({
@@ -33,8 +37,6 @@ class SubscriptionsPage extends StatefulWidget {
 }
 
 class _SubscriptionsPageState extends State<SubscriptionsPage> {
-  late bool _addExpanded;
-
   bool _allowEdit() => allowConnectionEdit(
     context,
     widget.connection,
@@ -52,19 +54,93 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
     child: child,
   );
 
-  @override
-  void initState() {
-    super.initState();
-    _addExpanded = widget.subscriptionUrl.text.isNotEmpty;
+  /// The link field opens in a dialog. The link typed there is kept when the
+  /// dialog is closed, and the dialog closes itself once the link is added.
+  /// An error it showed goes away with it.
+  Future<void> _openAddDialog() async {
+    if (!_allowEdit()) return;
+    await showAppDialog<void>(
+      context: context,
+      builder: (dialogContext) => ListenableBuilder(
+        listenable: widget.connection,
+        builder: (dialogContext, _) {
+          final connection = widget.connection;
+          final error = connection.errorFor(ConnectionErrorScope.subscriptions);
+          final onConfirm = connection.supported && connection.canEdit
+              ? () => _addSubscription(dialogContext)
+              : null;
+          return AppDialog(
+            title: context.l10n.addSubscription,
+            subtitle: context.l10n.addSubscriptionHelp,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SubscriptionInput(
+                  controller: widget.subscriptionUrl,
+                  enabled: connection.canEdit,
+                  onLoad: onConfirm,
+                  showButtons: false,
+                ),
+                if (connection.busy) ...[
+                  const SizedBox(height: AppTheme.sectionGap),
+                  const LinearProgressIndicator(),
+                ],
+                if (error != null) ...[
+                  const SizedBox(height: AppTheme.sectionGap),
+                  // Inset like the subtext above.
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: SelectableText(
+                      describeSubscriptionError(error, context.l10n),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            stackActions: true,
+            actions: [
+              PillButton(
+                key: const ValueKey('paste-subscription'),
+                label: context.l10n.paste,
+                textColor: AppColors.paste,
+                onPressed: connection.canEdit
+                    ? () => pasteSubscriptionLink(
+                        dialogContext,
+                        widget.subscriptionUrl,
+                        canApply: () => widget.connection.canEdit,
+                      )
+                    : null,
+              ),
+              PillButton(
+                key: const ValueKey('confirm-subscription'),
+                label: context.l10n.confirm,
+                multiplyColor: AppColors.confirm,
+                textColor: AppColors.card,
+                onPressed: onConfirm,
+              ),
+              PillButton(
+                label: context.l10n.cancel,
+                onPressed: () => Navigator.pop(dialogContext),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    widget.connection.clearError(ConnectionErrorScope.subscriptions);
   }
 
-  Future<void> _addSubscription() async {
+  Future<void> _addSubscription(BuildContext dialogContext) async {
     if (!_allowEdit()) return;
     final url = widget.subscriptionUrl.text.trim();
     await widget.connection.addSubscription(url);
-    if (!mounted || widget.connection.error != null) return;
+    if (!dialogContext.mounted || widget.connection.error != null) return;
     widget.subscriptionUrl.clear();
-    setState(() => _addExpanded = false);
+    Navigator.pop(dialogContext);
   }
 
   @override
@@ -83,76 +159,46 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Text(
+                  context.l10n.newSubscription,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: AppTheme.sectionLabelGap),
+                // The same plain white 48 px pill as the subscription select.
                 SizedBox(
-                  height: 36,
+                  height: 48,
                   child: OutlinedButton(
                     key: const ValueKey('add-subscription-toggle'),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppTheme.sectionPadding,
+                      ),
+                      shape: const StadiumBorder(),
                     ),
-                    onPressed: () {
-                      if (_addExpanded || _allowEdit()) {
-                        setState(() => _addExpanded = !_addExpanded);
-                      }
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          _addExpanded
-                              ? Icons.remove_rounded
-                              : Icons.add_rounded,
-                        ),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              context.l10n.addSubscription,
-                              maxLines: 1,
-                            ),
-                          ),
-                        ),
-                      ],
+                    onPressed: _openAddDialog,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(context.l10n.addSubscription, maxLines: 1),
                     ),
                   ),
-                ),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeInOut,
-                  alignment: Alignment.topCenter,
-                  child: _addExpanded
-                      ? Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: _editControl(
-                            SubscriptionInput(
-                              controller: widget.subscriptionUrl,
-                              enabled: connection.canEdit,
-                              onLoad: connection.supported && connection.canEdit
-                                  ? _addSubscription
-                                  : null,
-                            ),
-                          ),
-                        )
-                      : const SizedBox.shrink(),
                 ),
                 const SizedBox(height: 24),
                 Text(
                   context.l10n.savedSubscriptions,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppTheme.sectionLabelGap),
                 if (subscriptions.isEmpty)
                   Text(context.l10n.noSubscriptions)
                 else
                   _SavedSubscriptionSelector(connection: connection),
                 if (profiles.isNotEmpty) ...[
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   Text(
                     context.l10n.activeSubscriptionNodes,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppTheme.sectionLabelGap),
                 ],
               ],
             ),
@@ -167,22 +213,19 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
                 final profile = profiles[index];
                 final selected = identical(profile, connection.selected);
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(bottom: 12),
                   child: Material(
                     color: AppColors.card,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                        color: selected
-                            ? AppColors.accent.withValues(alpha: 0.55)
-                            : AppColors.lineStrong,
+                      borderRadius: BorderRadius.circular(
+                        AppTheme.sectionRowRadius,
                       ),
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: _editControl(
                       ListTile(
                         contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
+                          horizontal: AppTheme.contentPadding,
                           vertical: 4,
                         ),
                         title: ServerNodeDetails(
@@ -218,14 +261,17 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (connection.busy) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   const LinearProgressIndicator(),
                 ],
                 if (subscriptionError != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 12),
                     child: SelectableText(
-                      subscriptionError,
+                      describeSubscriptionError(
+                        subscriptionError,
+                        context.l10n,
+                      ),
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.error,
                       ),
@@ -287,6 +333,7 @@ class _SavedSubscriptionSelector extends StatelessWidget {
         _editControl(
           context,
           AppSelect<String>(
+            pill: true,
             onBeforeOpen: () => _allowEdit(context),
             key: const ValueKey('saved-subscription-select'),
             value: activeUrl,
@@ -314,7 +361,7 @@ class _SavedSubscriptionSelector extends StatelessWidget {
                 : null,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
@@ -350,7 +397,7 @@ class _SavedSubscriptionSelector extends StatelessWidget {
         ),
         if (active != null)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: 12),
             child: SubscriptionTiming(
               updatedAt: active.updatedAt,
               expiresAt: active.expiresAt,
@@ -358,12 +405,15 @@ class _SavedSubscriptionSelector extends StatelessWidget {
           ),
         if (details?.description != null)
           Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: 12),
             child: Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTheme.contentPadding,
+                vertical: 18,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.card,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppTheme.sectionRowRadius),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -385,7 +435,7 @@ class _SavedSubscriptionSelector extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
                     details!.description!,
                     style: Theme.of(context).textTheme.bodySmall,

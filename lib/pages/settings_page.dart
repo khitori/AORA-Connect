@@ -12,6 +12,8 @@ import '../components/connection_controls.dart';
 import '../components/connection_edit_notification.dart';
 import '../components/core_logs.dart';
 import '../components/language_settings.dart';
+import '../components/section_row_bleed.dart';
+import '../components/settings_label.dart';
 import '../components/statistics_panel.dart';
 import '../components/updates_panel.dart';
 import '../components/windows_startup_settings.dart';
@@ -130,15 +132,13 @@ class SettingsPage extends StatelessWidget {
         subtitle: connection.core.displayName,
         icon: Icons.memory_rounded,
         children: [
-          Text(
-            context.l10n.networkingCore,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
+          SettingsLabel(context.l10n.networkingCore),
+          const SizedBox(height: AppTheme.sectionLabelGap),
           _editControl(
             context,
             context.l10n.changingCore,
             AppSelect<CoreKind>(
+              plain: true,
               onBeforeOpen: () =>
                   _allowEdit(context, context.l10n.changingCore),
               value: connection.core,
@@ -160,11 +160,9 @@ class SettingsPage extends StatelessWidget {
                   : null,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(context.l10n.coreHelp),
           if (connection.selectedRequiresDifferentCore)
             Padding(
-              padding: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.only(top: AppTheme.sectionGap),
               child: Text(
                 context.l10n.selectedRequiresCore(
                   isolateTechnicalValue(
@@ -186,15 +184,13 @@ class SettingsPage extends StatelessWidget {
             : context.l10n.localProxy,
         icon: Icons.lan_rounded,
         children: [
-          Text(
-            context.l10n.connectionMode,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
+          SettingsLabel(context.l10n.connectionMode),
+          const SizedBox(height: AppTheme.sectionLabelGap),
           _editControl(
             context,
             context.l10n.changingMode,
             AppSelect<ConnectionMode>(
+              plain: true,
               onBeforeOpen: () =>
                   _allowEdit(context, context.l10n.changingMode),
               value: connection.mode,
@@ -219,58 +215,62 @@ class SettingsPage extends StatelessWidget {
                   : null,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppTheme.sectionGap),
           Text(context.l10n.connectionModeHelp),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppTheme.sectionGap),
           _editControl(
             context,
             context.l10n.changingKillSwitch,
-            Material(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(AppTheme.controlRadius),
-              clipBehavior: Clip.antiAlias,
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.controlRadius),
-                ),
-                hoverColor: AppColors.ink.withValues(alpha: 0.06),
-                title: Text(context.l10n.killSwitch),
-                subtitle: Text(
-                  connection.mode == ConnectionMode.tun
-                      ? context.l10n.killSwitchHelp
-                      : context.l10n.availableTun,
-                ),
-                onTap: connection.canEdit && connection.killSwitchAvailable
-                    ? () {
-                        if (!_allowEdit(
-                          context,
-                          context.l10n.changingKillSwitch,
-                        )) {
-                          return;
-                        }
-                        connection.setKillSwitchEnabled(
-                          !connection.killSwitchEnabled,
-                        );
-                      }
-                    : null,
-                trailing: AppToggle(
-                  semanticLabel: context.l10n.killSwitch,
-                  value: connection.killSwitchEnabled,
-                  onChanged:
-                      connection.canEdit && connection.killSwitchAvailable
-                      ? (enabled) {
-                          if (_allowEdit(
+            SectionRowBleed(
+              child: Material(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(AppTheme.sectionRowRadius),
+                clipBehavior: Clip.antiAlias,
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppTheme.sectionPadding,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                      AppTheme.sectionRowRadius,
+                    ),
+                  ),
+                  hoverColor: AppColors.ink.withValues(alpha: 0.06),
+                  title: Text(context.l10n.killSwitch),
+                  subtitle: Text(
+                    connection.mode == ConnectionMode.tun
+                        ? context.l10n.killSwitchHelp
+                        : context.l10n.availableTun,
+                  ),
+                  onTap: connection.canEdit && connection.killSwitchAvailable
+                      ? () {
+                          if (!_allowEdit(
                             context,
                             context.l10n.changingKillSwitch,
                           )) {
-                            connection.setKillSwitchEnabled(enabled);
+                            return;
                           }
+                          connection.setKillSwitchEnabled(
+                            !connection.killSwitchEnabled,
+                          );
                         }
                       : null,
+                  trailing: AppToggle(
+                    semanticLabel: context.l10n.killSwitch,
+                    value: connection.killSwitchEnabled,
+                    onChanged:
+                        connection.canEdit && connection.killSwitchAvailable
+                        ? (enabled) {
+                            if (_allowEdit(
+                              context,
+                              context.l10n.changingKillSwitch,
+                            )) {
+                              connection.setKillSwitchEnabled(enabled);
+                            }
+                          }
+                        : null,
+                  ),
                 ),
               ),
             ),
@@ -287,7 +287,7 @@ class SettingsPage extends StatelessWidget {
           icon: Icons.dashboard_customize_rounded,
           children: [
             Text(context.l10n.quickSettingsHelp),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTheme.sectionGap),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
@@ -305,15 +305,13 @@ class SettingsPage extends StatelessWidget {
         subtitle: connection.dnsProvider.label,
         icon: Icons.dns_rounded,
         children: [
-          Text(
-            context.l10n.dnsServer,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
+          SettingsLabel(context.l10n.dnsServer),
+          const SizedBox(height: AppTheme.sectionLabelGap),
           _editControl(
             context,
             context.l10n.changingDns,
             AppSelect<DnsProvider>(
+              plain: true,
               onBeforeOpen: () => _allowEdit(context, context.l10n.changingDns),
               value: connection.dnsProvider,
               items: [
@@ -333,7 +331,7 @@ class SettingsPage extends StatelessWidget {
                   : null,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppTheme.sectionGap),
           Text(context.l10n.dnsHelp),
         ],
       ),
@@ -344,12 +342,10 @@ class SettingsPage extends StatelessWidget {
         subtitle: connection.pingType.localizedLabel(context.l10n),
         icon: Icons.network_check_rounded,
         children: [
-          Text(
-            context.l10n.serverPingMethod,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
+          SettingsLabel(context.l10n.serverPingMethod),
+          const SizedBox(height: AppTheme.sectionLabelGap),
           AppSelect<PingType>(
+            plain: true,
             value: connection.pingType,
             items: [
               for (final type in PingType.values)
@@ -364,7 +360,7 @@ class SettingsPage extends StatelessWidget {
                     if (type != null) connection.setPingType(type);
                   },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppTheme.sectionGap),
           Text(context.l10n.serverChecksHelp),
         ],
       ),
@@ -385,23 +381,16 @@ class SettingsPage extends StatelessWidget {
         subtitle: context.l10n.diagnosticsSubtitle,
         icon: Icons.tune_rounded,
         children: [
+          SettingsLabel(context.l10n.diagnosticToolsLabel),
+          const SizedBox(height: AppTheme.sectionLabelGap),
           ConnectionControls(
             onValidate: connection.canValidate ? connection.validate : null,
             onTest: connection.canTest ? connection.testConnection : null,
             onCopy: () => _copyDiagnostics(context),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Icon(Icons.terminal_rounded, size: 18, color: AppColors.muted500),
-              const SizedBox(width: 8),
-              Text(
-                context.l10n.coreLogs,
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppTheme.sectionGap),
+          SettingsLabel(context.l10n.coreLogs),
+          const SizedBox(height: AppTheme.sectionLabelGap),
           CoreLogs(lines: connection.logs),
         ],
       ),
@@ -424,11 +413,11 @@ class SettingsPage extends StatelessWidget {
             'AORA Connect',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppTheme.sectionGap),
           Text(context.l10n.aboutClient),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppTheme.sectionGap),
           Text(context.l10n.license),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppTheme.sectionGap),
           Text(context.l10n.coresLicense),
         ],
       ),

@@ -790,4 +790,68 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get checkSelectedServer => 'Probar el servidor seleccionado';
+
+  @override
+  String get startupBehaviorLabel => 'Comportamiento';
+
+  @override
+  String get latencyLabel => 'Latencia';
+
+  @override
+  String get diagnosticToolsLabel => 'Herramientas';
+
+  @override
+  String get newSubscription => 'Suscripción';
+
+  @override
+  String get confirm => 'Confirmar';
+
+  @override
+  String get paste => 'Pegar';
+
+  @override
+  String get addSubscriptionHelp =>
+      'Pega el enlace de tu proveedor de VPN para cargar sus servidores.';
+
+  @override
+  String get link => 'Enlace';
+
+  @override
+  String get subscriptionErrorInvalidLink =>
+      'Esto no es un enlace de suscripción. Copia el enlace completo que empieza por https://.';
+
+  @override
+  String subscriptionErrorHttp(String code) {
+    return 'El servidor no devolvió la suscripción (error $code). Revisa el enlace y que tu suscripción esté activa.';
+  }
+
+  @override
+  String get subscriptionErrorEmpty =>
+      'La suscripción no tiene servidores. Puede haber caducado o el acceso está bloqueado.';
+
+  @override
+  String get subscriptionErrorUnsupported =>
+      'La suscripción no tiene servidores compatibles con esta aplicación.';
+
+  @override
+  String get subscriptionErrorNetwork =>
+      'No se pudo contactar con el servidor. Revisa tu conexión a internet e inténtalo de nuevo.';
+
+  @override
+  String get subscriptionErrorTooLarge =>
+      'La suscripción es demasiado grande para cargarla.';
+
+  @override
+  String get minimizeApp => 'Minimizar';
+
+  @override
+  String get routingRuleHelp =>
+      'Elige qué comprueba la regla y luego escribe la aplicación, el dominio o la dirección.';
+
+  @override
+  String get pickApplicationLabel => 'O elige una aplicación';
+
+  @override
+  String get pickApplicationHelp =>
+      'Elige la aplicación a la que se aplicará esta regla.';
 }

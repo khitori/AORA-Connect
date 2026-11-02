@@ -5,7 +5,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
-import '../theme/app_theme.dart';
+import 'app_dialog.dart';
+import 'application_picker_dialog.dart';
 
 Future<List<String>> loadRunningApplications() async {
   final ProcessResult result;
@@ -49,95 +50,13 @@ Future<List<String>> loadRunningApplications() async {
 }
 
 Future<String?> showRunningApplicationPicker(BuildContext context) =>
-    showDialog<String>(
+    showAppDialog<String>(
       context: context,
-      builder: (_) => const _RunningApplicationPicker(),
+      builder: (context) => ApplicationPickerDialog<String>(
+        title: context.l10n.runningApplications,
+        load: loadRunningApplications,
+        label: (name) => name,
+        result: (name) => name,
+        loadFailed: context.l10n.runningLoadFailed,
+      ),
     );
-
-class _RunningApplicationPicker extends StatefulWidget {
-  const _RunningApplicationPicker();
-
-  @override
-  State<_RunningApplicationPicker> createState() =>
-      _RunningApplicationPickerState();
-}
-
-class _RunningApplicationPickerState extends State<_RunningApplicationPicker> {
-  late Future<List<String>> applications = loadRunningApplications();
-  String query = '';
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(context.l10n.runningApplications),
-    content: SizedBox(
-      width: 320,
-      height: 360,
-      child: Column(
-        children: [
-          TextField(
-            decoration: InputDecoration(
-              hintText: context.l10n.searchApplications,
-              prefixIcon: Icon(Icons.search_rounded, size: 20),
-              prefixIconConstraints: BoxConstraints(
-                minWidth: 40,
-                minHeight: 36,
-              ),
-            ),
-            onChanged: (value) => setState(() => query = value.toLowerCase()),
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: FutureBuilder<List<String>>(
-              future: applications,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Center(child: Text(context.l10n.runningLoadFailed));
-                }
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final visible = snapshot.data!
-                    .where((name) => name.toLowerCase().contains(query))
-                    .toList();
-                if (visible.isEmpty) {
-                  return Center(
-                    child: Text(context.l10n.noMatchingApplications),
-                  );
-                }
-                return ListView.builder(
-                  itemCount: visible.length,
-                  itemBuilder: (context, index) => Material(
-                    type: MaterialType.transparency,
-                    borderRadius: BorderRadius.circular(AppTheme.controlRadius),
-                    clipBehavior: Clip.antiAlias,
-                    child: ListTile(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.controlRadius,
-                        ),
-                      ),
-                      leading: const Icon(Icons.apps_rounded),
-                      title: Text(visible[index]),
-                      onTap: () => Navigator.pop(context, visible[index]),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () =>
-            setState(() => applications = loadRunningApplications()),
-        child: Text(context.l10n.refresh),
-      ),
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: Text(context.l10n.cancel),
-      ),
-    ],
-  );
-}

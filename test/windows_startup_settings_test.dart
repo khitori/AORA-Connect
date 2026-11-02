@@ -89,7 +89,7 @@ void main() {
       expect(saved['startMinimized'], isTrue);
       expect(
         find.text('Opening the app does not connect the VPN automatically.'),
-        findsOneWidget,
+        findsNothing,
       );
       await tester.pumpWidget(const SizedBox.shrink());
       final restored = WindowsStartupController(

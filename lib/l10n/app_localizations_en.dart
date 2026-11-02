@@ -778,4 +778,67 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get checkSelectedServer => 'Check selected server';
+
+  @override
+  String get startupBehaviorLabel => 'Behavior';
+
+  @override
+  String get latencyLabel => 'Latency';
+
+  @override
+  String get diagnosticToolsLabel => 'Tools';
+
+  @override
+  String get newSubscription => 'Subscription';
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
+  String get paste => 'Paste';
+
+  @override
+  String get addSubscriptionHelp =>
+      'Paste the link from your VPN provider to load its servers.';
+
+  @override
+  String get link => 'Link';
+
+  @override
+  String get subscriptionErrorInvalidLink =>
+      'This isn\'t a subscription link. Copy the full link that starts with https://.';
+
+  @override
+  String subscriptionErrorHttp(String code) {
+    return 'The server didn\'t return the subscription (error $code). Check the link and that your subscription is active.';
+  }
+
+  @override
+  String get subscriptionErrorEmpty =>
+      'The subscription has no servers. It may have expired, or access is blocked.';
+
+  @override
+  String get subscriptionErrorUnsupported =>
+      'The subscription has no servers this app supports.';
+
+  @override
+  String get subscriptionErrorNetwork =>
+      'Couldn\'t reach the server. Check your internet connection and try again.';
+
+  @override
+  String get subscriptionErrorTooLarge =>
+      'The subscription is too large to load.';
+
+  @override
+  String get minimizeApp => 'Minimize';
+
+  @override
+  String get routingRuleHelp =>
+      'Choose what the rule looks at, then enter the app, domain or address.';
+
+  @override
+  String get pickApplicationLabel => 'Or pick an app';
+
+  @override
+  String get pickApplicationHelp => 'Pick the app this rule should apply to.';
 }

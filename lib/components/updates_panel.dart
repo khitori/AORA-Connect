@@ -53,7 +53,7 @@ class UpdatesPanel extends StatelessWidget {
       AppNotification.show(context, context.l10n.disconnectInstall);
       return;
     }
-    final approved = await showDialog<bool>(
+    final approved = await showAppDialog<bool>(
       context: context,
       builder: (context) => AppDialog(
         title: context.l10n.installVersion(
@@ -130,20 +130,20 @@ class UpdatesPanel extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppTheme.sectionGap),
           Text(updates.localizedStatus(context.l10n)),
           if (updates.busy) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTheme.sectionGap),
             LinearProgressIndicator(value: updates.progress),
           ],
           if (updates.error != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTheme.sectionGap),
             Text(
               updates.error!,
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: AppTheme.sectionGap),
           Row(
             children: [
               Expanded(
@@ -154,7 +154,7 @@ class UpdatesPanel extends StatelessWidget {
                   onPressed: disabled ? null : updates.check,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppTheme.sectionButtonGap),
               Expanded(
                 child: AppActionButton(
                   key: const ValueKey('update-from-file'),
@@ -166,7 +166,7 @@ class UpdatesPanel extends StatelessWidget {
             ],
           ),
           if (updates.release != null && updates.package == null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTheme.sectionButtonGap),
             SizedBox(
               width: double.infinity,
               child: AppActionButton(
@@ -177,7 +177,7 @@ class UpdatesPanel extends StatelessWidget {
             ),
           ],
           if (updates.package != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTheme.sectionButtonGap),
             SizedBox(
               width: double.infinity,
               child: AppActionButton(
@@ -189,7 +189,7 @@ class UpdatesPanel extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 8),
+          const SizedBox(height: AppTheme.sectionButtonGap),
           SizedBox(
             width: double.infinity,
             child: AppActionButton(
@@ -201,7 +201,7 @@ class UpdatesPanel extends StatelessWidget {
               icon: Icons.language_rounded,
               onPressed: disabled
                   ? null
-                  : () => showDialog<void>(
+                  : () => showAppDialog<void>(
                       context: context,
                       builder: (_) => UpdateSourcesDialog(updates: updates),
                     ),
