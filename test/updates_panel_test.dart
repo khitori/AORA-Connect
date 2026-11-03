@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aoravpn/components/updates_panel.dart';
-import 'package:aoravpn/components/app_action_button.dart';
+import 'package:aoravpn/components/pill_button.dart';
 import 'package:aoravpn/components/app_dialog.dart';
 import 'package:aoravpn/components/app_toggle.dart';
 import 'package:aoravpn/controllers/connection_controller.dart';
@@ -158,37 +158,50 @@ void main() {
       tester,
     ) async {
       await _mount(tester, width: width);
-      final check = tester.getRect(find.byKey(const ValueKey('check-updates')));
+      // Toggle row, then the status card, then one full-width main action
+      // with From file and Sources each on its own line under it.
+      final status = tester.getRect(
+        find.byKey(const ValueKey('update-status')),
+      );
+      final main = tester.getRect(find.byKey(const ValueKey('check-updates')));
       final fromFile = tester.getRect(
         find.byKey(const ValueKey('update-from-file')),
       );
-      expect(check.width, fromFile.width);
-      expect(check.top, fromFile.top);
-      expect(fromFile.left - check.right, AppTheme.sectionButtonGap);
-      expect(check.height, AppTheme.controlHeight);
-      expect(tester.getSize(find.byType(AppToggle)), const Size(48, 36));
-      expect(
-        tester.getSize(find.byType(AnimatedContainer)),
-        const Size(44, 26),
+      final sources = tester.getRect(
+        find.byKey(const ValueKey('update-sources')),
       );
-      final separator = tester.getRect(find.byType(Divider));
-      final track = tester.getRect(find.byType(AnimatedContainer));
-      expect(track.top - separator.bottom, AppTheme.sectionContentTopPadding);
+      expect(
+        tester.getRect(find.byType(AppToggle)).bottom,
+        lessThan(status.top),
+      );
+      expect(main.top - status.bottom, AppTheme.sectionGap);
+      expect(main.left, status.left);
+      expect(main.right, status.right);
+      expect(main.height, 48);
+      expect(fromFile.top - main.bottom, AppTheme.sectionButtonGap);
+      expect(sources.top - fromFile.bottom, AppTheme.sectionButtonGap);
+      for (final pill in [fromFile, sources]) {
+        expect(pill.left, main.left);
+        expect(pill.right, main.right);
+      }
+      expect(fromFile.height, 48);
       expect(tester.takeException(), isNull);
       await _openSources(tester);
+      // The glass dialog's pill column: blue Save above Cancel.
       final cancel = find.ancestor(
         of: find.text('Cancel'),
-        matching: find.byType(AppActionButton),
+        matching: find.byType(PillButton),
       );
       final save = find.ancestor(
         of: find.text('Save'),
-        matching: find.byType(AppActionButton),
+        matching: find.byType(PillButton),
       );
       final cancelRect = tester.getRect(cancel);
       final saveRect = tester.getRect(save);
+      expect(tester.widget<PillButton>(save).multiplyColor, isNotNull);
       expect(cancelRect.width, saveRect.width);
-      expect(saveRect.left - cancelRect.right, AppTheme.sectionButtonGap);
-      expect(cancelRect.top, saveRect.top);
+      expect(cancelRect.left, saveRect.left);
+      expect(cancelRect.top - saveRect.bottom, AppTheme.sectionButtonGap);
       expect(tester.takeException(), isNull);
       await tester.tap(find.text('Cancel'));
       await _expectClosed(tester);

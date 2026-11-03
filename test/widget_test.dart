@@ -239,6 +239,8 @@ void main() {
       const Offset(0, -180),
     );
     await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Rule actions'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Edit rule'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), 'firefox.exe');
@@ -252,7 +254,7 @@ void main() {
     await engine.messages.close();
   });
 
-  testWidgets('Statistics and Diagnostics expand on compact desktop layout', (
+  testWidgets('Diagnostics expands on compact layout; Statistics is hidden', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(360, 640);
@@ -261,31 +263,12 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     final engine = FakeEngine();
     await tester.pumpWidget(MyApp(engine: engine));
-    expect(find.text('Statistics'), findsNothing);
     await _openSettings(tester);
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('Statistics'), 200);
-    await Scrollable.ensureVisible(
-      tester.element(find.text('Statistics')),
-      alignment: 0,
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Off'), findsOneWidget);
-    final titleRect = tester.getRect(find.text('Statistics'));
-    final statusRect = tester.getRect(find.text('Off'));
-    expect(statusRect.top - titleRect.bottom, lessThanOrEqualTo(4));
-    expect(
-      tester.getCenter(find.byKey(const ValueKey('statistics-toggle'))).dy,
-      closeTo((titleRect.top + statusRect.bottom) / 2, 1),
-    );
-    await tester.tap(find.text('Statistics'));
-    await tester.pumpAndSettle();
-    expect(find.text('Statistics is off.'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('statistics-toggle')));
-    await tester.pumpAndSettle();
-    expect(find.text('Ping once'), findsNothing);
-    expect(find.text('Connect to collect live ICMP samples.'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('Diagnostics'), 200);
+    // The Statistics section is no longer part of Settings.
+    expect(find.text('Statistics'), findsNothing);
+    expect(find.byKey(const ValueKey('statistics-toggle')), findsNothing);
     await Scrollable.ensureVisible(
       tester.element(find.text('Diagnostics')),
       alignment: 0,

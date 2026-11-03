@@ -12,7 +12,6 @@ import 'components/floating_bottom_navigation.dart';
 import 'components/window_controls.dart';
 import 'controllers/connection_controller.dart';
 import 'controllers/node_ping_controller.dart';
-import 'controllers/statistics_controller.dart';
 import 'controllers/windows_startup_controller.dart';
 import 'core/desktop_window.dart';
 import 'core/tunnel_engine.dart';
@@ -99,7 +98,6 @@ class _AppShell extends StatefulWidget {
 
 class _AppShellState extends State<_AppShell> {
   late final ConnectionController _connection;
-  late final StatisticsController _statistics;
   late final NodePingController _pings;
   late final AppLifecycleListener _lifecycle;
   final _window = DesktopWindow();
@@ -137,7 +135,6 @@ class _AppShellState extends State<_AppShell> {
           widget.settingsStore ??
           (widget.engine == null ? createAppSettingsStore() : null),
     );
-    _statistics = StatisticsController(_connection);
     _pings = NodePingController(_connection);
     if (widget.engine == null && Platform.isWindows) {
       _startup = WindowsStartupController();
@@ -273,7 +270,6 @@ class _AppShellState extends State<_AppShell> {
     _window.dispose();
     _lifecycle.dispose();
     _subscriptionUrl.dispose();
-    _statistics.dispose();
     _pings.dispose();
     _connection.dispose();
     super.dispose();
@@ -363,7 +359,6 @@ class _AppShellState extends State<_AppShell> {
               ),
               _AppPage.settings => SettingsPage(
                 connection: _connection,
-                statistics: _statistics,
                 updates: _updates,
                 startup: _startup,
                 onInstallUpdate: _updates == null ? null : _installUpdate,

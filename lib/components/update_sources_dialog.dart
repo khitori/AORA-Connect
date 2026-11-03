@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
 import '../l10n/localized_exception.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 import '../updates/update_controller.dart';
-import 'app_action_button.dart';
 import 'app_dialog.dart';
+import 'pill_button.dart';
+import 'pill_field.dart';
 
 class UpdateSourcesDialog extends StatefulWidget {
   const UpdateSourcesDialog({super.key, required this.updates});
@@ -52,47 +55,74 @@ class _UpdateSourcesDialogState extends State<UpdateSourcesDialog> {
     }
   }
 
+  // The glass dialog style of Add subscription: the help as subtext, the
+  // links in a gray rounded box (several lines, so not a pill), an error
+  // under it, and Save in blue above Cancel.
   @override
   Widget build(BuildContext context) => PopScope(
     canPop: !_saving,
     child: AppDialog(
       title: context.l10n.updateSources,
+      subtitle: context.l10n.updateSourcesHelp,
+      stackActions: true,
       content: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(context.l10n.updateSourcesHelp),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _input,
-            textDirection: TextDirection.ltr,
-            minLines: 2,
-            maxLines: 4,
-            enabled: !_saving,
-            onChanged: (_) {
-              if (_error != null) setState(() => _error = null);
-            },
-            decoration: InputDecoration(
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: AppColors.glassControl,
+              borderRadius: BorderRadius.circular(AppTheme.sectionRowRadius),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTheme.sectionPadding,
+                vertical: 14,
               ),
-              hintText: context.l10n.metadataUrlPerLine,
-              errorText: _error,
-              errorMaxLines: 3,
+              child: TextField(
+                controller: _input,
+                textDirection: TextDirection.ltr,
+                minLines: 3,
+                maxLines: 5,
+                enabled: !_saving,
+                onChanged: (_) {
+                  if (_error != null) setState(() => _error = null);
+                },
+                style: Theme.of(context).textTheme.bodyMedium,
+                decoration:
+                    pillFieldDecoration(
+                      context,
+                      hintText: context.l10n.metadataUrlPerLine,
+                    ).copyWith(
+                      hintStyle: Theme.of(context).textTheme.bodyMedium
+                          ?.copyWith(color: AppColors.muted300),
+                    ),
+              ),
             ),
           ),
+          // Under the box, inset like the subtext.
+          if (_error case final error?) ...[
+            const SizedBox(height: AppTheme.sectionLabelGap),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                error,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+          ],
         ],
       ),
       actions: [
-        AppActionButton(
+        PillButton(
+          label: _saving ? context.l10n.saving : context.l10n.save,
+          multiplyColor: AppColors.confirm,
+          textColor: AppColors.card,
+          onPressed: _saving ? null : _save,
+        ),
+        PillButton(
           label: context.l10n.cancel,
           onPressed: _saving ? null : () => Navigator.of(context).pop(),
-        ),
-        AppActionButton(
-          label: _saving ? context.l10n.saving : context.l10n.save,
-          onPressed: _saving ? null : _save,
         ),
       ],
     ),

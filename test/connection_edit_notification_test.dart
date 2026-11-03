@@ -13,7 +13,6 @@ import 'package:aoravpn/components/app_toggle.dart';
 import 'package:aoravpn/components/routing_rule_card.dart';
 import 'package:aoravpn/controllers/connection_controller.dart';
 import 'package:aoravpn/controllers/node_ping_controller.dart';
-import 'package:aoravpn/controllers/statistics_controller.dart';
 import 'package:aoravpn/core/connection_mode.dart';
 import 'package:aoravpn/core/core_kind.dart';
 import 'package:aoravpn/core/dns_provider.dart';
@@ -57,7 +56,6 @@ class _Engine implements TunnelEngine {
 void main() {
   late _Engine engine;
   late ConnectionController connection;
-  late StatisticsController statistics;
   late NodePingController pings;
   late TextEditingController input;
   var loads = 0;
@@ -91,13 +89,11 @@ void main() {
         );
       },
     );
-    statistics = StatisticsController(connection);
     pings = NodePingController(connection);
     input = TextEditingController();
   });
   tearDown(() async {
     pings.dispose();
-    statistics.dispose();
     await connection.shutdown();
     connection.dispose();
     input.dispose();
@@ -276,37 +272,31 @@ void main() {
             .onChanged,
         isNull,
       );
-      expect(
-        tester
-            .widget<TextButton>(
-              find.descendant(
-                of: firstCard,
-                matching: find.widgetWithText(TextButton, 'Edit'),
-              ),
-            )
-            .onPressed,
-        isNull,
-      );
       await tap(
         tester,
         find.descendant(of: firstCard, matching: toggle('Enable one.example')),
         message,
       );
-      await tap(
-        tester,
-        find.descendant(of: firstCard, matching: find.byTooltip('Move down')),
-        message,
+      // The card's actions open in a bubble from its settings button; while
+      // connected they are disabled and notify instead.
+      await tester.tap(
+        find.descendant(
+          of: firstCard,
+          matching: find.byTooltip('Rule actions'),
+        ),
       );
-      await tap(
-        tester,
-        find.descendant(of: firstCard, matching: find.text('Edit')),
-        message,
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<IconButton>(
+              find.widgetWithIcon(IconButton, Icons.edit_rounded),
+            )
+            .onPressed,
+        isNull,
       );
-      await tap(
-        tester,
-        find.descendant(of: firstCard, matching: find.byTooltip('Delete rule')),
-        message,
-      );
+      await tap(tester, find.byTooltip('Move down'), message);
+      await tap(tester, find.byTooltip('Edit rule'), message);
+      await tap(tester, find.byTooltip('Delete rule'), message);
       expect(connection.routingPolicy.toJson(), original);
       expect(connection.busy, isFalse);
       expect(connection.error, isNull);
@@ -318,10 +308,7 @@ void main() {
     'settings stay disabled and notify without changing core, mode, DNS or Kill Switch',
     (tester) async {
       engine.change(TunnelState.running);
-      await mount(
-        tester,
-        () => SettingsPage(connection: connection, statistics: statistics),
-      );
+      await mount(tester, () => SettingsPage(connection: connection));
       expect(
         find.text('Stop the connection before changing core, mode or DNS.'),
         findsNothing,
@@ -510,10 +497,7 @@ void main() {
   testWidgets(
     'a dropdown opened before connection cannot apply a stale choice',
     (tester) async {
-      await mount(
-        tester,
-        () => SettingsPage(connection: connection, statistics: statistics),
-      );
+      await mount(tester, () => SettingsPage(connection: connection));
       await tester.tap(find.text('DNS'));
       await tester.pumpAndSettle();
       await tester.tap(find.byType(AppSelect<DnsProvider>));

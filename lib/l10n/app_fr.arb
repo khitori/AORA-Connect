@@ -133,7 +133,7 @@
   "checkServers": "Test des serveurs",
   "cancelChecks": "Annuler les tests des serveurs",
   "serverCheck": "Test de serveur via {p0}",
-  "applicationsAddresses": "Applications et adresses",
+  "applicationsAddresses": "Tunnel intelligent",
   "routeListedItems": "Acheminer les applications et adresses de la liste",
   "listedThroughTunnel": "Les éléments de la liste passent par le tunnel. Le reste utilise votre connexion habituelle.",
   "listedBypassTunnel": "Les éléments de la liste utilisent votre connexion habituelle. Le reste passe par le tunnel.",
@@ -242,5 +242,15 @@
   "minimizeApp": "Réduire",
   "routingRuleHelp": "Choisissez ce que la règle vérifie, puis saisissez l’application, le domaine ou l’adresse.",
   "pickApplicationLabel": "Ou choisissez une application",
-  "pickApplicationHelp": "Choisissez l’application à laquelle cette règle s’applique."
+  "pickApplicationHelp": "Choisissez l’application à laquelle cette règle s’applique.",
+  "serverNeedsCore": "Ce serveur nécessite {core}.",
+  "useCore": "Utiliser {core}",
+  "switchCore": "Changer",
+  "ruleActions": "Actions de la règle",
+  "copy": "Copier",
+  "logsCopied": "Journaux copiés.",
+  "coreLogsHelp": "Messages récents du cœur réseau.",
+  "automaticUpdatesHelp": "Rechercher une nouvelle version à chaque démarrage de l’application.",
+  "checkForUpdates": "Rechercher des mises à jour",
+  "retry": "Réessayer"
 }

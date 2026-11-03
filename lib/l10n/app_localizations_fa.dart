@@ -456,7 +456,7 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
-  String get applicationsAddresses => 'برنامه‌ها و نشانی‌ها';
+  String get applicationsAddresses => 'تونل هوشمند';
 
   @override
   String get routeListedItems => 'مسیریابی برنامه‌ها و نشانی‌های فهرست‌شده';
@@ -848,4 +848,39 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get pickApplicationHelp =>
       'برنامه‌ای را که این قانون باید روی آن اعمال شود انتخاب کنید.';
+
+  @override
+  String serverNeedsCore(String core) {
+    return 'این سرور به $core نیاز دارد.';
+  }
+
+  @override
+  String useCore(String core) {
+    return 'استفاده از $core';
+  }
+
+  @override
+  String get switchCore => 'تغییر';
+
+  @override
+  String get ruleActions => 'عملیات قانون';
+
+  @override
+  String get copy => 'کپی';
+
+  @override
+  String get logsCopied => 'گزارش‌ها کپی شد.';
+
+  @override
+  String get coreLogsHelp => 'پیام‌های اخیر هستهٔ شبکه.';
+
+  @override
+  String get automaticUpdatesHelp =>
+      'هر بار که برنامه شروع می‌شود، نسخهٔ جدید را جست‌وجو کن.';
+
+  @override
+  String get checkForUpdates => 'بررسی به‌روزرسانی';
+
+  @override
+  String get retry => 'تلاش دوباره';
 }

@@ -98,7 +98,7 @@ void main() {
       const AppSettingsData(
         core: CoreKind.xray,
         mode: ConnectionMode.proxy,
-        statisticsEnabled: true,
+        killSwitchEnabled: false,
       ),
     );
     await expectLater(second.write(const AppSettingsData()), throwsStateError);
@@ -106,7 +106,7 @@ void main() {
     final latest = await second.read();
     expect(latest.core, CoreKind.xray);
     expect(latest.mode, ConnectionMode.proxy);
-    expect(latest.statisticsEnabled, isTrue);
+    expect(latest.killSwitchEnabled, isFalse);
     expect(
       backend.commands.any((request) => request.containsKey('path')),
       isFalse,
@@ -169,10 +169,10 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     final other = backend.app();
     await other.read();
-    await other.write(const AppSettingsData(statisticsEnabled: true));
+    await other.write(const AppSettingsData(killSwitchEnabled: false));
     pending.complete(const AppSettingsData(core: CoreKind.xray));
     await expectLater(migrating, throwsStateError);
-    expect((await other.read()).statisticsEnabled, isTrue);
+    expect((await other.read()).killSwitchEnabled, isFalse);
   });
 
   test('Update preference stores preserve choices and reject corrupt data before saving', () async {

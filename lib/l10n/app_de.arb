@@ -133,7 +133,7 @@
   "checkServers": "Server werden geprüft",
   "cancelChecks": "Serverprüfungen abbrechen",
   "serverCheck": "Serverprüfung über {p0}",
-  "applicationsAddresses": "Anwendungen und Adressen",
+  "applicationsAddresses": "Smartes Tunneling",
   "routeListedItems": "Aufgeführte Anwendungen und Adressen weiterleiten",
   "listedThroughTunnel": "Aufgeführte Einträge verwenden den Tunnel. Alles andere nutzt Ihre normale Verbindung.",
   "listedBypassTunnel": "Aufgeführte Einträge nutzen Ihre normale Verbindung. Alles andere wird durch den Tunnel geleitet.",
@@ -242,5 +242,15 @@
   "minimizeApp": "Minimieren",
   "routingRuleHelp": "Wähle, worauf die Regel achtet, und gib dann App, Domain oder Adresse ein.",
   "pickApplicationLabel": "Oder App auswählen",
-  "pickApplicationHelp": "Wähle die App, für die diese Regel gelten soll."
+  "pickApplicationHelp": "Wähle die App, für die diese Regel gelten soll.",
+  "serverNeedsCore": "Dieser Server benötigt {core}.",
+  "useCore": "{core} verwenden",
+  "switchCore": "Wechseln",
+  "ruleActions": "Regelaktionen",
+  "copy": "Kopieren",
+  "logsCopied": "Protokolle kopiert.",
+  "coreLogsHelp": "Neueste Meldungen des Netzwerkkerns.",
+  "automaticUpdatesHelp": "Bei jedem App-Start nach einer neuen Version suchen.",
+  "checkForUpdates": "Nach Updates suchen",
+  "retry": "Erneut versuchen"
 }

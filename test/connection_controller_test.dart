@@ -9,7 +9,6 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:aoravpn/components/app_select.dart';
-import 'package:aoravpn/controllers/statistics_controller.dart';
 import 'package:aoravpn/pages/settings_page.dart';
 import 'package:aoravpn/theme/app_theme.dart';
 import 'package:aoravpn/controllers/connection_controller.dart';
@@ -179,7 +178,6 @@ void main() {
           mode: ConnectionMode.proxy,
           dnsProvider: DnsProvider.quad9,
           pingType: PingType.tcp,
-          statisticsEnabled: true,
           killSwitchEnabled: false,
           routingPolicy: RoutingPolicy(enabled: false),
         );
@@ -203,7 +201,6 @@ void main() {
         expect(controller.mode, ConnectionMode.proxy);
         expect(controller.dnsProvider, DnsProvider.quad9);
         expect(controller.pingType, PingType.tcp);
-        expect(controller.statisticsEnabled, isTrue);
         expect(controller.killSwitchEnabled, isFalse);
         expect(controller.routingPolicy.enabled, isFalse);
         expect(
@@ -212,7 +209,6 @@ void main() {
         );
         expect(controller.errorFor(ConnectionErrorScope.subscriptions), isNull);
         expect(controller.canEdit, isFalse);
-        expect(store.data.statisticsEnabled, isTrue);
       } finally {
         await controller.shutdown();
         controller.dispose();
@@ -379,9 +375,7 @@ void main() {
         engine: engine,
         settingsStore: store,
       );
-      final statistics = StatisticsController(controller);
       addTearDown(() async {
-        statistics.dispose();
         await controller.shutdown();
         controller.dispose();
       });
@@ -391,8 +385,7 @@ void main() {
           home: Scaffold(
             body: AnimatedBuilder(
               animation: controller,
-              builder: (_, _) =>
-                  SettingsPage(connection: controller, statistics: statistics),
+              builder: (_, _) => SettingsPage(connection: controller),
             ),
           ),
         ),

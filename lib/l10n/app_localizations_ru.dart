@@ -456,7 +456,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get applicationsAddresses => 'Приложения и адреса';
+  String get applicationsAddresses => 'Умное туннелирование';
 
   @override
   String get routeListedItems => 'Маршрутизация указанных приложений и адресов';
@@ -851,4 +851,39 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get pickApplicationHelp =>
       'Выберите приложение, к которому будет применяться правило.';
+
+  @override
+  String serverNeedsCore(String core) {
+    return 'Этому серверу нужен $core.';
+  }
+
+  @override
+  String useCore(String core) {
+    return 'Включить $core';
+  }
+
+  @override
+  String get switchCore => 'Сменить';
+
+  @override
+  String get ruleActions => 'Действия с правилом';
+
+  @override
+  String get copy => 'Копировать';
+
+  @override
+  String get logsCopied => 'Журнал скопирован.';
+
+  @override
+  String get coreLogsHelp => 'Последние сообщения сетевого ядра.';
+
+  @override
+  String get automaticUpdatesHelp =>
+      'Искать новую версию при каждом запуске приложения.';
+
+  @override
+  String get checkForUpdates => 'Проверить обновления';
+
+  @override
+  String get retry => 'Повторить';
 }

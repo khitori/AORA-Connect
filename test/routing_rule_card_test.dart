@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aoravpn/components/app_toggle.dart';
@@ -49,17 +50,101 @@ void main() {
     );
     final toggle = tester.getRect(find.byType(AppToggle));
     final title = tester.getRect(find.text('Microsoft Edge'));
-    final edit = tester.getRect(find.text('Edit'));
+    final settings = tester.getRect(find.byTooltip('Rule actions'));
     expect(toggle.top, lessThan(title.bottom));
-    expect(edit.top, greaterThan(toggle.bottom));
-    expect(tester.getSize(find.byType(RoutingRuleCard)).height, lessThan(125));
+    expect(settings.left, greaterThan(toggle.right));
+    // The actions stay hidden until the settings button opens them.
+    expect(find.byTooltip('Move up'), findsNothing);
+    expect(tester.getSize(find.byType(RoutingRuleCard)).height, lessThan(90));
     expect(find.text('1 · Application'), findsNothing);
     await tester.tap(find.byType(AppToggle));
-    await tester.tap(find.byTooltip('Move up'));
-    await tester.tap(find.byTooltip('Move down'));
-    await tester.tap(find.text('Edit'));
-    await tester.tap(find.byTooltip('Delete rule'));
+
+    Future<void> run(String action) async {
+      await tester.tap(find.byTooltip('Rule actions'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip(action));
+      await tester.pumpAndSettle();
+      // Running an action closes the bubble.
+      expect(find.byTooltip(action), findsNothing);
+    }
+
+    // The bubble shows the actions in one row above the settings button.
+    await tester.tap(find.byTooltip('Rule actions'));
+    await tester.pumpAndSettle();
+    final row = [
+      'Move up',
+      'Move down',
+      'Edit rule',
+      'Delete rule',
+    ].map((action) => tester.getRect(find.byTooltip(action))).toList();
+    for (var i = 1; i < row.length; i++) {
+      expect(row[i].top, row[0].top);
+      expect(row[i].left, greaterThan(row[i - 1].right - 0.01));
+    }
+    expect(row.last.bottom, lessThan(settings.top));
+    // A tap outside closes it without running anything.
+    await tester.tapAt(const Offset(5, 5));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Move up'), findsNothing);
+
+    for (final action in ['Move up', 'Move down', 'Edit rule', 'Delete rule']) {
+      await run(action);
+    }
     expect(actions, ['toggle:false', 'up', 'down', 'edit', 'delete']);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Hovering the action bubble shows tooltips without errors', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(420, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: Scaffold(
+          body: ListView(
+            padding: const EdgeInsets.fromLTRB(24, 200, 24, 24),
+            children: [
+              for (final target in ['one.exe', 'two.exe'])
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: RoutingRuleCard(
+                    rule: RoutingRule(
+                      match: RoutingMatch.application,
+                      target: target,
+                    ),
+                    onMoveUp: () {},
+                    onMoveDown: () {},
+                    onEdit: () {},
+                    onDelete: () {},
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+    await tester.tap(find.byTooltip('Rule actions').first);
+    await tester.pumpAndSettle();
+    for (final action in ['Move up', 'Move down', 'Edit rule', 'Delete rule']) {
+      await mouse.moveTo(tester.getCenter(find.byTooltip(action)));
+      await tester.pumpAndSettle(const Duration(seconds: 2));
+      expect(tester.takeException(), isNull);
+    }
+    // The bubble sits above its card's settings button.
+    expect(
+      tester.getRect(find.byTooltip('Move up')).bottom,
+      lessThan(tester.getRect(find.byTooltip('Rule actions').first).top),
+    );
+    await tester.tapAt(const Offset(5, 5));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Move up'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -88,8 +173,14 @@ void main() {
       ),
     );
     expect(tester.widget<AppToggle>(find.byType(AppToggle)).onChanged, isNull);
+    await tester.tap(find.byTooltip('Rule actions'));
+    await tester.pumpAndSettle();
     expect(
-      tester.widget<TextButton>(find.byType(TextButton)).onPressed,
+      tester
+          .widget<IconButton>(
+            find.widgetWithIcon(IconButton, Icons.edit_rounded),
+          )
+          .onPressed,
       isNull,
     );
     expect(tester.takeException(), isNull);

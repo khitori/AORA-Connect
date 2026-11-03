@@ -133,7 +133,7 @@
   "checkServers": "Probando servidores",
   "cancelChecks": "Cancelar pruebas de servidores",
   "serverCheck": "Prueba de servidor mediante {p0}",
-  "applicationsAddresses": "Aplicaciones y direcciones",
+  "applicationsAddresses": "Túnel inteligente",
   "routeListedItems": "Enrutar las aplicaciones y direcciones de la lista",
   "listedThroughTunnel": "Los elementos de la lista pasan por el túnel. El resto usa tu conexión normal.",
   "listedBypassTunnel": "Los elementos de la lista usan tu conexión normal. El resto pasa por el túnel.",
@@ -242,5 +242,15 @@
   "minimizeApp": "Minimizar",
   "routingRuleHelp": "Elige qué comprueba la regla y luego escribe la aplicación, el dominio o la dirección.",
   "pickApplicationLabel": "O elige una aplicación",
-  "pickApplicationHelp": "Elige la aplicación a la que se aplicará esta regla."
+  "pickApplicationHelp": "Elige la aplicación a la que se aplicará esta regla.",
+  "serverNeedsCore": "Este servidor necesita {core}.",
+  "useCore": "Usar {core}",
+  "switchCore": "Cambiar",
+  "ruleActions": "Acciones de la regla",
+  "copy": "Copiar",
+  "logsCopied": "Registros copiados.",
+  "coreLogsHelp": "Mensajes recientes del núcleo de red.",
+  "automaticUpdatesHelp": "Buscar una versión nueva cada vez que se inicia la aplicación.",
+  "checkForUpdates": "Buscar actualizaciones",
+  "retry": "Reintentar"
 }

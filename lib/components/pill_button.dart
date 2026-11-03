@@ -5,7 +5,8 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
 /// The 48 px pill of the "Add subscription" button, without the glass edge,
-/// filling the width it is given. Gray by default, for use on white surfaces
+/// always as wide as the space it is given (sections center their content
+/// rather than stretching it). Gray by default, for use on white surfaces
 /// such as dialogs.
 class PillButton extends StatelessWidget {
   const PillButton({
@@ -15,10 +16,14 @@ class PillButton extends StatelessWidget {
     this.color,
     this.multiplyColor,
     this.textColor,
+    this.icon,
   });
 
   final String label;
   final VoidCallback? onPressed;
+
+  /// An icon before the label, in the label's color.
+  final IconData? icon;
 
   /// Fill color; the glass dialogs' see-through gray when not given.
   final Color? color;
@@ -39,6 +44,7 @@ class PillButton extends StatelessWidget {
         ? Colors.transparent
         : color ?? AppColors.glassControl;
     final button = SizedBox(
+      width: double.infinity,
       height: 48,
       child: OutlinedButton(
         onPressed: onPressed,
@@ -54,7 +60,22 @@ class PillButton extends StatelessWidget {
         ),
         child: FittedBox(
           fit: BoxFit.scaleDown,
-          child: Text(label, maxLines: 1),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // In the label's color (the outlined buttons' theme grays icons
+              // otherwise); a disabled button keeps its faded color.
+              if (icon case final icon?) ...[
+                Icon(
+                  icon,
+                  size: 18,
+                  color: onPressed == null ? null : textColor ?? AppColors.ink,
+                ),
+                const SizedBox(width: 8),
+              ],
+              Text(label, maxLines: 1),
+            ],
+          ),
         ),
       ),
     );
@@ -63,6 +84,7 @@ class PillButton extends StatelessWidget {
     // Expanded, so the button keeps the full width (and its label stays
     // centered) instead of shrinking to its label inside the stack.
     return SizedBox(
+      width: double.infinity,
       height: 48,
       child: Stack(
         fit: StackFit.expand,

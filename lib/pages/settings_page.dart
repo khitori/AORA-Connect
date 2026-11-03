@@ -9,18 +9,16 @@ import '../components/app_notification.dart';
 import '../components/app_select.dart';
 import '../components/app_toggle.dart';
 import '../components/connection_controls.dart';
+import '../components/core_mismatch_notice.dart';
 import '../components/connection_edit_notification.dart';
 import '../components/core_logs.dart';
 import '../components/language_settings.dart';
 import '../components/section_row_bleed.dart';
 import '../components/settings_label.dart';
-import '../components/statistics_panel.dart';
 import '../components/updates_panel.dart';
 import '../components/windows_startup_settings.dart';
 import '../controllers/connection_controller.dart';
-import '../controllers/statistics_controller.dart';
 import '../controllers/windows_startup_controller.dart';
-import '../core/android_quick_settings.dart';
 import '../core/android_tunnel_engine.dart';
 import '../core/connection_mode.dart';
 import '../core/core_kind.dart';
@@ -36,13 +34,11 @@ class SettingsPage extends StatelessWidget {
   const SettingsPage({
     super.key,
     required this.connection,
-    required this.statistics,
     this.updates,
     this.onInstallUpdate,
     this.startup,
   });
   final ConnectionController connection;
-  final StatisticsController statistics;
   final UpdateController? updates;
   final Future<void> Function()? onInstallUpdate;
   final WindowsStartupController? startup;
@@ -98,24 +94,6 @@ class SettingsPage extends StatelessWidget {
     }
   }
 
-  Future<void> _addTile(BuildContext context) async {
-    try {
-      final result = await AndroidQuickSettings.addTile();
-      if (!context.mounted) return;
-      AppNotification.show(context, switch (result) {
-        'added' => context.l10n.tileAdded,
-        'alreadyAdded' => context.l10n.tileAlreadyAdded,
-        'manual' => context.l10n.tileManual,
-        'declined' => context.l10n.tileDeclined,
-        _ => context.l10n.tileFailed,
-      });
-    } catch (_) {
-      if (context.mounted) {
-        AppNotification.show(context, context.l10n.tileFailed);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) => ListView(
     padding: const EdgeInsets.fromLTRB(24, 32, 24, 120),
@@ -160,19 +138,12 @@ class SettingsPage extends StatelessWidget {
                   : null,
             ),
           ),
-          if (connection.selectedRequiresDifferentCore)
-            Padding(
-              padding: const EdgeInsets.only(top: AppTheme.sectionGap),
-              child: Text(
-                context.l10n.selectedRequiresCore(
-                  isolateTechnicalValue(
-                    context.l10n,
-                    connection.selected!.coreKind.label,
-                  ),
-                ),
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-            ),
+          // The main page's notice, with its one-tap switch.
+          if (connection.selectedRequiresDifferentCore) ...[
+            const SizedBox(height: AppTheme.sectionGap),
+            // As wide as the select above, which reaches out the same way.
+            SectionRowBleed(child: CoreMismatchNotice(connection: connection)),
+          ],
         ],
       ),
       const SizedBox(height: 12),
@@ -279,27 +250,6 @@ class SettingsPage extends StatelessWidget {
         ],
       ),
       const SizedBox(height: 12),
-      if (Platform.isAndroid) ...[
-        AppExpansionCard(
-          title: context.l10n.quickSettings,
-          storageId: 'quickSettings',
-          subtitle: context.l10n.quickSettingsSubtitle,
-          icon: Icons.dashboard_customize_rounded,
-          children: [
-            Text(context.l10n.quickSettingsHelp),
-            const SizedBox(height: AppTheme.sectionGap),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => _addTile(context),
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: Text(context.l10n.addQuickSettings),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-      ],
       AppExpansionCard(
         title: 'DNS',
         subtitle: connection.dnsProvider.label,
@@ -372,8 +322,6 @@ class SettingsPage extends StatelessWidget {
             style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
         ),
-      const SizedBox(height: 12),
-      StatisticsPanel(statistics: statistics),
       const SizedBox(height: 12),
       AppExpansionCard(
         title: context.l10n.diagnostics,

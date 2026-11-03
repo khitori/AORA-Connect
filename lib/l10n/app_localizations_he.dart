@@ -448,7 +448,7 @@ class AppLocalizationsHe extends AppLocalizations {
   }
 
   @override
-  String get applicationsAddresses => 'יישומים וכתובות';
+  String get applicationsAddresses => 'מנהור חכם';
 
   @override
   String get routeListedItems => 'ניתוב היישומים והכתובות שברשימה';
@@ -835,4 +835,38 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get pickApplicationHelp => 'בחרו את היישום שהכלל הזה יחול עליו.';
+
+  @override
+  String serverNeedsCore(String core) {
+    return 'השרת הזה דורש $core.';
+  }
+
+  @override
+  String useCore(String core) {
+    return 'שימוש ב־$core';
+  }
+
+  @override
+  String get switchCore => 'החלפה';
+
+  @override
+  String get ruleActions => 'פעולות הכלל';
+
+  @override
+  String get copy => 'העתקה';
+
+  @override
+  String get logsCopied => 'היומנים הועתקו.';
+
+  @override
+  String get coreLogsHelp => 'הודעות אחרונות מליבת הרשת.';
+
+  @override
+  String get automaticUpdatesHelp => 'חיפוש גרסה חדשה בכל הפעלה של היישום.';
+
+  @override
+  String get checkForUpdates => 'בדיקת עדכונים';
+
+  @override
+  String get retry => 'ניסיון חוזר';
 }

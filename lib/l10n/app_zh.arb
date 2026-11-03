@@ -133,7 +133,7 @@
   "checkServers": "正在检查服务器",
   "cancelChecks": "取消服务器检查",
   "serverCheck": "通过 {p0} 检查服务器",
-  "applicationsAddresses": "应用和地址",
+  "applicationsAddresses": "智能分流",
   "routeListedItems": "对列表中的应用和地址进行路由",
   "listedThroughTunnel": "列表中的项目通过隧道，其余流量使用正常连接。",
   "listedBypassTunnel": "列表中的项目使用正常连接，其余流量通过隧道。",
@@ -242,5 +242,15 @@
   "minimizeApp": "最小化",
   "routingRuleHelp": "选择规则要匹配的内容，然后输入应用、域名或地址。",
   "pickApplicationLabel": "或选择应用",
-  "pickApplicationHelp": "选择此规则要应用到的应用。"
+  "pickApplicationHelp": "选择此规则要应用到的应用。",
+  "serverNeedsCore": "此服务器需要 {core}。",
+  "useCore": "使用 {core}",
+  "switchCore": "切换",
+  "ruleActions": "规则操作",
+  "copy": "复制",
+  "logsCopied": "日志已复制。",
+  "coreLogsHelp": "网络核心的最新消息。",
+  "automaticUpdatesHelp": "每次启动应用时检查新版本。",
+  "checkForUpdates": "检查更新",
+  "retry": "重试"
 }

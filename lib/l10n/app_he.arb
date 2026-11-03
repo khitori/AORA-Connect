@@ -133,7 +133,7 @@
   "checkServers": "בודק שרתים",
   "cancelChecks": "ביטול בדיקות שרתים",
   "serverCheck": "בדיקת שרת {p0}",
-  "applicationsAddresses": "יישומים וכתובות",
+  "applicationsAddresses": "מנהור חכם",
   "routeListedItems": "ניתוב היישומים והכתובות שברשימה",
   "listedThroughTunnel": "הפריטים שברשימה עוברים דרך המנהרה. כל השאר משתמשים בחיבור הרגיל.",
   "listedBypassTunnel": "הפריטים שברשימה משתמשים בחיבור הרגיל. כל השאר עוברים דרך המנהרה.",
@@ -242,5 +242,15 @@
   "minimizeApp": "מזעור",
   "routingRuleHelp": "בחרו למה הכלל מתייחס, ואז הזינו את היישום, הדומיין או הכתובת.",
   "pickApplicationLabel": "או בחרו יישום",
-  "pickApplicationHelp": "בחרו את היישום שהכלל הזה יחול עליו."
+  "pickApplicationHelp": "בחרו את היישום שהכלל הזה יחול עליו.",
+  "serverNeedsCore": "השרת הזה דורש {core}.",
+  "useCore": "שימוש ב־{core}",
+  "switchCore": "החלפה",
+  "ruleActions": "פעולות הכלל",
+  "copy": "העתקה",
+  "logsCopied": "היומנים הועתקו.",
+  "coreLogsHelp": "הודעות אחרונות מליבת הרשת.",
+  "automaticUpdatesHelp": "חיפוש גרסה חדשה בכל הפעלה של היישום.",
+  "checkForUpdates": "בדיקת עדכונים",
+  "retry": "ניסיון חוזר"
 }

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../components/connection_button.dart';
+import '../components/core_mismatch_notice.dart';
 import '../components/server_selector.dart';
 import '../controllers/connection_controller.dart';
 import '../controllers/node_ping_controller.dart';
@@ -69,19 +70,10 @@ class ConnectionPage extends StatelessWidget {
                 ),
                 if (connection.selected?.insecure == true)
                   Text(context.l10n.insecureProfile),
-                if (connection.selectedRequiresDifferentCore)
-                  Text(
-                    context.l10n.serverRequiresCore(
-                      isolateTechnicalValue(
-                        context.l10n,
-                        connection.selected!.coreKind.label,
-                      ),
-                    ),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
+                if (connection.selectedRequiresDifferentCore) ...[
+                  const SizedBox(height: 12),
+                  CoreMismatchNotice(connection: connection),
+                ],
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 32),

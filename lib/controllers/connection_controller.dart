@@ -125,7 +125,6 @@ class ConnectionController extends ChangeNotifier {
   DnsProvider _dnsProvider = DnsProvider.cloudflare;
   PingType _pingType = PingType.proxyGet;
   bool _killSwitchEnabled = true;
-  bool _statisticsEnabled = false;
   RoutingPolicy _routingPolicy = const RoutingPolicy();
   String? _selectedServerAddress;
   bool _busy = false;
@@ -152,7 +151,6 @@ class ConnectionController extends ChangeNotifier {
   DnsProvider get dnsProvider => _dnsProvider;
   PingType get pingType => _pingType;
   bool get killSwitchEnabled => _killSwitchEnabled;
-  bool get statisticsEnabled => _statisticsEnabled;
   RoutingPolicy get routingPolicy => _routingPolicy;
   bool get killSwitchAvailable => supported && _mode == ConnectionMode.tun;
   String? get selectedServerAddress => _selectedServerAddress;
@@ -386,7 +384,6 @@ class ConnectionController extends ChangeNotifier {
         core: _core,
         dnsProvider: _dnsProvider,
         killSwitchEnabled: _killSwitchEnabled,
-        statisticsEnabled: _statisticsEnabled,
         routingPolicy: _routingPolicy,
         pingType: _pingType,
       ),
@@ -409,7 +406,6 @@ class ConnectionController extends ChangeNotifier {
         _dnsProvider = saved.dnsProvider;
         _pingType = saved.pingType;
         _killSwitchEnabled = saved.killSwitchEnabled;
-        _statisticsEnabled = saved.statisticsEnabled;
         _routingPolicy = saved.routingPolicy;
         _changed();
         if (_engine case final AndroidTunnelEngine android) await android.ready;
@@ -622,11 +618,6 @@ class ConnectionController extends ChangeNotifier {
       await _persist();
     }, errorScope: ConnectionErrorScope.settings);
   }
-
-  Future<void> setStatisticsEnabled(bool enabled) => _perform(() async {
-    _statisticsEnabled = enabled;
-    await _persist();
-  }, errorScope: ConnectionErrorScope.settings);
 
   Future<void> setRoutingPolicy(RoutingPolicy policy) {
     if (!canEdit) return Future.value();

@@ -459,7 +459,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get applicationsAddresses => 'Aplicaciones y direcciones';
+  String get applicationsAddresses => 'Túnel inteligente';
 
   @override
   String get routeListedItems =>
@@ -854,4 +854,39 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get pickApplicationHelp =>
       'Elige la aplicación a la que se aplicará esta regla.';
+
+  @override
+  String serverNeedsCore(String core) {
+    return 'Este servidor necesita $core.';
+  }
+
+  @override
+  String useCore(String core) {
+    return 'Usar $core';
+  }
+
+  @override
+  String get switchCore => 'Cambiar';
+
+  @override
+  String get ruleActions => 'Acciones de la regla';
+
+  @override
+  String get copy => 'Copiar';
+
+  @override
+  String get logsCopied => 'Registros copiados.';
+
+  @override
+  String get coreLogsHelp => 'Mensajes recientes del núcleo de red.';
+
+  @override
+  String get automaticUpdatesHelp =>
+      'Buscar una versión nueva cada vez que se inicia la aplicación.';
+
+  @override
+  String get checkForUpdates => 'Buscar actualizaciones';
+
+  @override
+  String get retry => 'Reintentar';
 }

@@ -2,11 +2,12 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
-import 'window_controls.dart';
+import 'pill_button.dart';
 
-/// Diagnostics actions as wide islands, like the top bar's buttons: Check and
-/// Test share a line, Copy diagnostics takes the whole line below.
+/// Diagnostics actions as flat gray pills: Check and Test share a line, Copy
+/// diagnostics takes the whole line below.
 class ConnectionControls extends StatelessWidget {
   const ConnectionControls({
     super.key,
@@ -26,8 +27,8 @@ class ConnectionControls extends StatelessWidget {
       Row(
         children: [
           Expanded(
-            child: IslandButton(
-              expanded: true,
+            child: PillButton(
+              color: AppColors.controlGray,
               onPressed: onValidate,
               icon: Icons.fact_check_rounded,
               label: context.l10n.validate,
@@ -35,8 +36,8 @@ class ConnectionControls extends StatelessWidget {
           ),
           const SizedBox(width: AppTheme.sectionButtonGap),
           Expanded(
-            child: IslandButton(
-              expanded: true,
+            child: PillButton(
+              color: AppColors.controlGray,
               onPressed: onTest,
               icon: Icons.network_check_rounded,
               label: context.l10n.testConnection,
@@ -45,8 +46,8 @@ class ConnectionControls extends StatelessWidget {
         ],
       ),
       const SizedBox(height: AppTheme.sectionButtonGap),
-      IslandButton(
-        expanded: true,
+      PillButton(
+        color: AppColors.controlGray,
         onPressed: onCopy,
         icon: Icons.copy_rounded,
         label: context.l10n.copyDiagnostics,

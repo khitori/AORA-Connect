@@ -5,8 +5,8 @@ import 'package:aoravpn/components/window_controls.dart';
 import 'package:aoravpn/theme/glass_surface.dart';
 import 'package:aoravpn/components/subscription_input.dart';
 import 'package:aoravpn/components/connection_controls.dart';
+import 'package:aoravpn/components/pill_button.dart';
 import 'package:aoravpn/controllers/connection_controller.dart';
-import 'package:aoravpn/controllers/statistics_controller.dart';
 import 'package:aoravpn/core/diagnostics_report.dart';
 import 'package:aoravpn/core/tunnel_engine.dart';
 import 'package:aoravpn/pages/settings_page.dart';
@@ -175,34 +175,32 @@ void main() {
               ),
             ),
           );
+          // Flat gray 48 px pills, not glass islands.
           for (final label in ['Check', 'Test', 'Copy diagnostics']) {
-            // The same glass islands as the top bar's buttons.
             expect(
               find.descendant(
-                of: find.widgetWithText(IslandButton, label),
+                of: find.widgetWithText(PillButton, label),
                 matching: find.byType(GlassSurface),
               ),
-              findsOneWidget,
+              findsNothing,
             );
           }
           final validate = tester.getRect(
-            find.widgetWithText(IslandButton, 'Check'),
+            find.widgetWithText(PillButton, 'Check'),
           );
-          final test = tester.getRect(
-            find.widgetWithText(IslandButton, 'Test'),
-          );
+          final test = tester.getRect(find.widgetWithText(PillButton, 'Test'));
           final copy = tester.getRect(
-            find.widgetWithText(IslandButton, 'Copy diagnostics'),
+            find.widgetWithText(PillButton, 'Copy diagnostics'),
           );
           expect(validate.width, test.width);
-          expect(validate.height, 32);
+          expect(validate.height, 48);
           expect(test.top, validate.top);
           expect(test.left - validate.right, 12);
           expect(copy.left, validate.left);
           expect(copy.right, test.right);
           expect(copy.width, width);
           expect(copy.top - validate.bottom, 12);
-          expect(copy.height, 32);
+          expect(copy.height, 48);
           expect(tester.takeException(), isNull);
         },
       );
@@ -328,9 +326,7 @@ void main() {
         engine: _Engine(),
         xrayEngine: _Engine(),
       );
-      final statistics = StatisticsController(connection);
       addTearDown(() async {
-        statistics.dispose();
         await connection.shutdown();
         connection.dispose();
       });
@@ -345,9 +341,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.light,
-          home: Scaffold(
-            body: SettingsPage(connection: connection, statistics: statistics),
-          ),
+          home: Scaffold(body: SettingsPage(connection: connection)),
         ),
       );
       await tester.scrollUntilVisible(find.text('Diagnostics'), 300);

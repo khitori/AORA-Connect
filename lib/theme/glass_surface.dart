@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
 /// The glass style for clickable foreground elements: a top-to-bottom light
-/// gradient, a soft shadow and a white edge on the top and bottom that fades
-/// out toward the left and right ends.
+/// gradient, a soft shadow, and a grey outline with a white edge inside it on
+/// the top and bottom, both fading out toward the left and right ends.
 ///
 /// Wrap any control in it and give it the control's [shape]; ink effects
 /// (hover, press) of the child are clipped to that shape. For shapes other
@@ -42,9 +42,16 @@ class GlassSurface extends StatelessWidget {
       ],
     ),
     // The edge is painted over the content so hover highlights never leave
-    // a seam along the curved border.
+    // a seam along the curved border. Like the bottom navigation, a grey
+    // outline sits outside the white edge on the top and bottom, fading out
+    // over the rounded ends.
     child: CustomPaint(
-      foregroundPainter: GlassEdgePainter(shape, cornerWidth: cornerWidth),
+      foregroundPainter: GlassEdgePainter(
+        shape,
+        cornerWidth: cornerWidth,
+        outline: AppColors.lineStrong.withValues(alpha: 0.35),
+        fadeOutlineEnds: true,
+      ),
       child: Material(
         type: MaterialType.transparency,
         shape: shape,

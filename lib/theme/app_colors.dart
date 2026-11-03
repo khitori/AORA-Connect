@@ -16,6 +16,9 @@ abstract final class AppColors {
 
   static Color get paper => hsl(60, 8.3, 93);
   static Color get paperDark => hsl(60, 4.2, 92.3);
+  // Flat gray controls inside white sections (Diagnostics buttons and the
+  // logs box): a neutral gray.
+  static Color get controlGray => hsl(0, 0, 95);
   static Color get card => hsl(0, 0, 100);
   static Color get glass => hsl(0, 0, 100, alpha: 0.84);
   static Color get ink => hsl(240, 8, 9.8);

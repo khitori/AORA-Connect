@@ -158,7 +158,8 @@ class _ApplicationPickerDialogState<T>
             ],
           ),
         ),
-        const SizedBox(height: AppTheme.sectionButtonGap),
+        // The same gap as between the list and the buttons below it.
+        const SizedBox(height: 24),
         SizedBox(
           height: _listHeight,
           child: FutureBuilder<List<T>>(

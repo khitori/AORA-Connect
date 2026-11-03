@@ -464,7 +464,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get applicationsAddresses => 'Anwendungen und Adressen';
+  String get applicationsAddresses => 'Smartes Tunneling';
 
   @override
   String get routeListedItems =>
@@ -857,4 +857,39 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get pickApplicationHelp =>
       'Wähle die App, für die diese Regel gelten soll.';
+
+  @override
+  String serverNeedsCore(String core) {
+    return 'Dieser Server benötigt $core.';
+  }
+
+  @override
+  String useCore(String core) {
+    return '$core verwenden';
+  }
+
+  @override
+  String get switchCore => 'Wechseln';
+
+  @override
+  String get ruleActions => 'Regelaktionen';
+
+  @override
+  String get copy => 'Kopieren';
+
+  @override
+  String get logsCopied => 'Protokolle kopiert.';
+
+  @override
+  String get coreLogsHelp => 'Neueste Meldungen des Netzwerkkerns.';
+
+  @override
+  String get automaticUpdatesHelp =>
+      'Bei jedem App-Start nach einer neuen Version suchen.';
+
+  @override
+  String get checkForUpdates => 'Nach Updates suchen';
+
+  @override
+  String get retry => 'Erneut versuchen';
 }

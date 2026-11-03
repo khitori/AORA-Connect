@@ -139,9 +139,11 @@ void main() {
     expect(restored.killSwitchEnabled, isTrue);
   });
 
-  test('Statistics defaults to OFF and saves an explicit ON choice', () {
-    expect(AppSettingsData.fromJson({'version': 1}).statisticsEnabled, isFalse);
-    const data = AppSettingsData(statisticsEnabled: true);
-    expect(AppSettingsData.fromJson(data.toJson()).statisticsEnabled, isTrue);
+  test('A Statistics choice saved by an older version is dropped', () {
+    final data = AppSettingsData.fromJson({
+      'version': 1,
+      'statisticsEnabled': true,
+    });
+    expect(data.toJson().containsKey('statisticsEnabled'), isFalse);
   });
 }

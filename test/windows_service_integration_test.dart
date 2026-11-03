@@ -138,7 +138,6 @@ void main() {
         expect(controller.activeCore == saved.core, isTrue);
         expect(controller.dnsProvider == saved.dnsProvider, isTrue);
         expect(controller.pingType == saved.pingType, isTrue);
-        expect(controller.statisticsEnabled == saved.statisticsEnabled, isTrue);
         expect(controller.killSwitchEnabled == saved.killSwitchEnabled, isTrue);
         expect(
           jsonEncode(controller.routingPolicy.toJson()) ==

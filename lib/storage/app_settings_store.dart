@@ -63,7 +63,6 @@ class AppSettingsData {
     this.core = CoreKind.singBox,
     this.dnsProvider = DnsProvider.cloudflare,
     this.killSwitchEnabled = true,
-    this.statisticsEnabled = false,
     this.pingType = PingType.proxyGet,
     this.routingPolicy = const RoutingPolicy(),
   });
@@ -74,7 +73,6 @@ class AppSettingsData {
   final CoreKind core;
   final DnsProvider dnsProvider;
   final bool killSwitchEnabled;
-  final bool statisticsEnabled;
   final PingType pingType;
   final RoutingPolicy routingPolicy;
 
@@ -138,9 +136,6 @@ class AppSettingsData {
       killSwitchEnabled: json['connectionLeakProtectionEnabled'] is bool
           ? json['connectionLeakProtectionEnabled'] as bool
           : true,
-      statisticsEnabled: json['statisticsEnabled'] is bool
-          ? json['statisticsEnabled'] as bool
-          : false,
       routingPolicy: json['routingPolicy'] is Map
           ? RoutingPolicy.fromJson(
               Map<String, dynamic>.from(json['routingPolicy'] as Map),
@@ -157,7 +152,6 @@ class AppSettingsData {
     'core': core.name,
     'dnsProvider': dnsProvider.name,
     'connectionLeakProtectionEnabled': killSwitchEnabled,
-    'statisticsEnabled': statisticsEnabled,
     'pingType': pingType.name,
     'routingPolicy': routingPolicy.toJson(),
   };

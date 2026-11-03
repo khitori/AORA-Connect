@@ -436,7 +436,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get applicationsAddresses => '应用和地址';
+  String get applicationsAddresses => '智能分流';
 
   @override
   String get routeListedItems => '对列表中的应用和地址进行路由';
@@ -800,4 +800,38 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pickApplicationHelp => '选择此规则要应用到的应用。';
+
+  @override
+  String serverNeedsCore(String core) {
+    return '此服务器需要 $core。';
+  }
+
+  @override
+  String useCore(String core) {
+    return '使用 $core';
+  }
+
+  @override
+  String get switchCore => '切换';
+
+  @override
+  String get ruleActions => '规则操作';
+
+  @override
+  String get copy => '复制';
+
+  @override
+  String get logsCopied => '日志已复制。';
+
+  @override
+  String get coreLogsHelp => '网络核心的最新消息。';
+
+  @override
+  String get automaticUpdatesHelp => '每次启动应用时检查新版本。';
+
+  @override
+  String get checkForUpdates => '检查更新';
+
+  @override
+  String get retry => '重试';
 }

@@ -233,7 +233,7 @@
       }
     }
   },
-  "applicationsAddresses": "Applications and addresses",
+  "applicationsAddresses": "Smart tunneling",
   "routeListedItems": "Route listed applications and addresses",
   "listedThroughTunnel": "Listed items go through the tunnel. Everything else uses your normal connection.",
   "listedBypassTunnel": "Listed items use your normal connection. Everything else goes through the tunnel.",
@@ -435,5 +435,25 @@
   "minimizeApp": "Minimize",
   "routingRuleHelp": "Choose what the rule looks at, then enter the app, domain or address.",
   "pickApplicationLabel": "Or pick an app",
-  "pickApplicationHelp": "Pick the app this rule should apply to."
+  "pickApplicationHelp": "Pick the app this rule should apply to.",
+  "serverNeedsCore": "This server needs {core}.",
+  "@serverNeedsCore": {
+    "placeholders": {
+      "core": {"type": "String"}
+    }
+  },
+  "useCore": "Use {core}",
+  "@useCore": {
+    "placeholders": {
+      "core": {"type": "String"}
+    }
+  },
+  "switchCore": "Switch",
+  "ruleActions": "Rule actions",
+  "copy": "Copy",
+  "logsCopied": "Logs copied.",
+  "coreLogsHelp": "Recent messages from the networking core.",
+  "automaticUpdatesHelp": "Look for a new version each time the app starts.",
+  "checkForUpdates": "Check for updates",
+  "retry": "Try again"
 }

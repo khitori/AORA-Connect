@@ -913,7 +913,7 @@ abstract class AppLocalizations {
   /// No description provided for @applicationsAddresses.
   ///
   /// In en, this message translates to:
-  /// **'Applications and addresses'**
+  /// **'Smart tunneling'**
   String get applicationsAddresses;
 
   /// No description provided for @routeListedItems.
@@ -1569,6 +1569,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pick the app this rule should apply to.'**
   String get pickApplicationHelp;
+
+  /// No description provided for @serverNeedsCore.
+  ///
+  /// In en, this message translates to:
+  /// **'This server needs {core}.'**
+  String serverNeedsCore(String core);
+
+  /// No description provided for @useCore.
+  ///
+  /// In en, this message translates to:
+  /// **'Use {core}'**
+  String useCore(String core);
+
+  /// No description provided for @switchCore.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch'**
+  String get switchCore;
+
+  /// No description provided for @ruleActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule actions'**
+  String get ruleActions;
+
+  /// No description provided for @copy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get copy;
+
+  /// No description provided for @logsCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs copied.'**
+  String get logsCopied;
+
+  /// No description provided for @coreLogsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent messages from the networking core.'**
+  String get coreLogsHelp;
+
+  /// No description provided for @automaticUpdatesHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Look for a new version each time the app starts.'**
+  String get automaticUpdatesHelp;
+
+  /// No description provided for @checkForUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for updates'**
+  String get checkForUpdates;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get retry;
 }
 
 class _AppLocalizationsDelegate

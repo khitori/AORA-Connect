@@ -8,7 +8,11 @@ import '../theme/app_theme.dart';
 import '../theme/glass_surface.dart';
 import 'app_toggle.dart';
 import 'connection_edit_notification.dart';
+import 'glass_popover_button.dart';
 import 'installed_application_picker.dart';
+
+/// Side inset of the card's content, the same as in section cards.
+const _inset = 16 + AppTheme.sectionPadding;
 
 class RoutingRuleCard extends StatelessWidget {
   const RoutingRuleCard({
@@ -51,17 +55,24 @@ class RoutingRuleCard extends StatelessWidget {
     _ => Icons.language_rounded,
   };
 
+  // One action in the glass bubble; it closes the bubble once it has run.
   Widget _action(
     BuildContext context, {
     required String tooltip,
     required IconData icon,
     required VoidCallback? onPressed,
+    required VoidCallback close,
   }) => _editControl(
     context,
     IconButton(
       tooltip: tooltip,
-      onPressed: editingEnabled ? onPressed : null,
-      icon: Icon(icon, size: 18),
+      onPressed: editingEnabled && onPressed != null
+          ? () {
+              close();
+              onPressed();
+            }
+          : null,
+      icon: Icon(icon, size: 20),
       style: IconButton.styleFrom(
         foregroundColor: AppColors.muted500,
         disabledForegroundColor: AppColors.lineStrong,
@@ -93,11 +104,21 @@ class RoutingRuleCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(14, 10, 12, 10),
+            // The section header's side inset and gaps, a little shorter: 16 px
+            // above and below the icon, 20 px between icon, text and switch.
+            padding: const EdgeInsets.symmetric(
+              horizontal: _inset,
+              vertical: 16,
+            ),
             child: Row(
               children: [
-                // The section headers' round glass icon box.
+                // The section headers' glass icon box: a heavily rounded
+                // square.
                 GlassSurface(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  cornerWidth: 14,
                   child: Container(
                     width: 40,
                     height: 40,
@@ -120,7 +141,7 @@ class RoutingRuleCard extends StatelessWidget {
                           ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppTheme.sectionGap),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -162,7 +183,7 @@ class RoutingRuleCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppTheme.sectionGap),
                 _editControl(
                   context,
                   AppToggle(
@@ -172,59 +193,44 @@ class RoutingRuleCard extends StatelessWidget {
                   ),
                   available: onEnabledChanged != null,
                 ),
-              ],
-            ),
-          ),
-          Divider(height: 1, thickness: 1, color: AppColors.line),
-          ColoredBox(
-            color: AppColors.paper.withValues(alpha: 0.55),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Row(
-                children: [
-                  _action(
-                    context,
-                    tooltip: context.l10n.moveUp,
-                    icon: Icons.keyboard_arrow_up_rounded,
-                    onPressed: onMoveUp,
-                  ),
-                  _action(
-                    context,
-                    tooltip: context.l10n.moveDown,
-                    icon: Icons.keyboard_arrow_down_rounded,
-                    onPressed: onMoveDown,
-                  ),
-                  const Spacer(),
-                  _editControl(
-                    context,
-                    Tooltip(
-                      message: context.l10n.editRule,
-                      child: TextButton.icon(
-                        onPressed: editingEnabled ? onEdit : null,
-                        icon: const Icon(Icons.edit_rounded, size: 16),
-                        label: Text(context.l10n.edit),
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.muted500,
-                          disabledForegroundColor: AppColors.lineStrong,
-                          minimumSize: const Size(0, 36),
-                          visualDensity: VisualDensity.standard,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: const StadiumBorder(),
-                        ),
-                      ),
+                const SizedBox(width: 8),
+                // One settings icon next to the switch; the actions open in a
+                // glass bubble above it, in a row.
+                GlassPopoverButton(
+                  icon: Icons.settings_outlined,
+                  tooltip: context.l10n.ruleActions,
+                  actions: (context, close) => [
+                    _action(
+                      context,
+                      tooltip: context.l10n.moveUp,
+                      icon: Icons.keyboard_arrow_up_rounded,
+                      onPressed: onMoveUp,
+                      close: close,
                     ),
-                    available: onEdit != null,
-                  ),
-                  const SizedBox(width: 4),
-                  _action(
-                    context,
-                    tooltip: context.l10n.deleteRule,
-                    icon: Icons.delete_outline_rounded,
-                    onPressed: onDelete,
-                  ),
-                ],
-              ),
+                    _action(
+                      context,
+                      tooltip: context.l10n.moveDown,
+                      icon: Icons.keyboard_arrow_down_rounded,
+                      onPressed: onMoveDown,
+                      close: close,
+                    ),
+                    _action(
+                      context,
+                      tooltip: context.l10n.editRule,
+                      icon: Icons.edit_rounded,
+                      onPressed: onEdit,
+                      close: close,
+                    ),
+                    _action(
+                      context,
+                      tooltip: context.l10n.deleteRule,
+                      icon: Icons.delete_outline_rounded,
+                      onPressed: onDelete,
+                      close: close,
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],

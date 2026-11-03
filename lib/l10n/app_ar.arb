@@ -133,7 +133,7 @@
   "checkServers": "جارٍ فحص الخوادم",
   "cancelChecks": "إلغاء فحص الخوادم",
   "serverCheck": "فحص الخادم عبر {p0}",
-  "applicationsAddresses": "التطبيقات والعناوين",
+  "applicationsAddresses": "توجيه ذكي",
   "routeListedItems": "توجيه التطبيقات والعناوين المدرجة",
   "listedThroughTunnel": "تمر العناصر المدرجة عبر النفق. ويستخدم كل ما عداها اتصالك العادي.",
   "listedBypassTunnel": "تستخدم العناصر المدرجة اتصالك العادي. ويمر كل ما عداها عبر النفق.",
@@ -242,5 +242,15 @@
   "minimizeApp": "تصغير",
   "routingRuleHelp": "اختر ما تطابقه القاعدة، ثم أدخل التطبيق أو النطاق أو العنوان.",
   "pickApplicationLabel": "أو اختر تطبيقًا",
-  "pickApplicationHelp": "اختر التطبيق الذي ستنطبق عليه هذه القاعدة."
+  "pickApplicationHelp": "اختر التطبيق الذي ستنطبق عليه هذه القاعدة.",
+  "serverNeedsCore": "يحتاج هذا الخادم إلى {core}.",
+  "useCore": "استخدم {core}",
+  "switchCore": "تبديل",
+  "ruleActions": "إجراءات القاعدة",
+  "copy": "نسخ",
+  "logsCopied": "تم نسخ السجلات.",
+  "coreLogsHelp": "أحدث الرسائل من نواة الشبكة.",
+  "automaticUpdatesHelp": "البحث عن إصدار جديد في كل مرة يبدأ فيها التطبيق.",
+  "checkForUpdates": "التحقق من التحديثات",
+  "retry": "إعادة المحاولة"
 }

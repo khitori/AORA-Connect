@@ -447,7 +447,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get applicationsAddresses => 'التطبيقات والعناوين';
+  String get applicationsAddresses => 'توجيه ذكي';
 
   @override
   String get routeListedItems => 'توجيه التطبيقات والعناوين المدرجة';
@@ -842,4 +842,39 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get pickApplicationHelp =>
       'اختر التطبيق الذي ستنطبق عليه هذه القاعدة.';
+
+  @override
+  String serverNeedsCore(String core) {
+    return 'يحتاج هذا الخادم إلى $core.';
+  }
+
+  @override
+  String useCore(String core) {
+    return 'استخدم $core';
+  }
+
+  @override
+  String get switchCore => 'تبديل';
+
+  @override
+  String get ruleActions => 'إجراءات القاعدة';
+
+  @override
+  String get copy => 'نسخ';
+
+  @override
+  String get logsCopied => 'تم نسخ السجلات.';
+
+  @override
+  String get coreLogsHelp => 'أحدث الرسائل من نواة الشبكة.';
+
+  @override
+  String get automaticUpdatesHelp =>
+      'البحث عن إصدار جديد في كل مرة يبدأ فيها التطبيق.';
+
+  @override
+  String get checkForUpdates => 'التحقق من التحديثات';
+
+  @override
+  String get retry => 'إعادة المحاولة';
 }

@@ -8,6 +8,8 @@ import 'unfold_icon.dart';
 
 /// The same large corner radius whether collapsed or expanded.
 const _radius = AppTheme.sectionRadius;
+/// Corners of the 40 px header icon box: heavily rounded, not a circle.
+const _iconBoxRadius = 14.0;
 const _motion = Duration(milliseconds: 240);
 
 class AppExpansionCard extends StatefulWidget {
@@ -121,10 +123,26 @@ class _AppExpansionCardState extends State<AppExpansionCard>
             ),
             shape: RoundedRectangleBorder(borderRadius: radius),
             collapsedShape: RoundedRectangleBorder(borderRadius: radius),
-            // Arrow down while collapsed, up while expanded.
-            trailing: UnfoldIcon(open: open > 0.5),
-            // The icon box uses the islands' glass style and is fully round.
+            // Arrow down while collapsed, up while expanded. A header switch
+            // sits next to it as one group, so the text keeps the same gap
+            // before it as after the icon and wraps before reaching it.
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.titleAction case final action?) ...[
+                  action,
+                  const SizedBox(width: 8),
+                ],
+                UnfoldIcon(open: open > 0.5),
+              ],
+            ),
+            // The icon box uses the islands' glass style: a heavily rounded
+            // square rather than a circle.
             leading: GlassSurface(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(_iconBoxRadius),
+              ),
+              cornerWidth: _iconBoxRadius,
               child: SizedBox(
                 width: 40,
                 height: 40,
@@ -142,24 +160,17 @@ class _AppExpansionCardState extends State<AppExpansionCard>
                 ),
               ),
             ),
-            title: Row(
+            title: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(widget.title),
-                      const SizedBox(height: 2),
-                      Text(
-                        widget.subtitle,
-                        style: Theme.of(context).textTheme.bodySmall
-                            ?.copyWith(color: AppColors.muted400),
-                      ),
-                    ],
-                  ),
+                Text(widget.title),
+                const SizedBox(height: 2),
+                Text(
+                  widget.subtitle,
+                  style: Theme.of(context).textTheme.bodySmall
+                      ?.copyWith(color: AppColors.muted400),
                 ),
-                ?widget.titleAction,
               ],
             ),
             children: [
