@@ -15,6 +15,7 @@ class SubscriptionLoadResult {
     this.webPageUrl,
     this.supportUrl,
     this.expiresAt,
+    this.source,
   });
 
   final List<ServerProfile> profiles;
@@ -24,6 +25,10 @@ class SubscriptionLoadResult {
   final String? webPageUrl;
   final String? supportUrl;
   final DateTime? expiresAt;
+
+  /// The text the profiles were parsed from, kept so the list can be saved
+  /// and shown again at the next start before it is downloaded anew.
+  final String? source;
 }
 
 DateTime? subscriptionExpiry(String? userInfo) {
@@ -99,6 +104,7 @@ SubscriptionLoadResult parseSubscriptionDetailed(String body) {
       metadata['support-url'] ?? metadata['profile-support-url'],
     ),
     expiresAt: subscriptionExpiry(metadata['subscription-userinfo']),
+    source: body,
   );
 }
 
@@ -185,6 +191,7 @@ Future<SubscriptionLoadResult> loadSubscriptionDetailed(String url) async {
       expiresAt:
           subscriptionExpiry(response.headers.value('subscription-userinfo')) ??
           parsed.expiresAt,
+      source: parsed.source,
     );
   } on IOException {
     throw StateError(

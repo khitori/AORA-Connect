@@ -61,7 +61,32 @@ class WindowsServiceTransport {
     }
   }
 
-  static Future<void> start() async {
+  /// The last check that the service runs. At app start settings, the
+  /// connection, checks and startup each make sure of it within a moment, so
+  /// a check is shared for [_shareFor]: one helper launch instead of one per
+  /// part. Later actions check again, in case the service was stopped
+  /// meanwhile; a failed check or request is forgotten at once.
+  static Future<void>? _started;
+  static DateTime? _startedAt;
+  static const _shareFor = Duration(seconds: 10);
+
+  static Future<void> start() {
+    final at = _startedAt;
+    if (_started != null &&
+        (at == null || DateTime.now().difference(at) < _shareFor)) {
+      return _started!;
+    }
+    _startedAt = null;
+    return _started = _start().then(
+      (_) => _startedAt = DateTime.now(),
+      onError: (Object error, StackTrace stack) {
+        _started = null;
+        Error.throwWithStackTrace(error, stack);
+      },
+    );
+  }
+
+  static Future<void> _start() async {
     try {
       await _run('probe', null);
     } catch (_) {
@@ -69,13 +94,132 @@ class WindowsServiceTransport {
     }
   }
 
+  /// One helper kept running for all requests, instead of launching one per
+  /// request. Null until the first request or after it ended.
+  static HelperSession? _session;
+
+  /// Set when the installed helper is older and has no session mode; then
+  /// every request launches its own helper, as before.
+  static bool _sessionUnsupported = false;
+
   static Future<Map<String, dynamic>> request(
     Map<String, Object?> value,
   ) async {
-    final reply = jsonDecode(await _run('request', value));
+    final String output;
+    try {
+      output = await _send(value);
+    } catch (_) {
+      _started = null;
+      _startedAt = null;
+      rethrow;
+    }
+    final reply = jsonDecode(output);
     if (reply is! Map<String, dynamic>) {
       throw StateError('Invalid Windows service reply.');
     }
     return reply;
+  }
+
+  static Future<String> _send(Map<String, Object?> value) async {
+    if (_sessionUnsupported) return _run('request', value);
+    final body = jsonEncode(value);
+    if (utf8.encode(body).length > maxFrame) {
+      throw StateError('The Windows service request is too large.');
+    }
+    var session = _session;
+    if (session == null || !session.alive) {
+      final helper = AppPaths.windowsHelper('aoravpn_service');
+      if (!await File(helper).exists()) {
+        throw StateError(
+          'The Windows service helper is missing. Repair the installation.',
+        );
+      }
+      session = _session = await HelperSession.open(helper);
+    }
+    try {
+      return await session.send(body);
+    } on HelperSessionUnsupported {
+      _sessionUnsupported = true;
+      _session = null;
+      return _run('request', value);
+    }
+  }
+}
+
+/// The installed helper ended its session mode without answering anything,
+/// as an older helper that does not know it does.
+class HelperSessionUnsupported implements Exception {
+  const HelperSessionUnsupported();
+}
+
+/// A helper running in session mode: one request per line on its input,
+/// each answered on its own line, in order. It ends when its input closes,
+/// so it also ends with the app.
+class HelperSession {
+  HelperSession._(this._process) {
+    // Requests are UTF-8 text, as the helper reads them; not the Windows
+    // code page the input would use otherwise.
+    _process.stdin.encoding = utf8;
+    // A write to a helper that already ended is reported by [send] instead.
+    _process.stdin.done.ignore();
+    _process.stdout
+        .transform(utf8.decoder)
+        .transform(const LineSplitter())
+        .listen(
+          (line) {
+            _answered = true;
+            if (_pending.isNotEmpty) _pending.removeAt(0).complete(line);
+          },
+          onDone: _ended,
+          onError: (Object _) => _ended(),
+        );
+    _process.stderr.drain<void>().ignore();
+    _process.exitCode.then((_) => _ended()).ignore();
+  }
+
+  static Future<HelperSession> open(
+    String helper, {
+    List<String> arguments = const ['session'],
+  }) async => HelperSession._(await Process.start(helper, arguments));
+
+  static const _timeout = Duration(seconds: 12);
+
+  final Process _process;
+  final _pending = <Completer<String>>[];
+  bool _alive = true;
+  bool _answered = false;
+
+  bool get alive => _alive;
+
+  Future<String> send(String body) async {
+    if (!_alive) throw StateError('Windows service helper ended.');
+    final reply = Completer<String>();
+    _pending.add(reply);
+    _process.stdin.writeln(body);
+    try {
+      return await reply.future.timeout(_timeout);
+    } on TimeoutException {
+      // A stuck helper would hold up every later request: replace it.
+      close();
+      throw StateError('Windows service request timed out.');
+    }
+  }
+
+  void close() {
+    if (!_alive) return;
+    _process.kill();
+    _ended();
+  }
+
+  void _ended() {
+    if (!_alive && _pending.isEmpty) return;
+    _alive = false;
+    final error = _answered
+        ? StateError('Windows service helper ended.')
+        : const HelperSessionUnsupported();
+    for (final pending in _pending) {
+      if (!pending.isCompleted) pending.completeError(error);
+    }
+    _pending.clear();
   }
 }

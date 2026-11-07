@@ -313,6 +313,42 @@ unsafe extern "system" fn service_main(_: u32, _: *mut *mut u16) {
     let _ = report(handle, SERVICE_STOPPED, code);
 }
 
+/// Checks one request from the app and passes it to the service over its
+/// pipe, returning the service's reply, or a failure reply when the service
+/// cannot be reached.
+#[cfg(not(feature = "service-fixture"))]
+fn forward(bytes: &[u8]) -> io::Result<Vec<u8>> {
+    if bytes.is_empty() || bytes.len() > transport::MAX_FRAME {
+        return Err(io::Error::other("Service request size limit exceeded"));
+    }
+    if bytes.len() > 4096
+        && !serde_json::from_slice::<serde_json::Value>(bytes)
+            .ok()
+            .is_some_and(|r| {
+                matches!(
+                    r["command"].as_str(),
+                    Some(
+                        "settings.read"
+                            | "settings.write"
+                            | "connection.start"
+                            | "connection.validate"
+                            | "checks.open"
+                    )
+                )
+            })
+    {
+        return Err(io::Error::other("Service request size limit exceeded"));
+    }
+    Ok(
+        match transport::request(&pipe_name(), &installed_executable()?, bytes) {
+            Ok(response) => response,
+            Err(error) => serde_json::to_vec(
+                &serde_json::json!({"protocol":1,"ok":false,"error":format!("Windows service communication failed: {error}"),"service_stopped":manager::is_stopped()}),
+            )?,
+        },
+    )
+}
+
 pub fn run(arguments: Vec<String>) -> io::Result<()> {
     match arguments.as_slice() {
         #[cfg(not(any(
@@ -347,36 +383,38 @@ pub fn run(arguments: Vec<String>) -> io::Result<()> {
             io::stdin()
                 .take(transport::MAX_FRAME as u64 + 1)
                 .read_to_end(&mut bytes)?;
-            if bytes.is_empty() || bytes.len() > transport::MAX_FRAME {
-                return Err(io::Error::other("Service request size limit exceeded"));
-            }
-            if bytes.len() > 4096
-                && !serde_json::from_slice::<serde_json::Value>(&bytes)
-                    .ok()
-                    .is_some_and(|r| {
-                        matches!(
-                            r["command"].as_str(),
-                            Some(
-                                "settings.read"
-                                    | "settings.write"
-                                    | "connection.start"
-                                    | "connection.validate"
-                                    | "checks.open"
-                            )
-                        )
-                    })
-            {
-                return Err(io::Error::other("Service request size limit exceeded"));
-            }
-            let response = match transport::request(&pipe_name(), &installed_executable()?, &bytes)
-            {
-                Ok(response) => response,
-                Err(error) => serde_json::to_vec(
-                    &serde_json::json!({"protocol":1,"ok":false,"error":format!("Windows service communication failed: {error}"),"service_stopped":manager::is_stopped()}),
-                )?,
-            };
+            let response = forward(&bytes)?;
             println!("{}", String::from_utf8(response).map_err(io::Error::other)?);
             Ok(())
+        }
+        // Like "request", but stays running: one request per stdin line, each
+        // answered on its own stdout line, until stdin closes. The app keeps
+        // one of these instead of launching a helper for every request.
+        #[cfg(not(feature = "service-fixture"))]
+        [command] if command == "session" => {
+            use std::io::{BufRead, Read, Write};
+            let mut input = io::stdin().lock();
+            let mut output = io::stdout().lock();
+            loop {
+                let mut bytes = Vec::new();
+                let read = (&mut input)
+                    .take(transport::MAX_FRAME as u64 + 2)
+                    .read_until(b'\n', &mut bytes)?;
+                if read == 0 {
+                    return Ok(());
+                }
+                if bytes.last() != Some(&b'\n') {
+                    return Err(io::Error::other("Service request size limit exceeded"));
+                }
+                bytes.pop();
+                if bytes.last() == Some(&b'\r') {
+                    bytes.pop();
+                }
+                let response = forward(&bytes)?;
+                output.write_all(&response)?;
+                output.write_all(b"\n")?;
+                output.flush()?;
+            }
         }
         #[cfg(feature = "service-scm-fixture")]
         [command] if command == "fixture-info" => {

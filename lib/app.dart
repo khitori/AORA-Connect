@@ -23,6 +23,7 @@ import 'pages/settings_page.dart';
 import 'pages/subscriptions_page.dart';
 import 'storage/app_settings_store.dart';
 import 'storage/platform_settings_stores.dart';
+import 'storage/server_cache_store.dart';
 import 'theme/app_theme.dart';
 import 'updates/android_updates.dart';
 import 'updates/update_controller.dart';
@@ -134,6 +135,7 @@ class _AppShellState extends State<_AppShell> {
       settingsStore:
           widget.settingsStore ??
           (widget.engine == null ? createAppSettingsStore() : null),
+      serverCache: widget.engine == null ? createServerCacheStore() : null,
     );
     _pings = NodePingController(_connection);
     if (widget.engine == null && Platform.isWindows) {

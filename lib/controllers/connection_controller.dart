@@ -28,6 +28,7 @@ import '../profiles/subscription_loader.dart';
 import '../routing/routing_policy.dart';
 import '../storage/app_paths.dart';
 import '../storage/app_settings_store.dart';
+import '../storage/server_cache_store.dart';
 
 typedef SubscriptionLoader = Future<SubscriptionLoadResult> Function(
   String url,
@@ -41,6 +42,7 @@ class ConnectionController extends ChangeNotifier {
     TunnelEngine? xrayEngine,
     String? configPath,
     this.settingsStore,
+    this.serverCache,
     SubscriptionLoader? subscriptionLoader,
     KillSwitch? killSwitch,
     WindowsServiceClient? windowsService,
@@ -102,6 +104,13 @@ class ConnectionController extends ChangeNotifier {
       mode == ConnectionMode.tun || Platform.isWindows;
   bool get serverChecksSupported => supported;
   final AppSettingsStore? settingsStore;
+
+  /// Keeps the active subscription's last server list, so the next start can
+  /// show it before downloading the subscription again.
+  final ServerCacheStore? serverCache;
+
+  /// The list text last handed to [serverCache], to skip saving it again.
+  String? _savedServers;
   final SubscriptionLoader _subscriptionLoader;
   final Future<Directory> Function()? sessionCreator;
   final bool _hasTestConfig;
@@ -388,6 +397,54 @@ class ConnectionController extends ChangeNotifier {
         pingType: _pingType,
       ),
     );
+    _rememberServers();
+  }
+
+  /// Saves the active subscription's server list in the background when it
+  /// changed. A failure only means the next start shows no list until the
+  /// download finishes, so it is not reported.
+  void _rememberServers() {
+    final store = serverCache;
+    if (store == null) return;
+    final url = _activeSubscriptionUrl;
+    final result = url == null ? null : _profileCache[url];
+    final source = result?.source;
+    final key = url == null || source == null ? null : '$url\n$source';
+    if (key == _savedServers) return;
+    _savedServers = key;
+    unawaited(
+      store
+          .write(key == null ? null : ServerCache(url: url!, result: result!))
+          .catchError((Object _) => _savedServers = null),
+    );
+  }
+
+  /// Shows the last saved server list of the active subscription at once,
+  /// before the slower service start and download. Nothing can connect with
+  /// it yet: [canConnect] waits for the restore to finish.
+  Future<ServerCache?> _showSavedServers() async {
+    final url = _activeSubscriptionUrl;
+    final store = serverCache;
+    if (url == null || store == null) return null;
+    final ServerCache? cached;
+    try {
+      cached = await store.read();
+    } catch (_) {
+      return null;
+    }
+    if (cached == null ||
+        cached.url != url ||
+        cached.result.profiles.isEmpty ||
+        _profiles.isNotEmpty) {
+      return null;
+    }
+    final entry = _subscriptions.firstWhere((value) => value.url == url);
+    _savedServers = '$url\n${cached.result.source}';
+    _profileCache[url] = cached.result;
+    _profiles = cached.result.profiles;
+    _selected = _preferredProfile(entry, cached.result.profiles);
+    _changed();
+    return cached;
   }
 
   Future<void> restore() {
@@ -408,32 +465,69 @@ class ConnectionController extends ChangeNotifier {
         _killSwitchEnabled = saved.killSwitchEnabled;
         _routingPolicy = saved.routingPolicy;
         _changed();
-        if (_engine case final AndroidTunnelEngine android) await android.ready;
-        if (_xrayEngine case final AndroidTunnelEngine android) {
-          await android.ready;
-        }
-        await _killSwitch?.disarm();
-        WindowsServiceSnapshot? service;
+        final cached = await _showSavedServers();
+        // The download does not need the service, so it runs while the
+        // service is started and checked below instead of after it. Not with
+        // the built-in kill switch: its rules left from a crash would block
+        // the download until it is disarmed below.
+        final download = switch (_activeSubscriptionUrl) {
+          final url? when _killSwitch == null => _subscriptionLoader(url),
+          _ => null,
+        };
+        // Its failure is handled where it is awaited; this only keeps an
+        // early failure from being reported as unhandled meanwhile.
+        download?.ignore();
         try {
-          service = await _windowsService?.initialize();
+          if (_engine case final AndroidTunnelEngine android) {
+            await android.ready;
+          }
+          if (_xrayEngine case final AndroidTunnelEngine android) {
+            await android.ready;
+          }
+          await _killSwitch?.disarm();
+          WindowsServiceSnapshot? service;
+          try {
+            service = await _windowsService?.initialize();
+          } catch (_) {
+            _serviceUnavailable = _windowsService != null;
+            _errorScope = ConnectionErrorScope.connection;
+            rethrow;
+          }
+          if (service != null &&
+              service.state != TunnelState.stopped &&
+              service.core != null) {
+            _core = service.core!;
+            _mode = service.mode == 'proxy'
+                ? ConnectionMode.proxy
+                : ConnectionMode.tun;
+          }
+          _state = _activeEngine.state;
+          _changed();
+          if (_activeSubscriptionUrl case final url?) {
+            try {
+              try {
+                await _activate(url, refresh: true, download: download);
+              } catch (_) {
+                // The early download may have been blocked by protection left
+                // from a crash, which the service removed above: once more.
+                if (download == null) rethrow;
+                await _activate(url, refresh: true);
+              }
+            } catch (_) {
+              // Offline, or the provider failed: keep using the saved list,
+              // and still report why it could not be refreshed.
+              if (cached != null) await _activate(url);
+              rethrow;
+            }
+            await _persist();
+          }
         } catch (_) {
-          _serviceUnavailable = _windowsService != null;
-          _errorScope = ConnectionErrorScope.connection;
+          // A server shown from the saved list was never checked or prepared,
+          // so it must not stay selected for connecting.
+          if (_activePlan == null && _importedConfigPath == null) {
+            _selected = null;
+          }
           rethrow;
-        }
-        if (service != null &&
-            service.state != TunnelState.stopped &&
-            service.core != null) {
-          _core = service.core!;
-          _mode = service.mode == 'proxy'
-              ? ConnectionMode.proxy
-              : ConnectionMode.tun;
-        }
-        _state = _activeEngine.state;
-        _changed();
-        if (_activeSubscriptionUrl != null) {
-          await _activate(_activeSubscriptionUrl!, refresh: true);
-          await _persist();
         }
       },
       errorScope: ConnectionErrorScope.subscriptions,
@@ -470,10 +564,18 @@ class ConnectionController extends ChangeNotifier {
     await _persist();
   }, errorScope: ConnectionErrorScope.subscriptions);
 
-  Future<void> _activate(String url, {bool refresh = false}) async {
+  /// [download] is a download of [url] already started elsewhere, used
+  /// instead of starting a new one.
+  Future<void> _activate(
+    String url, {
+    bool refresh = false,
+    Future<SubscriptionLoadResult>? download,
+  }) async {
     final entry = _subscriptions.firstWhere((value) => value.url == url);
     final fetch = refresh || !_profileCache.containsKey(url);
-    final result = fetch ? await _subscriptionLoader(url) : _profileCache[url]!;
+    final result = fetch
+        ? await (download ?? _subscriptionLoader(url))
+        : _profileCache[url]!;
     final updatedAt = DateTime.now();
     final profiles = result.profiles;
     final chosen = _preferredProfile(entry, profiles);

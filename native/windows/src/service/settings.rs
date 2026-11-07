@@ -30,6 +30,9 @@ enum Document {
     App,
     Language,
     Updates,
+    /// The active subscription's last downloaded server list, shown at the
+    /// next start before it is downloaded anew.
+    Servers,
 }
 impl Document {
     fn name(self) -> &'static str {
@@ -37,6 +40,7 @@ impl Document {
             Self::App => "app-state.json",
             Self::Language => "language.json",
             Self::Updates => "updates.json",
+            Self::Servers => "server-cache.json",
         }
     }
 }
@@ -152,6 +156,39 @@ fn validate(document: Document, value: &Value) -> Result<()> {
                     link(source, true)?;
                 }
             }
+        }
+        Document::Servers => {
+            object(
+                value,
+                &[
+                    "version",
+                    "url",
+                    "lines",
+                    "title",
+                    "descriptionLines",
+                    "webPageUrl",
+                    "supportUrl",
+                    "expiresAt",
+                ],
+            )?;
+            if value["version"] != 1 {
+                return Err(Failure::Invalid);
+            }
+            if !value["url"].is_null() {
+                link(&value["url"], false)?;
+            }
+            for field in ["lines", "descriptionLines"] {
+                if !value[field].is_null() {
+                    let lines = value[field].as_array().ok_or(Failure::Invalid)?;
+                    for line in lines {
+                        text(line, MAX_DOCUMENT, false)?;
+                    }
+                }
+            }
+            text(&value["title"], 4096, true)?;
+            text(&value["webPageUrl"], 16384, true)?;
+            text(&value["supportUrl"], 16384, true)?;
+            text(&value["expiresAt"], 64, true)?;
         }
         Document::App => {
             object(
@@ -521,6 +558,13 @@ mod tests {
         assert!(validate(Document::App, &json!({"version":1,"subscriptions":[{"url":"https://example.org/sub","command":"run"}]})).is_err());
         assert!(validate(Document::App, &json!({"version":1,"subscriptions":[{"url":format!("https://example.org/{}", "x".repeat(20000))}]})).is_err());
         assert!(validate(Document::App, &json!({"version":1,"mode":"proxy","core":"xray","dnsProvider":"quad9","routingPolicy":{"enabled":true,"direction":"direct","rules":[{"match":"application","target":"C:/Program Files/App/app.exe","enabled":true}]}})).is_ok());
+        assert!(validate(Document::Servers, &json!({"version":1,"url":"https://example.org/sub","lines":["vless://a@b:443#One","#profile-title: X"],"title":"X","descriptionLines":["Hi"],"expiresAt":"2027-01-01T00:00:00.000Z"})).is_ok());
+        assert!(validate(Document::Servers, &json!({"version":1})).is_ok());
+        assert!(validate(Document::Servers, &json!({"version":2})).is_err());
+        assert!(validate(Document::Servers, &json!({"version":1,"url":"file:///x"})).is_err());
+        assert!(validate(Document::Servers, &json!({"version":1,"lines":["a\u{0}b"]})).is_err());
+        assert!(validate(Document::Servers, &json!({"version":1,"lines":["x".repeat(300 * 1024)]})).is_err());
+        assert!(validate(Document::Servers, &json!({"version":1,"command":"run"})).is_err());
     }
     #[test]
     fn writes_preserve_unrecognized_existing_metadata_but_honor_removals() {
