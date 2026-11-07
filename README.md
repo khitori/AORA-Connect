@@ -9,10 +9,13 @@ An open-source VPN client for **Windows and Android**, built with Flutter and po
 ## Screenshots
 
 <p>
-  <img src="https://github.com/user-attachments/assets/13e65e94-1f79-4bdf-81d4-99ec7932c0f9" alt="AORA Connect app screenshot 1" width="190">
-  <img src="https://github.com/user-attachments/assets/3b2fb88e-fa05-4d99-bacc-2bf2a680e972" alt="AORA Connect app screenshot 2" width="190">
-  <img src="https://github.com/user-attachments/assets/02e1347e-b6df-48c2-bdd3-c4d0625fa55b" alt="AORA Connect app screenshot 3" width="190">
-  <img src="https://github.com/user-attachments/assets/73963e27-010f-42fa-ad79-12d8269fdef6" alt="AORA Connect app screenshot 4" width="190">
+  <img width="190" alt="1" src="https://github.com/user-attachments/assets/97738fac-d301-4a4d-8311-55f262b960e3" />
+  <img width="190" alt="2" src="https://github.com/user-attachments/assets/de5ec378-aa36-4d5e-bdb0-86346022ebbf" />
+  <img width="190" alt="3" src="https://github.com/user-attachments/assets/ceb98dde-1144-48d6-acc5-81b4ba432a71" />
+  <img width="190" alt="4" src="https://github.com/user-attachments/assets/65353e1b-7ff8-4bcd-8ed3-0e7d2bbe3b4a" />
+  <img width="190" alt="5" src="https://github.com/user-attachments/assets/6b684b3f-0c08-4bda-8eab-dbb49a2bfbfe" />
+  <img width="190" alt="6" src="https://github.com/user-attachments/assets/26ffdcd0-6af6-4903-8739-ee23b7c9a15b" />
+  <img width="190" alt="7" src="https://github.com/user-attachments/assets/58ffb8ca-f046-4c0b-bdfd-b5008db77fe4" />
 </p>
 
 ## Platforms and downloads
