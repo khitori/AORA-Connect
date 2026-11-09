@@ -23,7 +23,7 @@ class SettingsLabel extends StatelessWidget {
       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
         fontSize: 14,
         fontWeight: FontWeight.w400,
-        color: color ?? AppColors.subsectionLabel,
+        color: color ?? AppColors.sectionLabel,
       ),
     ),
   );

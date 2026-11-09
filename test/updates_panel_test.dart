@@ -53,7 +53,7 @@ Future<(UpdateController, Directory)> _mount(
   });
   await tester.pumpWidget(
     MaterialApp(
-      theme: AppTheme.light,
+      theme: AppTheme.current,
       home: Scaffold(
         body: ListView(
           padding: const EdgeInsets.all(24),

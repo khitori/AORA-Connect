@@ -67,7 +67,7 @@ void main() {
 
           await tester.pumpWidget(
             MaterialApp(
-              theme: AppTheme.light,
+              theme: AppTheme.current,
               builder: (context, child) => MediaQuery(
                 data: MediaQuery.of(context)
                     .copyWith(textScaler: TextScaler.linear(textScale)),

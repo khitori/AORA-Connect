@@ -16,29 +16,32 @@ class GlassSurface extends StatelessWidget {
     super.key,
     this.shape = const StadiumBorder(),
     this.cornerWidth,
+    required this.backgroundTop,
+    required this.backgroundBottom,
+    required this.innerBorder,
+    required this.outerBorder,
+    required this.shadow,
     required this.child,
   });
 
   final OutlinedBorder shape;
   final double? cornerWidth;
+  final Color backgroundTop, backgroundBottom, innerBorder, shadow;
+  final Color? outerBorder;
   final Widget child;
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
     decoration: ShapeDecoration(
       shape: shape,
-      gradient: const LinearGradient(
+      gradient: LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [AppColors.glassTop, AppColors.glassBottom],
+        colors: [backgroundTop, backgroundBottom],
       ),
-      // Drop shadow: X 0, Y 1, blur 9, spread 0, black 10%.
-      shadows: const [
-        BoxShadow(
-          color: AppColors.glassShadow,
-          blurRadius: 9,
-          offset: Offset(0, 1),
-        ),
+      // Drop shadow: X 0, Y 1, blur 9, spread 0.
+      shadows: [
+        BoxShadow(color: shadow, blurRadius: 9, offset: const Offset(0, 1)),
       ],
     ),
     // The edge is painted over the content so hover highlights never leave
@@ -49,7 +52,8 @@ class GlassSurface extends StatelessWidget {
       foregroundPainter: GlassEdgePainter(
         shape,
         cornerWidth: cornerWidth,
-        outline: AppColors.lineStrong.withValues(alpha: 0.35),
+        innerBorder: innerBorder,
+        outline: outerBorder,
         fadeOutlineEnds: true,
       ),
       child: Material(
@@ -63,7 +67,8 @@ class GlassSurface extends StatelessWidget {
 }
 
 /// The glass edge alone: white on the straight top and bottom, fading out
-/// over the rounded left and right ends. Use as a `foregroundPainter`.
+/// over the rounded left and right ends. In the dark theme it is a thinner,
+/// warm line all the way around. Use as a `foregroundPainter`.
 ///
 /// With [outline], a full 1 px border of that color is drawn on the very
 /// outside and the white edge sits just inside it, so both stay visible.
@@ -76,11 +81,13 @@ class GlassEdgePainter extends CustomPainter {
     this.outline,
     this.opacity = 1,
     this.fadeOutlineEnds = false,
+    required this.innerBorder,
   });
 
   final OutlinedBorder shape;
   final double? cornerWidth;
   final Color? outline;
+  final Color innerBorder;
 
   /// Fades both borders, for surfaces that animate in.
   final double opacity;
@@ -89,11 +96,15 @@ class GlassEdgePainter extends CustomPainter {
   /// leaving it only on the straight top and bottom.
   final bool fadeOutlineEnds;
   static const _width = 1.5;
+  static const _darkWidth = 1.0;
   static const _outlineWidth = 1.0;
 
   @override
   void paint(Canvas canvas, Size size) {
-    var bounds = Offset.zero & size;
+    final outer = Offset.zero & size;
+    var bounds = outer;
+    var inset = 0.0;
+    final dark = AppColors.isDark;
     final fade = size.width <= 0
         ? 0.5
         : ((cornerWidth ?? size.height / 2) / size.width).clamp(0.0, 0.5);
@@ -103,23 +114,33 @@ class GlassEdgePainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = _outlineWidth
         ..color = line;
-      if (fadeOutlineEnds) paint.shader = _endFade(line, fade, bounds);
-      canvas.drawPath(
-        shape.getOuterPath(bounds.deflate(_outlineWidth / 2)),
-        paint,
-      );
+      if (fadeOutlineEnds && !dark) {
+        paint.shader = _endFade(line, fade, bounds);
+      }
+      canvas.drawPath(_insetPath(outer, _outlineWidth / 2), paint);
       bounds = bounds.deflate(_outlineWidth);
+      inset = _outlineWidth;
     }
-    final glassEdge = AppColors.glassEdge;
-    final edge = glassEdge.withValues(alpha: glassEdge.a * opacity);
-    canvas.drawPath(
-      shape.getOuterPath(bounds.deflate(_width / 2)),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = _width
-        ..shader = _endFade(edge, fade, bounds),
-    );
+    final edge = innerBorder.withValues(alpha: innerBorder.a * opacity);
+    final width = dark ? _darkWidth : _width;
+    final edgePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = width
+      ..color = edge;
+    if (!dark) edgePaint.shader = _endFade(edge, fade, bounds);
+    canvas.drawPath(_insetPath(outer, inset + width / 2), edgePaint);
   }
+
+  /// The shape's outline moved [inset] inward. Rounded rectangles also get
+  /// smaller corners, so lines stacked inside each other stay the same
+  /// distance apart around the curve. Pills and circles do this by themselves.
+  Path _insetPath(Rect outer, double inset) => switch (shape) {
+    RoundedRectangleBorder(:final borderRadius) =>
+      Path()..addRRect(
+        borderRadius.resolve(TextDirection.ltr).toRRect(outer).deflate(inset),
+      ),
+    _ => shape.getOuterPath(outer.deflate(inset)),
+  };
 
   static Shader _endFade(Color color, double fade, Rect bounds) =>
       LinearGradient(
@@ -137,6 +158,7 @@ class GlassEdgePainter extends CustomPainter {
       oldDelegate.shape != shape ||
       oldDelegate.cornerWidth != cornerWidth ||
       oldDelegate.outline != outline ||
+      oldDelegate.innerBorder != innerBorder ||
       oldDelegate.opacity != opacity ||
       oldDelegate.fadeOutlineEnds != fadeOutlineEnds;
 }
@@ -146,9 +168,10 @@ class GlassEdgePainter extends CustomPainter {
 /// inside it, with [radius] corners. Usable wherever Flutter takes a shape,
 /// such as button themes and decorations.
 class GlassBorder extends OutlinedBorder {
-  const GlassBorder({this.radius = 12, super.side});
+  const GlassBorder({this.radius = 12, required this.innerBorder, super.side});
 
   final double radius;
+  final Color innerBorder;
 
   RoundedRectangleBorder get _shape =>
       RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius));
@@ -172,22 +195,32 @@ class GlassBorder extends OutlinedBorder {
       _shape,
       cornerWidth: radius,
       outline: side.style == BorderStyle.none ? null : side.color,
+      innerBorder: innerBorder,
     ).paint(canvas, rect.size);
     canvas.restore();
   }
 
   @override
-  GlassBorder copyWith({BorderSide? side}) =>
-      GlassBorder(radius: radius, side: side ?? this.side);
+  GlassBorder copyWith({BorderSide? side}) => GlassBorder(
+    radius: radius,
+    innerBorder: innerBorder,
+    side: side ?? this.side,
+  );
 
   @override
-  ShapeBorder scale(double t) =>
-      GlassBorder(radius: radius * t, side: side.scale(t));
+  ShapeBorder scale(double t) => GlassBorder(
+    radius: radius * t,
+    innerBorder: innerBorder,
+    side: side.scale(t),
+  );
 
   @override
   bool operator ==(Object other) =>
-      other is GlassBorder && other.radius == radius && other.side == side;
+      other is GlassBorder &&
+      other.radius == radius &&
+      other.innerBorder == innerBorder &&
+      other.side == side;
 
   @override
-  int get hashCode => Object.hash(radius, side);
+  int get hashCode => Object.hash(radius, innerBorder, side);
 }

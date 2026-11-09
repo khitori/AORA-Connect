@@ -39,9 +39,12 @@ class _AppToggleState extends State<AppToggle> {
     final enabled = widget.onChanged != null;
     final on = widget.value;
     // Groove in both states: darker at the top, as if light falls into a slot.
-    const colors = [AppColors.toggleGrooveTop, AppColors.toggleGrooveBottom];
+    final colors = [
+      AppColors.toggleTrackBackgroundTop,
+      AppColors.toggleTrackBackgroundBottom,
+    ];
     final tint = enabled && (_hovered || _focused || _pressed)
-        ? AppColors.ink.withValues(alpha: _pressed ? 0.12 : 0.06)
+        ? (_pressed ? AppColors.toggleTrackPressed : AppColors.toggleTrackHover)
         : null;
     void toggle() => widget.onChanged?.call(!on);
     return Semantics(
@@ -79,8 +82,10 @@ class _AppToggleState extends State<AppToggle> {
                     height: 26,
                     child: Stack(
                       children: [
-                        // The groove.
+                        // The groove. The key makes a theme switch instant
+                        // instead of fading.
                         AnimatedContainer(
+                          key: ValueKey(AppColors.isDark),
                           duration: _motion,
                           curve: _curve,
                           decoration: BoxDecoration(
@@ -95,7 +100,9 @@ class _AppToggleState extends State<AppToggle> {
                                       : Color.alphaBlend(tint, color),
                               ],
                             ),
-                            border: Border.all(color: AppColors.line),
+                            border: Border.all(
+                              color: AppColors.toggleTrackBorder,
+                            ),
                           ),
                         ),
                         // The lit knob's hard glare across the groove,
@@ -110,13 +117,17 @@ class _AppToggleState extends State<AppToggle> {
                                   end: AlignmentDirectional.centerStart,
                                   stops: const [0, 0.35, 1],
                                   colors: [
-                                    AppColors.accent.withValues(
-                                      alpha: 0.5 * lit,
+                                    AppColors.faded(
+                                      AppColors.toggleTrackGlowStrong,
+                                      lit,
                                     ),
-                                    AppColors.accent.withValues(
-                                      alpha: 0.22 * lit,
+                                    AppColors.faded(
+                                      AppColors.toggleTrackGlowSoft,
+                                      lit,
                                     ),
-                                    AppColors.accent.withValues(alpha: 0),
+                                    AppColors.toggleTrackGlowSoft.withValues(
+                                      alpha: 0,
+                                    ),
                                   ],
                                 ),
                               ),
@@ -169,20 +180,28 @@ class _Knob extends StatelessWidget {
           end: Alignment.bottomCenter,
           colors: [
             // Lit like the white glass: deeper at the top, lighter below.
-            Color.lerp(AppColors.glassTop, AppColors.accentDark, lit)!,
-            Color.lerp(AppColors.glassBottom, AppColors.accent, lit)!,
+            Color.lerp(
+              AppColors.toggleKnobBackgroundTop,
+              AppColors.toggleKnobOnBackgroundTop,
+              lit,
+            )!,
+            Color.lerp(
+              AppColors.toggleKnobBackgroundBottom,
+              AppColors.toggleKnobOnBackgroundBottom,
+              lit,
+            )!,
           ],
         ),
         shadows: [
           BoxShadow.lerp(
-            const BoxShadow(
-              color: AppColors.glassShadow,
+            BoxShadow(
+              color: AppColors.toggleKnobShadow,
               blurRadius: 9,
-              offset: Offset(0, 1),
+              offset: const Offset(0, 1),
             ),
             // A deep glow that reaches into the groove.
             BoxShadow(
-              color: AppColors.accent.withValues(alpha: 0.7),
+              color: AppColors.toggleKnobGlow,
               blurRadius: 12,
               spreadRadius: 1,
             ),
@@ -190,8 +209,11 @@ class _Knob extends StatelessWidget {
           )!,
         ],
       ),
-      child: const CustomPaint(
-        foregroundPainter: GlassEdgePainter(CircleBorder()),
+      child: CustomPaint(
+        foregroundPainter: GlassEdgePainter(
+          const CircleBorder(),
+          innerBorder: AppColors.toggleKnobInnerBorder,
+        ),
       ),
     ),
   );

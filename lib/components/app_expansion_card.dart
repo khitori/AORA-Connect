@@ -8,6 +8,7 @@ import 'unfold_icon.dart';
 
 /// The same large corner radius whether collapsed or expanded.
 const _radius = AppTheme.sectionRadius;
+
 /// Corners of the 40 px header icon box: heavily rounded, not a circle.
 const _iconBoxRadius = 14.0;
 const _motion = Duration(milliseconds: 240);
@@ -89,9 +90,9 @@ class _AppExpansionCardState extends State<AppExpansionCard>
       final radius = BorderRadius.circular(_radius);
       final theme = Theme.of(context);
       return Material(
-        color: AppColors.card,
+        color: AppColors.sectionBackground,
         elevation: 1,
-        shadowColor: AppColors.islandShadow,
+        shadowColor: AppColors.sectionShadow,
         shape: RoundedRectangleBorder(borderRadius: radius),
         clipBehavior: Clip.antiAlias,
         child: Theme(
@@ -106,6 +107,8 @@ class _AppExpansionCardState extends State<AppExpansionCard>
           child: ExpansionTile(
             key: PageStorageKey('section-${widget.storageId ?? widget.title}'),
             controller: _expansion,
+            textColor: AppColors.sectionTitle,
+            collapsedTextColor: AppColors.sectionTitle,
             initiallyExpanded: widget.initiallyExpanded,
             minTileHeight: 64,
             // The header and the content are inset by the hoverable rows'
@@ -133,12 +136,24 @@ class _AppExpansionCardState extends State<AppExpansionCard>
                   action,
                   const SizedBox(width: 8),
                 ],
-                UnfoldIcon(open: open > 0.5),
+                UnfoldIcon(
+                  open: open > 0.5,
+                  color: Color.lerp(
+                    AppColors.sectionArrow,
+                    AppColors.sectionArrowOpen,
+                    open,
+                  ),
+                ),
               ],
             ),
             // The icon box uses the islands' glass style: a heavily rounded
             // square rather than a circle.
             leading: GlassSurface(
+              backgroundTop: AppColors.sectioniconboxBackgroundTop,
+              backgroundBottom: AppColors.sectioniconboxBackgroundBottom,
+              innerBorder: AppColors.sectioniconboxInnerBorder,
+              outerBorder: AppColors.sectioniconboxOuterBorder,
+              shadow: AppColors.sectioniconboxShadow,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(_iconBoxRadius),
               ),
@@ -151,9 +166,14 @@ class _AppExpansionCardState extends State<AppExpansionCard>
                 child: Icon(
                   widget.icon,
                   size: 20,
+                  color: Color.lerp(
+                    AppColors.sectionIcon,
+                    AppColors.sectionIconOpen,
+                    open,
+                  ),
                   shadows: [
                     Shadow(
-                      color: AppColors.accent.withValues(alpha: 0.45 * open),
+                      color: AppColors.faded(AppColors.sectionIconGlow, open),
                       blurRadius: 9,
                     ),
                   ],
@@ -169,12 +189,12 @@ class _AppExpansionCardState extends State<AppExpansionCard>
                 Text(
                   widget.subtitle,
                   style: Theme.of(context).textTheme.bodySmall
-                      ?.copyWith(color: AppColors.muted400),
+                      ?.copyWith(color: AppColors.sectionSubtitle),
                 ),
               ],
             ),
             children: [
-              Divider(height: 1, color: AppColors.line),
+              Divider(height: 1, color: AppColors.sectionDivider),
               SizedBox(height: widget.contentTopPadding),
               for (final child in widget.children)
                 Theme(data: theme, child: child),

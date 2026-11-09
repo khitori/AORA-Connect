@@ -252,5 +252,10 @@
   "coreLogsHelp": "أحدث الرسائل من نواة الشبكة.",
   "automaticUpdatesHelp": "البحث عن إصدار جديد في كل مرة يبدأ فيها التطبيق.",
   "checkForUpdates": "التحقق من التحديثات",
-  "retry": "إعادة المحاولة"
+  "retry": "إعادة المحاولة",
+  "appearance": "المظهر",
+  "theme": "السمة",
+  "themeLight": "فاتح",
+  "themeDark": "داكن",
+  "themeSaveFailed": "تعذّر حفظ السمة."
 }

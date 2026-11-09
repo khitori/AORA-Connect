@@ -12,7 +12,7 @@ void main() {
   Future<void> mount(WidgetTester tester, List<String> lines) =>
       tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.light,
+          theme: AppTheme.current,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(

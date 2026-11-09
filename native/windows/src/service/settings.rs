@@ -33,6 +33,8 @@ enum Document {
     /// The active subscription's last downloaded server list, shown at the
     /// next start before it is downloaded anew.
     Servers,
+    /// The chosen light, dark or system theme.
+    Appearance,
 }
 impl Document {
     fn name(self) -> &'static str {
@@ -41,6 +43,7 @@ impl Document {
             Self::Language => "language.json",
             Self::Updates => "updates.json",
             Self::Servers => "server-cache.json",
+            Self::Appearance => "appearance.json",
         }
     }
 }
@@ -156,6 +159,10 @@ fn validate(document: Document, value: &Value) -> Result<()> {
                     link(source, true)?;
                 }
             }
+        }
+        Document::Appearance => {
+            object(value, &["theme"])?;
+            choice(&value["theme"], &["system", "light", "dark"])?;
         }
         Document::Servers => {
             object(
@@ -565,6 +572,9 @@ mod tests {
         assert!(validate(Document::Servers, &json!({"version":1,"lines":["a\u{0}b"]})).is_err());
         assert!(validate(Document::Servers, &json!({"version":1,"lines":["x".repeat(300 * 1024)]})).is_err());
         assert!(validate(Document::Servers, &json!({"version":1,"command":"run"})).is_err());
+        assert!(validate(Document::Appearance, &json!({"theme":"dark"})).is_ok());
+        assert!(validate(Document::Appearance, &json!({"theme":"neon"})).is_err());
+        assert!(validate(Document::Appearance, &json!({"theme":"dark","path":"x"})).is_err());
     }
     #[test]
     fn writes_preserve_unrecognized_existing_metadata_but_honor_removals() {

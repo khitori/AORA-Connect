@@ -883,4 +883,19 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get retry => 'تلاش دوباره';
+
+  @override
+  String get appearance => 'ظاهر';
+
+  @override
+  String get theme => 'پوسته';
+
+  @override
+  String get themeLight => 'روشن';
+
+  @override
+  String get themeDark => 'تیره';
+
+  @override
+  String get themeSaveFailed => 'ذخیرهٔ پوسته ممکن نشد.';
 }

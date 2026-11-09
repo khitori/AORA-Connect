@@ -888,4 +888,19 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get retry => 'Réessayer';
+
+  @override
+  String get appearance => 'Apparence';
+
+  @override
+  String get theme => 'Thème';
+
+  @override
+  String get themeLight => 'Clair';
+
+  @override
+  String get themeDark => 'Sombre';
+
+  @override
+  String get themeSaveFailed => 'Impossible d’enregistrer le thème.';
 }

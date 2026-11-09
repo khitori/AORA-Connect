@@ -21,6 +21,11 @@ class IconIsland extends StatelessWidget {
   Widget build(BuildContext context) => SizedBox(
     height: _height,
     child: GlassSurface(
+      backgroundTop: AppColors.iconbuttonBackgroundTop,
+      backgroundBottom: AppColors.iconbuttonBackgroundBottom,
+      innerBorder: AppColors.iconbuttonInnerBorder,
+      outerBorder: AppColors.iconbuttonOuterBorder,
+      shadow: AppColors.iconbuttonShadow,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: _inset),
         child: Row(
@@ -66,16 +71,21 @@ class IslandAction extends StatelessWidget {
   Widget build(BuildContext context) {
     // Working and selected icons both light up with a glow in their color.
     final base = onPressed == null && !active
-        ? AppColors.muted300
-        : AppColors.muted700;
-    final lit = selected ? AppColors.accent : AppColors.active;
+        ? AppColors.iconbuttonIconDisabled
+        : AppColors.iconbuttonIcon;
+    final lit = selected
+        ? AppColors.iconbuttonIconSelected
+        : AppColors.iconbuttonIconWorking;
     return Tooltip(
       message: tooltip,
       child: SizedBox.square(
         dimension: _innerSize,
         child: InkWell(
           customBorder: const CircleBorder(),
-          overlayColor: AppTheme.controlOverlayColor,
+          overlayColor: AppTheme.overlay(
+            AppColors.iconbuttonHover,
+            AppColors.iconbuttonPressed,
+          ),
           onTap: onPressed,
           child: TweenAnimationBuilder<double>(
             tween: Tween(end: selected || active ? 1 : 0),
@@ -192,7 +202,9 @@ class IslandButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = onPressed == null ? AppColors.muted300 : AppColors.muted700;
+    final color = onPressed == null
+        ? AppColors.iconbuttonIconDisabled
+        : AppColors.iconbuttonIcon;
     Widget content = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -217,7 +229,10 @@ class IslandButton extends StatelessWidget {
       height: _innerSize,
       child: InkWell(
         customBorder: const StadiumBorder(),
-        overlayColor: AppTheme.controlOverlayColor,
+        overlayColor: AppTheme.overlay(
+          AppColors.iconbuttonHover,
+          AppColors.iconbuttonPressed,
+        ),
         onTap: onPressed,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -229,6 +244,11 @@ class IslandButton extends StatelessWidget {
         ? SizedBox(
             height: _height,
             child: GlassSurface(
+              backgroundTop: AppColors.iconbuttonBackgroundTop,
+              backgroundBottom: AppColors.iconbuttonBackgroundBottom,
+              innerBorder: AppColors.iconbuttonInnerBorder,
+              outerBorder: AppColors.iconbuttonOuterBorder,
+              shadow: AppColors.iconbuttonShadow,
               child: Padding(
                 padding: const EdgeInsets.all(_inset),
                 child: pill,

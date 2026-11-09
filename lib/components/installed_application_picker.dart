@@ -62,7 +62,7 @@ class InstalledApplicationPicker extends StatelessWidget {
             : Image.memory(
                 app.icon!,
                 errorBuilder: (_, _, _) =>
-                    Icon(Icons.apps_rounded, color: AppColors.muted500),
+                    Icon(Icons.apps_rounded, color: AppColors.apppickerIcon),
               ),
         loadFailed: context.l10n.installedLoadFailed,
       );

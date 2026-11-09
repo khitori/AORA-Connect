@@ -74,8 +74,8 @@ class UpdatesPanel extends StatelessWidget {
         actions: [
           PillButton(
             label: context.l10n.install,
-            multiplyColor: AppColors.confirm,
-            textColor: AppColors.card,
+            multiplyColor: AppColors.dialogConfirmButton,
+            textColor: AppColors.dialogConfirmButtonText,
             onPressed: () => Navigator.pop(context, true),
           ),
           PillButton(
@@ -111,7 +111,7 @@ class UpdatesPanel extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTheme.sectionRowRadius),
           ),
-          hoverColor: AppColors.ink.withValues(alpha: 0.06),
+          hoverColor: AppColors.settingsrowHover,
           title: Text(context.l10n.automaticUpdates),
           subtitle: Text(context.l10n.automaticUpdatesHelp),
           onTap: disabled ? null : () => change(!updates.automaticChecks),
@@ -134,7 +134,7 @@ class UpdatesPanel extends StatelessWidget {
     return DecoratedBox(
       key: const ValueKey('update-status'),
       decoration: BoxDecoration(
-        color: AppColors.controlGray,
+        color: AppColors.updatesstatusBackground,
         borderRadius: BorderRadius.circular(AppTheme.sectionRowRadius),
       ),
       child: Padding(
@@ -150,7 +150,9 @@ class UpdatesPanel extends StatelessWidget {
                 Icon(
                   found ? Icons.new_releases_outlined : Icons.verified_outlined,
                   size: 20,
-                  color: found ? AppColors.confirm : AppColors.muted500,
+                  color: found
+                      ? AppColors.updatesstatusIconFound
+                      : AppColors.updatesstatusIcon,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -172,7 +174,9 @@ class UpdatesPanel extends StatelessWidget {
                       Text(
                         updates.localizedStatus(context.l10n),
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: found ? AppColors.confirm : AppColors.muted500,
+                          color: found
+                              ? AppColors.updatesstatusTextFound
+                              : AppColors.updatesstatusText,
                         ),
                       ),
                     ],
@@ -187,7 +191,7 @@ class UpdatesPanel extends StatelessWidget {
                 maxLines: 4,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColors.muted500,
+                  color: AppColors.updatesnotesText,
                 ),
               ),
             ],
@@ -198,8 +202,8 @@ class UpdatesPanel extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: updates.progress,
                   minHeight: 6,
-                  color: AppColors.confirm,
-                  backgroundColor: AppColors.card,
+                  color: AppColors.updatesprogressBar,
+                  backgroundColor: AppColors.updatesprogressTrack,
                 ),
               ),
             ],
@@ -259,14 +263,14 @@ class UpdatesPanel extends StatelessWidget {
             key: const ValueKey('check-updates'),
             label: label,
             icon: icon,
-            multiplyColor: AppColors.confirm,
-            textColor: AppColors.card,
+            multiplyColor: AppColors.updatescheckbuttonBackground,
+            textColor: AppColors.updatescheckbuttonText,
             onPressed: disabled ? null : action,
           ),
           const SizedBox(height: AppTheme.sectionButtonGap),
           PillButton(
             key: const ValueKey('update-from-file'),
-            color: AppColors.controlGray,
+            color: AppColors.updatesbuttonBackground,
             label: context.l10n.importUpdate,
             icon: Icons.folder_open_rounded,
             onPressed: disabled ? null : () => _import(context),
@@ -275,7 +279,7 @@ class UpdatesPanel extends StatelessWidget {
           const SizedBox(height: AppTheme.sectionButtonGap),
           PillButton(
             key: const ValueKey('update-sources'),
-            color: AppColors.controlGray,
+            color: AppColors.updatesbuttonBackground,
             label: updates.additionalSources.isEmpty
                 ? context.l10n.additionalSources
                 : context.l10n.additionalSourcesCount(

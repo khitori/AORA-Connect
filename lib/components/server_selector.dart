@@ -68,7 +68,7 @@ class _ServerSelectorState extends State<ServerSelector> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(_radius),
             child: ColoredBox(
-              color: AppColors.card,
+              color: AppColors.serverpanelBackground,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -100,7 +100,7 @@ class _ServerSelectorState extends State<ServerSelector> {
                             _status,
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
-                                  color: AppColors.muted500,
+                                  color: AppColors.serverpanelStatusText,
                                   fontSize: 11,
                                 ),
                           ),
@@ -141,7 +141,7 @@ class _ServerSelectorState extends State<ServerSelector> {
                     thickness: 1,
                     indent: AppTheme.contentPadding,
                     endIndent: AppTheme.contentPadding,
-                    color: AppColors.line,
+                    color: AppColors.serverpanelDivider,
                   ),
                   AppSelect<ServerProfile>(
                     tapRegionGroupId: _menuGroup,

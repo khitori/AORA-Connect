@@ -886,4 +886,19 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get retry => 'Повторить';
+
+  @override
+  String get appearance => 'Оформление';
+
+  @override
+  String get theme => 'Тема';
+
+  @override
+  String get themeLight => 'Светлая';
+
+  @override
+  String get themeDark => 'Тёмная';
+
+  @override
+  String get themeSaveFailed => 'Не удалось сохранить тему.';
 }

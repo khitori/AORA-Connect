@@ -252,5 +252,10 @@
   "coreLogsHelp": "Последние сообщения сетевого ядра.",
   "automaticUpdatesHelp": "Искать новую версию при каждом запуске приложения.",
   "checkForUpdates": "Проверить обновления",
-  "retry": "Повторить"
+  "retry": "Повторить",
+  "appearance": "Оформление",
+  "theme": "Тема",
+  "themeLight": "Светлая",
+  "themeDark": "Тёмная",
+  "themeSaveFailed": "Не удалось сохранить тему."
 }

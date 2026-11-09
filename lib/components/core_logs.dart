@@ -28,7 +28,7 @@ class CoreLogs extends StatelessWidget {
     return SizedBox(
       height: 168,
       child: Material(
-        color: AppColors.controlGray,
+        color: AppColors.logspreviewBackground,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(
             Radius.circular(AppTheme.sectionRowRadius),
@@ -37,7 +37,10 @@ class CoreLogs extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           key: const ValueKey('core-logs-open'),
-          overlayColor: AppTheme.controlOverlayColor,
+          overlayColor: AppTheme.overlay(
+            AppColors.logspreviewHover,
+            AppColors.logspreviewPressed,
+          ),
           onTap: () => showAppDialog<void>(
             context: context,
             builder: (_) => _CoreLogsDialog(lines: lines),
@@ -91,7 +94,7 @@ class _CoreLogsDialog extends StatelessWidget {
       height: 320,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: AppColors.glassControl,
+          color: AppColors.logsdialogBackground,
           borderRadius: BorderRadius.circular(AppTheme.sectionRowRadius),
         ),
         child: SingleChildScrollView(
@@ -116,8 +119,8 @@ class _CoreLogsDialog extends StatelessWidget {
       PillButton(
         key: const ValueKey('copy-core-logs'),
         label: context.l10n.copy,
-        multiplyColor: AppColors.confirm,
-        textColor: AppColors.card,
+        multiplyColor: AppColors.dialogConfirmButton,
+        textColor: AppColors.dialogConfirmButtonText,
         onPressed: lines.isEmpty
             ? null
             : () async {

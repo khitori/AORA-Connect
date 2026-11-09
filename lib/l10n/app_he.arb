@@ -252,5 +252,10 @@
   "coreLogsHelp": "הודעות אחרונות מליבת הרשת.",
   "automaticUpdatesHelp": "חיפוש גרסה חדשה בכל הפעלה של היישום.",
   "checkForUpdates": "בדיקת עדכונים",
-  "retry": "ניסיון חוזר"
+  "retry": "ניסיון חוזר",
+  "appearance": "מראה",
+  "theme": "ערכת נושא",
+  "themeLight": "בהיר",
+  "themeDark": "כהה",
+  "themeSaveFailed": "לא ניתן לשמור את ערכת הנושא."
 }

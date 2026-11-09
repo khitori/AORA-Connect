@@ -134,7 +134,7 @@ void main() {
     bool enabled = true,
   }) => tester.pumpWidget(
     MaterialApp(
-      theme: AppTheme.light,
+      theme: AppTheme.current,
       home: Scaffold(
         body: Center(
           child: SizedBox(
@@ -157,7 +157,7 @@ void main() {
         (tester) async {
           await tester.pumpWidget(
             MaterialApp(
-              theme: AppTheme.light,
+              theme: AppTheme.current,
               home: MediaQuery(
                 data: MediaQueryData(textScaler: TextScaler.linear(scale)),
                 child: Scaffold(
@@ -340,7 +340,7 @@ void main() {
           });
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.light,
+          theme: AppTheme.current,
           home: Scaffold(body: SettingsPage(connection: connection)),
         ),
       );

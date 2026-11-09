@@ -13,7 +13,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light.copyWith(
+        theme: AppTheme.current.copyWith(
           platform: TargetPlatform.windows,
           visualDensity: VisualDensity.compact,
         ),
@@ -58,7 +58,7 @@ void main() {
     ) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.light.copyWith(platform: platform),
+          theme: AppTheme.current.copyWith(platform: platform),
           home: Scaffold(
             body: SizedBox(
               width: 320,

@@ -48,7 +48,7 @@ Future<RoutingRule?> showRoutingRuleEditor(
             const SizedBox(height: AppTheme.sectionLabelGap),
             AppSelect<RoutingMatch>(
               pill: true,
-              fieldColor: AppColors.glassControl,
+              fieldColor: AppColors.dialogSelectBackground,
               value: match,
               items: [
                 for (final type in RoutingMatch.values)
@@ -121,8 +121,8 @@ Future<RoutingRule?> showRoutingRuleEditor(
         actions: [
           PillButton(
             label: context.l10n.save,
-            multiplyColor: AppColors.confirm,
-            textColor: AppColors.card,
+            multiplyColor: AppColors.dialogConfirmButton,
+            textColor: AppColors.dialogConfirmButtonText,
             onPressed: () {
               final rule = RoutingRule(
                 match: match,

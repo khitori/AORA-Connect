@@ -38,59 +38,62 @@ abstract final class AppTheme {
   /// their corners curve the same as that select's pill ends.
   static const sectionRowRadius = 24.0;
 
-  static Color get selectedSurface => AppColors.ink.withValues(alpha: 0.06);
-
-  static WidgetStateProperty<Color?> get controlOverlayColor =>
+  /// A hover and press tint for one element, from its own two colors.
+  static WidgetStateProperty<Color?> overlay(Color hover, Color pressed) =>
       WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.pressed)) {
-          return AppColors.ink.withValues(alpha: 0.12);
+          return pressed;
         }
         if (states.contains(WidgetState.hovered) ||
             states.contains(WidgetState.focused)) {
-          return AppColors.ink.withValues(alpha: 0.06);
+          return hover;
         }
         return null;
       });
 
-  static ThemeData get light {
+  static WidgetStateProperty<Color?> get controlOverlayColor =>
+      overlay(AppColors.defaultHover, AppColors.defaultPressed);
+
+  /// The theme of the active palette ([AppColors.current]): light or dark.
+  static ThemeData get current {
     final accentSurface = Color.alphaBlend(
-      AppColors.accent.withValues(alpha: 0.08),
-      AppColors.card,
+      AppColors.defaultAccent.withValues(alpha: 0.08),
+      AppColors.defaultSurface,
     );
-    final colors = ColorScheme.light(
-      primary: AppColors.accent,
-      onPrimary: AppColors.card,
+    final colors = (AppColors.isDark ? ColorScheme.dark : ColorScheme.light)(
+      primary: AppColors.defaultAccent,
+      onPrimary: AppColors.defaultOnAccent,
       primaryContainer: accentSurface,
-      onPrimaryContainer: AppColors.accentDark,
-      secondary: AppColors.muted700,
-      onSecondary: AppColors.card,
-      secondaryContainer: AppColors.card,
-      onSecondaryContainer: AppColors.ink,
-      tertiary: AppColors.ink,
-      onTertiary: AppColors.card,
-      tertiaryContainer: AppColors.paperDark,
-      onTertiaryContainer: AppColors.ink,
-      error: AppColors.accentDark,
-      onError: AppColors.card,
+      onPrimaryContainer: AppColors.errorText,
+      secondary: AppColors.defaultSecondary,
+      onSecondary: AppColors.defaultSurface,
+      secondaryContainer: AppColors.defaultSurface,
+      onSecondaryContainer: AppColors.defaultText,
+      tertiary: AppColors.defaultText,
+      onTertiary: AppColors.defaultSurface,
+      tertiaryContainer: AppColors.defaultSurfaceDim,
+      onTertiaryContainer: AppColors.defaultText,
+      error: AppColors.errorText,
+      onError: AppColors.defaultOnAccent,
       errorContainer: accentSurface,
-      onErrorContainer: AppColors.accentDark,
-      surface: AppColors.paper,
-      onSurface: AppColors.ink,
-      onSurfaceVariant: AppColors.muted400,
-      surfaceDim: AppColors.paperDark,
-      surfaceBright: AppColors.card,
-      surfaceContainerLowest: AppColors.card,
-      surfaceContainerLow: AppColors.paperDark,
-      surfaceContainer: AppColors.card,
-      surfaceContainerHigh: AppColors.paperDark,
-      surfaceContainerHighest: AppColors.line,
-      outline: AppColors.lineStrong,
-      outlineVariant: AppColors.line,
-      inverseSurface: AppColors.ink,
-      onInverseSurface: AppColors.paper,
-      inversePrimary: AppColors.accent,
-      shadow: AppColors.islandShadow,
-      scrim: AppColors.ink,
+      onErrorContainer: AppColors.errorText,
+      surface: AppColors.pageBackground,
+      onSurface: AppColors.defaultText,
+      onSurfaceVariant: AppColors.defaultTextSecondary,
+      surfaceDim: AppColors.defaultSurfaceDim,
+      surfaceBright: AppColors.defaultSurface,
+      surfaceContainerLowest: AppColors.defaultSurface,
+      surfaceContainerLow: AppColors.defaultSurfaceDim,
+      surfaceContainer: AppColors.defaultSurface,
+      surfaceContainerHigh: AppColors.defaultSurfaceDim,
+      surfaceContainerHighest: AppColors.defaultBorderFaint,
+      outline: AppColors.defaultBorder,
+      outlineVariant: AppColors.defaultBorderFaint,
+      inverseSurface: AppColors.defaultText,
+      onInverseSurface: AppColors.pageBackground,
+      inversePrimary: AppColors.defaultAccent,
+      shadow: AppColors.defaultShadow,
+      scrim: AppColors.defaultText,
       surfaceTint: Colors.transparent,
     );
     final shape = RoundedRectangleBorder(
@@ -104,12 +107,12 @@ abstract final class AppTheme {
     final theme = ThemeData(
       useMaterial3: true,
       colorScheme: colors,
-      scaffoldBackgroundColor: AppColors.paper,
-      disabledColor: AppColors.muted300,
-      dividerColor: AppColors.divider,
+      scaffoldBackgroundColor: AppColors.pageBackground,
+      disabledColor: AppColors.defaultDisabled,
+      dividerColor: AppColors.defaultDivider,
       appBarTheme: AppBarThemeData(
-        backgroundColor: AppColors.paper,
-        foregroundColor: AppColors.ink,
+        backgroundColor: AppColors.pageBackground,
+        foregroundColor: AppColors.defaultText,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -120,13 +123,16 @@ abstract final class AppTheme {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           visualDensity: VisualDensity.standard,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          foregroundColor: AppColors.ink,
+          foregroundColor: AppColors.buttonText,
           // The selection style, like outlined dropdowns: white with the white
           // glass edge and no grey outline. Island-style buttons use
           // IslandButton or RoundIconButton instead.
-          backgroundColor: AppColors.card,
+          backgroundColor: AppColors.buttonBackground,
           side: BorderSide.none,
-          shape: const GlassBorder(radius: controlRadius),
+          shape: GlassBorder(
+            radius: controlRadius,
+            innerBorder: AppColors.buttonInnerBorder,
+          ),
         ).copyWith(overlayColor: controlOverlayColor),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -135,10 +141,10 @@ abstract final class AppTheme {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           visualDensity: VisualDensity.standard,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          backgroundColor: AppColors.accent,
-          foregroundColor: AppColors.card,
-          disabledBackgroundColor: AppColors.paperDark,
-          disabledForegroundColor: AppColors.muted300,
+          backgroundColor: AppColors.defaultAccent,
+          foregroundColor: AppColors.defaultOnAccent,
+          disabledBackgroundColor: AppColors.defaultSurfaceDim,
+          disabledForegroundColor: AppColors.defaultDisabled,
           shape: shape,
         ),
       ),
@@ -148,7 +154,7 @@ abstract final class AppTheme {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           visualDensity: VisualDensity.standard,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          foregroundColor: AppColors.accent,
+          foregroundColor: AppColors.defaultAccent,
           shape: shape,
         ).copyWith(overlayColor: controlOverlayColor),
       ),
@@ -160,34 +166,37 @@ abstract final class AppTheme {
         isDense: true,
         constraints: const BoxConstraints(minHeight: controlHeight),
         filled: true,
-        fillColor: AppColors.card,
+        fillColor: AppColors.defaultSurface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        labelStyle: TextStyle(color: AppColors.muted400),
-        floatingLabelStyle: TextStyle(color: AppColors.accent),
-        hintStyle: TextStyle(color: AppColors.muted300),
-        border: inputBorder(AppColors.lineStrong),
-        enabledBorder: inputBorder(AppColors.lineStrong),
-        disabledBorder: inputBorder(AppColors.line),
-        focusedBorder: inputBorder(AppColors.accent, width: 2),
-        errorBorder: inputBorder(AppColors.accentDark),
-        focusedErrorBorder: inputBorder(AppColors.accentDark, width: 2),
+        labelStyle: TextStyle(color: AppColors.defaultTextSecondary),
+        floatingLabelStyle: TextStyle(color: AppColors.defaultAccent),
+        hintStyle: TextStyle(color: AppColors.defaultDisabled),
+        border: inputBorder(AppColors.defaultBorder),
+        enabledBorder: inputBorder(AppColors.defaultBorder),
+        disabledBorder: inputBorder(AppColors.defaultBorderFaint),
+        focusedBorder: inputBorder(AppColors.defaultAccent, width: 2),
+        errorBorder: inputBorder(AppColors.errorText),
+        focusedErrorBorder: inputBorder(AppColors.errorText, width: 2),
       ),
       // No dimming behind dialogs: the glass dialog stands out on its own.
       dialogTheme: const DialogThemeData(barrierColor: Colors.transparent),
-      dividerTheme: DividerThemeData(color: AppColors.divider, thickness: 1),
-      iconTheme: IconThemeData(color: AppColors.ink),
+      dividerTheme: DividerThemeData(
+        color: AppColors.defaultDivider,
+        thickness: 1,
+      ),
+      iconTheme: IconThemeData(color: AppColors.defaultText),
       progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: AppColors.accent,
+        color: AppColors.defaultAccent,
       ),
       popupMenuTheme: PopupMenuThemeData(
-        color: AppColors.card,
+        color: AppColors.defaultSurface,
         surfaceTintColor: Colors.transparent,
         shape: shape,
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.ink,
-        contentTextStyle: TextStyle(color: AppColors.card),
-        actionTextColor: AppColors.card,
+        backgroundColor: AppColors.defaultText,
+        contentTextStyle: TextStyle(color: AppColors.defaultSurface),
+        actionTextColor: AppColors.defaultSurface,
         behavior: SnackBarBehavior.floating,
         shape: shape,
       ),
@@ -204,8 +213,8 @@ abstract final class AppTheme {
           ),
           iconColor: WidgetStateProperty.resolveWith(
             (states) => states.contains(WidgetState.disabled)
-                ? AppColors.muted300
-                : AppColors.muted500,
+                ? AppColors.buttonIconDisabled
+                : AppColors.buttonIcon,
           ),
         ),
       ),

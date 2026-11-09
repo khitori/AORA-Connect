@@ -67,7 +67,7 @@ class ServerNodeLabel extends StatelessWidget {
                 ? Icon(
                     Icons.public_rounded,
                     size: 18,
-                    color: AppColors.muted300,
+                    color: AppColors.serverrowFallbackIcon,
                   )
                 : CountryFlag.fromCountryCode(
                     node.countryCode!,
@@ -111,7 +111,7 @@ class ServerNodeLabel extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall
-                    ?.copyWith(color: AppColors.muted500, fontSize: 11),
+                    ?.copyWith(color: AppColors.serverrowDetail, fontSize: 11),
               ),
             ],
           ),

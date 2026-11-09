@@ -252,5 +252,10 @@
   "coreLogsHelp": "پیام‌های اخیر هستهٔ شبکه.",
   "automaticUpdatesHelp": "هر بار که برنامه شروع می‌شود، نسخهٔ جدید را جست‌وجو کن.",
   "checkForUpdates": "بررسی به‌روزرسانی",
-  "retry": "تلاش دوباره"
+  "retry": "تلاش دوباره",
+  "appearance": "ظاهر",
+  "theme": "پوسته",
+  "themeLight": "روشن",
+  "themeDark": "تیره",
+  "themeSaveFailed": "ذخیرهٔ پوسته ممکن نشد."
 }

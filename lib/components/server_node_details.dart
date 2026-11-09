@@ -61,7 +61,7 @@ class ServerNodeDetails extends StatelessWidget {
     'trojan' => AppColors.protocolTrojan,
     'shadowsocks' => AppColors.protocolShadowsocks,
     'vmess' => AppColors.protocolVmess,
-    _ => AppColors.muted500,
+    _ => AppColors.protocolUnknown,
   };
 
   @override
@@ -81,7 +81,7 @@ class ServerNodeDetails extends StatelessWidget {
                 result.localizedLabel(context.l10n),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: result.error == null
-                      ? AppColors.muted500
+                      ? AppColors.serverrowPing
                       : Theme.of(context).colorScheme.error,
                 ),
               ),

@@ -53,13 +53,13 @@ class AppNotification extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
     children: [
-      Icon(icon, size: 20, color: AppColors.muted500),
+      Icon(icon, size: 20, color: AppColors.notificationIcon),
       const SizedBox(width: 12),
       Expanded(
         child: Text(
           message,
           style: Theme.of(context).textTheme.bodyMedium
-              ?.copyWith(color: AppColors.ink),
+              ?.copyWith(color: AppColors.notificationText),
         ),
       ),
       const SizedBox(width: 8),
@@ -68,11 +68,21 @@ class AppNotification extends StatelessWidget {
         height: 36,
         child: IconButton(
           tooltip: context.l10n.close,
-          style: IconButton.styleFrom(
-            padding: EdgeInsets.zero,
-            shape: const CircleBorder(),
-          ).copyWith(overlayColor: AppTheme.controlOverlayColor),
-          icon: Icon(Icons.close_rounded, size: 20, color: AppColors.muted500),
+          style:
+              IconButton.styleFrom(
+                padding: EdgeInsets.zero,
+                shape: const CircleBorder(),
+              ).copyWith(
+                overlayColor: AppTheme.overlay(
+                  AppColors.notificationCloseHover,
+                  AppColors.notificationClosePressed,
+                ),
+              ),
+          icon: Icon(
+            Icons.close_rounded,
+            size: 20,
+            color: AppColors.notificationCloseIcon,
+          ),
           onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
         ),
       ),
@@ -125,7 +135,8 @@ class _GlassNotificationState extends State<_GlassNotification>
           foregroundPainter: GlassEdgePainter(
             _shape,
             cornerWidth: AppTheme.sectionRowRadius,
-            outline: AppColors.lineStrong,
+            outline: AppColors.notificationOuterBorder,
+            innerBorder: AppColors.notificationInnerBorder,
             opacity: t,
           ),
           child: ClipRRect(
@@ -139,7 +150,7 @@ class _GlassNotificationState extends State<_GlassNotification>
       );
     },
     child: ColoredBox(
-      color: AppColors.glass.withValues(alpha: 0.5),
+      color: AppColors.notificationBackground,
       child: Padding(
         padding: const EdgeInsetsDirectional.fromSTEB(
           AppTheme.contentPadding,

@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart' show OverflowBoxFit;
 import 'package:flutter/services.dart';
 
 import '../l10n/l10n.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
 class MorphingMenuEntry<T> {
@@ -102,7 +103,7 @@ class _MorphingMenuShellState<T> extends State<MorphingMenuShell<T>>
                     alignment: AlignmentDirectional.centerStart,
                     foregroundColor: colors.onSecondaryContainer,
                     backgroundColor: entry.value == widget.selected
-                        ? AppTheme.selectedSurface
+                        ? AppColors.defaultHover
                         : null,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(

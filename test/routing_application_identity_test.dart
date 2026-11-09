@@ -42,7 +42,7 @@ void main() {
     final connection = await controller(tester);
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+        theme: AppTheme.current,
         home: Scaffold(
           body: RoutingPage(
             connection: connection,
@@ -86,7 +86,7 @@ void main() {
       }
 
       Widget page() => MaterialApp(
-        theme: AppTheme.light,
+        theme: AppTheme.current,
         home: Scaffold(
           body: RoutingPage(connection: connection, applicationLoader: load),
         ),

@@ -869,4 +869,19 @@ class AppLocalizationsHe extends AppLocalizations {
 
   @override
   String get retry => 'ניסיון חוזר';
+
+  @override
+  String get appearance => 'מראה';
+
+  @override
+  String get theme => 'ערכת נושא';
+
+  @override
+  String get themeLight => 'בהיר';
+
+  @override
+  String get themeDark => 'כהה';
+
+  @override
+  String get themeSaveFailed => 'לא ניתן לשמור את ערכת הנושא.';
 }

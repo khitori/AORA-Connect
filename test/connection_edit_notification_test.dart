@@ -108,7 +108,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+        theme: AppTheme.current,
         home: Scaffold(
           body: ListenableBuilder(
             listenable: connection,
@@ -159,7 +159,7 @@ void main() {
     for (final entry in controls.entries) {
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.light,
+          theme: AppTheme.current,
           home: Scaffold(
             body: Center(
               child: Row(

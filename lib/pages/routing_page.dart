@@ -173,7 +173,7 @@ class _RoutingPageState extends State<RoutingPage> {
                 _editControl(
                   PillButton(
                     label: context.l10n.addRule,
-                    color: AppColors.card,
+                    color: AppColors.addrulebuttonBackground,
                     onPressed: connection.canEdit ? () => _edit(context) : null,
                   ),
                 ),
@@ -187,7 +187,7 @@ class _RoutingPageState extends State<RoutingPage> {
                     padding: const EdgeInsets.only(top: 12),
                     child: SelectableText(
                       error,
-                      style: TextStyle(color: AppColors.accentDark),
+                      style: TextStyle(color: AppColors.errorText),
                     ),
                   ),
               ],

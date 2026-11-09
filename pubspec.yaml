@@ -2,7 +2,7 @@ name: aoravpn
 description: "AORA VPN Client"
 publish_to: 'none'
 
-version: 1.2.4+20
+version: 1.2.5+21
 
 environment:
   sdk: ^3.13.4
@@ -34,4 +34,5 @@ flutter:
   uses-material-design: true
   assets:
     - lib/assets/logo.png
+    - lib/assets/logo-dark.png
     - release/update-public-key.txt

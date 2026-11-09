@@ -10,7 +10,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+        theme: AppTheme.current,
         home: Scaffold(
           body: Builder(
             builder: (context) => TextButton(

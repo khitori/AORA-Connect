@@ -88,7 +88,7 @@ class AppSelect<T> extends StatefulWidget {
   final bool pill;
 
   /// Fill of an outlined field; white when not given. Glass dialogs pass
-  /// their see-through gray ([AppColors.glassControl]).
+  /// their see-through gray ([AppColors.dialogSelectBackground]).
   final Color? fieldColor;
 
   @override
@@ -251,7 +251,8 @@ class _AppSelectState<T> extends State<AppSelect<T>>
                                 ),
                               ),
                               cornerWidth: widget._menuRadius,
-                              outline: AppColors.line,
+                              outline: AppColors.selectdropdownOuterBorder,
+                              innerBorder: AppColors.selectdropdownInnerBorder,
                               opacity: t,
                             ),
                             // Frosted glass: translucent, blurring what is
@@ -281,7 +282,7 @@ class _AppSelectState<T> extends State<AppSelect<T>>
                         elevation: 0,
                         shadowColor: Colors.transparent,
                         surfaceTintColor: Colors.transparent,
-                        color: AppColors.menuGlass,
+                        color: AppColors.selectdropdownGlass,
                         child: ConstrainedBox(
                           constraints: BoxConstraints(
                             maxHeight: availableHeight,
@@ -306,7 +307,10 @@ class _AppSelectState<T> extends State<AppSelect<T>>
                                 return _withSeparator(
                                   index,
                                   InkWell(
-                                    overlayColor: AppTheme.controlOverlayColor,
+                                    overlayColor: AppTheme.overlay(
+                                      AppColors.selectdropdownItemHover,
+                                      AppColors.selectdropdownItemPressed,
+                                    ),
                                     onTap: item.enabled
                                         ? () => _hide(selected: item.value)
                                         : null,
@@ -324,7 +328,7 @@ class _AppSelectState<T> extends State<AppSelect<T>>
                                         vertical: 10,
                                       ),
                                       color: item.value == widget.value
-                                          ? AppTheme.selectedSurface
+                                          ? AppColors.selectdropdownItemSelected
                                           : null,
                                       child: DefaultTextStyle(
                                         style: Theme.of(context)
@@ -332,7 +336,8 @@ class _AppSelectState<T> extends State<AppSelect<T>>
                                             .titleMedium!
                                             .copyWith(
                                               color: item.enabled
-                                                  ? null
+                                                  ? AppColors
+                                                        .selectdropdownItemText
                                                   : Theme.of(context)
                                                         .disabledColor,
                                             ),
@@ -377,7 +382,9 @@ class _AppSelectState<T> extends State<AppSelect<T>>
               left: widget._sidePadding,
               right: widget._sidePadding,
               height: 1,
-              child: IgnorePointer(child: ColoredBox(color: AppColors.line)),
+              child: IgnorePointer(
+                child: ColoredBox(color: AppColors.selectdropdownSeparator),
+              ),
             ),
           ],
         );
@@ -396,14 +403,20 @@ class _AppSelectState<T> extends State<AppSelect<T>>
           child: InkWell(
             focusNode: _focusNode,
             overlayColor: widget.hoverHighlight
-                ? AppTheme.controlOverlayColor
+                ? AppTheme.overlay(
+                    AppColors.selectHover,
+                    AppColors.selectPressed,
+                  )
                 : WidgetStateProperty.resolveWith(
                     (states) =>
                         states.contains(WidgetState.hovered) &&
                             !states.contains(WidgetState.pressed) &&
                             !states.contains(WidgetState.focused)
                         ? Colors.transparent
-                        : AppTheme.controlOverlayColor.resolve(states),
+                        : AppTheme.overlay(
+                            AppColors.selectHover,
+                            AppColors.selectPressed,
+                          ).resolve(states),
                   ),
             // Pills tint as a pill.
             customBorder: widget._pill ? const StadiumBorder() : null,
@@ -424,7 +437,7 @@ class _AppSelectState<T> extends State<AppSelect<T>>
               decoration: widget.showOutline || widget.plain
                   ? null
                   : BoxDecoration(
-                      color: AppColors.card,
+                      color: AppColors.selectBackground,
                       borderRadius: widget.borderRadius,
                     ),
               child: SizedBox(
@@ -478,7 +491,7 @@ class _AppSelectState<T> extends State<AppSelect<T>>
                           Icons.chevron_right_rounded,
                           color: !_enabled
                               ? Theme.of(context).disabledColor
-                              : AppColors.muted500,
+                              : AppColors.selectArrow,
                         ),
                       ),
                     ],
@@ -498,11 +511,12 @@ class _AppSelectState<T> extends State<AppSelect<T>>
     return SizedBox(
       height: widget._pill ? 48 : widget.height,
       child: Material(
-        color: widget.fieldColor ?? AppColors.card,
+        color: widget.fieldColor ?? AppColors.selectBackground,
         // A pill field is plain white, without the glass edge.
         shape: widget._pill
             ? const StadiumBorder()
-            : const GlassBorder(
+            : GlassBorder(
+                innerBorder: AppColors.selectInnerBorder,
                 radius: AppTheme.controlRadius,
                 side: BorderSide.none,
               ),

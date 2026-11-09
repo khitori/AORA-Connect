@@ -75,7 +75,7 @@ class SubscriptionTiming extends StatelessWidget {
       vertical: 18,
     ),
     decoration: BoxDecoration(
-      color: AppColors.card,
+      color: AppColors.subscriptiontimingBackground,
       borderRadius: BorderRadius.circular(AppTheme.sectionRowRadius),
     ),
     child: Column(
@@ -83,7 +83,7 @@ class SubscriptionTiming extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(icon, size: 16, color: AppColors.muted500),
+            Icon(icon, size: 16, color: AppColors.subscriptiontimingIcon),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
@@ -91,7 +91,7 @@ class SubscriptionTiming extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall
-                    ?.copyWith(color: AppColors.muted500),
+                    ?.copyWith(color: AppColors.subscriptiontimingLabel),
               ),
             ),
           ],
@@ -109,7 +109,7 @@ class SubscriptionTiming extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.bodySmall
-              ?.copyWith(color: AppColors.muted500),
+              ?.copyWith(color: AppColors.subscriptiontimingDetail),
         ),
       ],
     ),

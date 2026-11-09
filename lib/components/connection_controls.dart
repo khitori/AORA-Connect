@@ -28,7 +28,7 @@ class ConnectionControls extends StatelessWidget {
         children: [
           Expanded(
             child: PillButton(
-              color: AppColors.controlGray,
+              color: AppColors.diagnosticsbuttonBackground,
               onPressed: onValidate,
               icon: Icons.fact_check_rounded,
               label: context.l10n.validate,
@@ -37,7 +37,7 @@ class ConnectionControls extends StatelessWidget {
           const SizedBox(width: AppTheme.sectionButtonGap),
           Expanded(
             child: PillButton(
-              color: AppColors.controlGray,
+              color: AppColors.diagnosticsbuttonBackground,
               onPressed: onTest,
               icon: Icons.network_check_rounded,
               label: context.l10n.testConnection,
@@ -47,7 +47,7 @@ class ConnectionControls extends StatelessWidget {
       ),
       const SizedBox(height: AppTheme.sectionButtonGap),
       PillButton(
-        color: AppColors.controlGray,
+        color: AppColors.diagnosticsbuttonBackground,
         onPressed: onCopy,
         icon: Icons.copy_rounded,
         label: context.l10n.copyDiagnostics,

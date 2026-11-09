@@ -74,8 +74,8 @@ class RoutingRuleCard extends StatelessWidget {
           : null,
       icon: Icon(icon, size: 20),
       style: IconButton.styleFrom(
-        foregroundColor: AppColors.muted500,
-        disabledForegroundColor: AppColors.lineStrong,
+        foregroundColor: AppColors.routingruleActionIcon,
+        disabledForegroundColor: AppColors.routingruleActionIconDisabled,
         minimumSize: const Size(36, 36),
         maximumSize: const Size(36, 36),
         padding: EdgeInsets.zero,
@@ -94,7 +94,7 @@ class RoutingRuleCard extends StatelessWidget {
         : rule.match.localizedLabel(context.l10n);
     // No border, and the Subscriptions page rows' rounding.
     return Material(
-      color: AppColors.card,
+      color: AppColors.routingruleBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.sectionRowRadius),
       ),
@@ -115,6 +115,12 @@ class RoutingRuleCard extends StatelessWidget {
                 // The section headers' glass icon box: a heavily rounded
                 // square.
                 GlassSurface(
+                  backgroundTop: AppColors.routingruleiconboxBackgroundTop,
+                  backgroundBottom:
+                      AppColors.routingruleiconboxBackgroundBottom,
+                  innerBorder: AppColors.routingruleiconboxInnerBorder,
+                  outerBorder: AppColors.routingruleiconboxOuterBorder,
+                  shadow: AppColors.routingruleiconboxShadow,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -127,7 +133,7 @@ class RoutingRuleCard extends StatelessWidget {
                         ? Icon(
                             _fallbackIcon,
                             size: 24,
-                            color: AppColors.muted500,
+                            color: AppColors.routingruleIcon,
                           )
                         : Image.memory(
                             application!.icon!,
@@ -136,7 +142,7 @@ class RoutingRuleCard extends StatelessWidget {
                             errorBuilder: (_, _, _) => Icon(
                               _fallbackIcon,
                               size: 24,
-                              color: AppColors.muted500,
+                              color: AppColors.routingruleIcon,
                             ),
                           ),
                   ),
@@ -158,8 +164,8 @@ class RoutingRuleCard extends StatelessWidget {
                               ?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: rule.enabled
-                                    ? AppColors.ink
-                                    : AppColors.muted500,
+                                    ? AppColors.routingruleTitle
+                                    : AppColors.routingruleTitleDisabled,
                               ),
                         ),
                       ),
@@ -176,7 +182,7 @@ class RoutingRuleCard extends StatelessWidget {
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 fontSize: 11,
-                                color: AppColors.muted500,
+                                color: AppColors.routingruleSubtitle,
                               ),
                         ),
                       ),

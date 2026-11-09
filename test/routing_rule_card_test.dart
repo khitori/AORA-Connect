@@ -28,7 +28,7 @@ void main() {
     final actions = <String>[];
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+        theme: AppTheme.current,
         home: Scaffold(
           body: Padding(
             padding: const EdgeInsets.all(24),
@@ -103,7 +103,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+        theme: AppTheme.current,
         home: Scaffold(
           body: ListView(
             padding: const EdgeInsets.fromLTRB(24, 200, 24, 24),
@@ -157,7 +157,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light,
+        theme: AppTheme.current,
         home: Scaffold(
           body: Padding(
             padding: const EdgeInsets.all(24),

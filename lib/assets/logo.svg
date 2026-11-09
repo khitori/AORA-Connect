@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <title>AORA Connect</title>
+  <rect id="background" width="1024" height="1024" fill="#F4F4F2"/>
+  <ellipse id="orbit" cx="512" cy="594" rx="360.5" ry="90" transform="rotate(-14 512 594)" fill="none" stroke="#17171B" stroke-width="30.5"/>
+  <path id="letter" d="M315.2 823.8 512 200.85 708.8 823.8" fill="none" stroke="#17171B" stroke-width="30.75" stroke-linecap="round" stroke-linejoin="miter" stroke-miterlimit="10"/>
+  <circle id="dot" cx="512" cy="594" r="41" fill="#E0241B"/>
+</svg>

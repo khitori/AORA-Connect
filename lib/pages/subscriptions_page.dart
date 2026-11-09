@@ -106,7 +106,7 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
               PillButton(
                 key: const ValueKey('paste-subscription'),
                 label: context.l10n.paste,
-                textColor: AppColors.paste,
+                textColor: AppColors.dialogPasteButtonText,
                 onPressed: connection.canEdit
                     ? () => pasteSubscriptionLink(
                         dialogContext,
@@ -118,8 +118,8 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
               PillButton(
                 key: const ValueKey('confirm-subscription'),
                 label: context.l10n.confirm,
-                multiplyColor: AppColors.confirm,
-                textColor: AppColors.card,
+                multiplyColor: AppColors.dialogConfirmButton,
+                textColor: AppColors.dialogConfirmButtonText,
                 onPressed: onConfirm,
               ),
               PillButton(
@@ -215,7 +215,7 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Material(
-                    color: AppColors.card,
+                    color: AppColors.subscriptionrowBackground,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(
                         AppTheme.sectionRowRadius,
@@ -233,7 +233,10 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
                           pings: widget.pings,
                         ),
                         trailing: selected
-                            ? Icon(Icons.check_rounded, color: AppColors.accent)
+                            ? Icon(
+                                Icons.check_rounded,
+                                color: AppColors.subscriptionrowCheck,
+                              )
                             : null,
                         onTap: connection.canEdit
                             ? () {
@@ -412,7 +415,7 @@ class _SavedSubscriptionSelector extends StatelessWidget {
                 vertical: 18,
               ),
               decoration: BoxDecoration(
-                color: AppColors.card,
+                color: AppColors.subscriptiondescriptionBackground,
                 borderRadius: BorderRadius.circular(AppTheme.sectionRowRadius),
               ),
               child: Column(
@@ -423,14 +426,16 @@ class _SavedSubscriptionSelector extends StatelessWidget {
                       Icon(
                         Icons.description_rounded,
                         size: 16,
-                        color: AppColors.muted500,
+                        color: AppColors.subscriptiondescriptionIcon,
                       ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           context.l10n.description,
                           style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: AppColors.muted500),
+                              ?.copyWith(
+                                color: AppColors.subscriptiondescriptionLabel,
+                              ),
                         ),
                       ),
                     ],

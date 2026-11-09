@@ -455,5 +455,10 @@
   "coreLogsHelp": "Recent messages from the networking core.",
   "automaticUpdatesHelp": "Look for a new version each time the app starts.",
   "checkForUpdates": "Check for updates",
-  "retry": "Try again"
+  "retry": "Try again",
+  "appearance": "Appearance",
+  "theme": "Theme",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "themeSaveFailed": "Could not save the theme."
 }

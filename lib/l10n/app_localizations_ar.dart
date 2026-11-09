@@ -877,4 +877,19 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get retry => 'إعادة المحاولة';
+
+  @override
+  String get appearance => 'المظهر';
+
+  @override
+  String get theme => 'السمة';
+
+  @override
+  String get themeLight => 'فاتح';
+
+  @override
+  String get themeDark => 'داكن';
+
+  @override
+  String get themeSaveFailed => 'تعذّر حفظ السمة.';
 }

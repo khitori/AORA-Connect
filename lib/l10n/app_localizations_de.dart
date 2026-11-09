@@ -892,4 +892,19 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get retry => 'Erneut versuchen';
+
+  @override
+  String get appearance => 'Darstellung';
+
+  @override
+  String get theme => 'Design';
+
+  @override
+  String get themeLight => 'Hell';
+
+  @override
+  String get themeDark => 'Dunkel';
+
+  @override
+  String get themeSaveFailed => 'Das Design konnte nicht gespeichert werden.';
 }

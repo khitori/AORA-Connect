@@ -47,7 +47,7 @@ class _WindowsStartupSettingsState extends State<WindowsStartupSettings> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTheme.sectionRowRadius),
           ),
-          hoverColor: AppColors.ink.withValues(alpha: 0.06),
+          hoverColor: AppColors.settingsrowHover,
           title: Text(title),
           subtitle: Text(help),
           onTap: enabled ? () => change(!value) : null,

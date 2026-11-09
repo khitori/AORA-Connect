@@ -834,4 +834,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get retry => '重试';
+
+  @override
+  String get appearance => '外观';
+
+  @override
+  String get theme => '主题';
+
+  @override
+  String get themeLight => '浅色';
+
+  @override
+  String get themeDark => '深色';
+
+  @override
+  String get themeSaveFailed => '无法保存主题。';
 }

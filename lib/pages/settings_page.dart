@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../components/app_expansion_card.dart';
+import '../components/appearance_settings.dart';
 import '../components/app_notification.dart';
 import '../components/app_select.dart';
 import '../components/app_toggle.dart';
@@ -99,6 +100,8 @@ class SettingsPage extends StatelessWidget {
     padding: const EdgeInsets.fromLTRB(24, 32, 24, 120),
     children: [
       const LanguageSettings(),
+      const SizedBox(height: 12),
+      const AppearanceSettings(),
       const SizedBox(height: 12),
       if (Platform.isWindows && startup != null) ...[
         WindowsStartupSettings(controller: startup!),
@@ -207,7 +210,7 @@ class SettingsPage extends StatelessWidget {
                       AppTheme.sectionRowRadius,
                     ),
                   ),
-                  hoverColor: AppColors.ink.withValues(alpha: 0.06),
+                  hoverColor: AppColors.settingsrowHover,
                   title: Text(context.l10n.killSwitch),
                   subtitle: Text(
                     connection.mode == ConnectionMode.tun

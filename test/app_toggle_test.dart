@@ -33,7 +33,7 @@ void main() {
                       .gradient!
                   as LinearGradient)
               .colors;
-      const groove = [AppColors.toggleGrooveTop, AppColors.toggleGrooveBottom];
+      final groove = [AppColors.toggleTrackBackgroundTop, AppColors.toggleTrackBackgroundBottom];
       var value = false;
       await tester.pumpWidget(
         MaterialApp(
@@ -48,7 +48,7 @@ void main() {
         ),
       );
       expect(trackColors(), groove);
-      expect(knobColors(), [AppColors.glassTop, AppColors.glassBottom]);
+      expect(knobColors(), [AppColors.toggleKnobBackgroundTop, AppColors.toggleKnobBackgroundBottom]);
       expect(tester.getSize(find.byType(AppToggle)), const Size(48, 48));
       expect(tester.getSize(knob), const Size(18, 18));
       await tester.tap(find.byType(AppToggle));
@@ -56,7 +56,7 @@ void main() {
       expect(value, isTrue);
       expect(tester.getSize(knob), const Size(18, 18));
       expect(trackColors(), groove);
-      expect(knobColors(), [AppColors.accentDark, AppColors.accent]);
+      expect(knobColors(), [AppColors.toggleKnobOnBackgroundTop, AppColors.toggleKnobOnBackgroundBottom]);
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
       await tester.pump();
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);

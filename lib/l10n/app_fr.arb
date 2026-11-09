@@ -252,5 +252,10 @@
   "coreLogsHelp": "Messages récents du cœur réseau.",
   "automaticUpdatesHelp": "Rechercher une nouvelle version à chaque démarrage de l’application.",
   "checkForUpdates": "Rechercher des mises à jour",
-  "retry": "Réessayer"
+  "retry": "Réessayer",
+  "appearance": "Apparence",
+  "theme": "Thème",
+  "themeLight": "Clair",
+  "themeDark": "Sombre",
+  "themeSaveFailed": "Impossible d’enregistrer le thème."
 }

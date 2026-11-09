@@ -252,5 +252,10 @@
   "coreLogsHelp": "Neueste Meldungen des Netzwerkkerns.",
   "automaticUpdatesHelp": "Bei jedem App-Start nach einer neuen Version suchen.",
   "checkForUpdates": "Nach Updates suchen",
-  "retry": "Erneut versuchen"
+  "retry": "Erneut versuchen",
+  "appearance": "Darstellung",
+  "theme": "Design",
+  "themeLight": "Hell",
+  "themeDark": "Dunkel",
+  "themeSaveFailed": "Das Design konnte nicht gespeichert werden."
 }

@@ -24,7 +24,9 @@ import 'pages/subscriptions_page.dart';
 import 'storage/app_settings_store.dart';
 import 'storage/platform_settings_stores.dart';
 import 'storage/server_cache_store.dart';
+import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
+import 'theme/theme_controller.dart';
 import 'updates/android_updates.dart';
 import 'updates/update_controller.dart';
 
@@ -47,40 +49,93 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   late final LocaleController _locale =
       widget.localeController ??
       LocaleController(
         store: widget.engine == null ? createLanguageStore() : null,
       );
+  late final ThemeController _theme = ThemeController(
+    store: widget.engine == null ? createThemeStore() : null,
+  );
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _usePalette();
+    _theme.addListener(_applyPalette);
     unawaited(_locale.initialize());
+    unawaited(_theme.initialize());
+  }
+
+  // Runs on hot reload only, before the widgets rebuild.
+  @override
+  void reassemble() {
+    super.reassemble();
+    AppColors.reloadPalettes();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _theme.dispose();
     if (widget.localeController == null) _locale.dispose();
     super.dispose();
   }
 
+  /// Uses the palette of the theme chosen in Settings, or of the system's
+  /// light or dark setting. Returns whether the palette changed.
+  bool _usePalette() {
+    final dark = switch (_theme.choice) {
+      ThemeChoice.light => false,
+      ThemeChoice.dark => true,
+      ThemeChoice.system =>
+        WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+            Brightness.dark,
+    };
+    final palette = dark ? AppColors.dark : AppColors.light;
+    if (identical(palette, AppColors.current)) return false;
+    AppColors.current = palette;
+    return true;
+  }
+
   @override
-  Widget build(BuildContext context) => LocaleScope(
-    controller: _locale,
-    child: ListenableBuilder(
-      listenable: _locale,
-      builder: (context, _) => MaterialApp(
-        title: 'AORA Connect',
-        theme: AppTheme.light,
-        locale: _locale.locale,
-        supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        home: _AppShell(
-          engine: widget.engine,
-          configPath: widget.configPath,
-          settingsStore: widget.settingsStore,
+  void didChangePlatformBrightness() => _applyPalette();
+
+  void _applyPalette() {
+    if (!_usePalette()) return;
+    setState(() {});
+    // Widgets read AppColors directly rather than through the theme, so
+    // every one is rebuilt to pick up the other palette.
+    void rebuild(Element element) {
+      element.markNeedsBuild();
+      element.visitChildren(rebuild);
+    }
+
+    (context as Element).visitChildren(rebuild);
+  }
+
+  @override
+  Widget build(BuildContext context) => ThemeScope(
+    controller: _theme,
+    child: LocaleScope(
+      controller: _locale,
+      child: ListenableBuilder(
+        listenable: _locale,
+        builder: (context, _) => MaterialApp(
+          title: 'AORA Connect',
+          theme: AppTheme.current,
+          // Switching themes is instant.
+          themeAnimationDuration: Duration.zero,
+          locale: _locale.locale,
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: _AppShell(
+            engine: widget.engine,
+            configPath: widget.configPath,
+            settingsStore: widget.settingsStore,
+          ),
         ),
       ),
     ),
@@ -317,7 +372,9 @@ class _AppShellState extends State<_AppShell> {
               children: [
                 ClipOval(
                   child: Image.asset(
-                    'lib/assets/logo.png',
+                    AppColors.isDark
+                        ? 'lib/assets/logo-dark.png'
+                        : 'lib/assets/logo.png',
                     key: const ValueKey('app-logo'),
                     width: 32,
                     height: 32,

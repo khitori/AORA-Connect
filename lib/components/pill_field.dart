@@ -20,7 +20,7 @@ class PillFieldBox extends StatelessWidget {
     height: 48,
     child: DecoratedBox(
       decoration: ShapeDecoration(
-        color: AppColors.glassControl,
+        color: AppColors.dialogInputBackground,
         shape: const StadiumBorder(),
       ),
       child: Padding(
@@ -43,7 +43,7 @@ InputDecoration pillFieldDecoration(BuildContext context, {String? hintText}) =>
     InputDecoration(
       hintText: hintText,
       hintStyle: pillFieldTextStyle(context)
-          ?.copyWith(color: AppColors.muted300),
+          ?.copyWith(color: AppColors.dialogInputHint),
       filled: false,
       isCollapsed: true,
       border: InputBorder.none,

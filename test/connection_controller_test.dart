@@ -381,7 +381,7 @@ void main() {
       });
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.light,
+          theme: AppTheme.current,
           home: Scaffold(
             body: AnimatedBuilder(
               animation: controller,

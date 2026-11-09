@@ -40,9 +40,15 @@ class PillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fill = multiplyColor != null
+    // Multiplying a near-black backdrop would give black, so the dark theme
+    // uses a slightly see-through fill instead.
+    final dark = AppColors.isDark;
+    final multiply = dark ? null : multiplyColor;
+    final fill = multiply != null
         ? Colors.transparent
-        : color ?? AppColors.glassControl;
+        : dark && multiplyColor != null
+        ? multiplyColor!.withValues(alpha: 0.85)
+        : color ?? AppColors.dialogButtonBackground;
     final button = SizedBox(
       width: double.infinity,
       height: 48,
@@ -69,7 +75,9 @@ class PillButton extends StatelessWidget {
                 Icon(
                   icon,
                   size: 18,
-                  color: onPressed == null ? null : textColor ?? AppColors.ink,
+                  color: onPressed == null
+                      ? null
+                      : textColor ?? AppColors.buttonText,
                 ),
                 const SizedBox(width: 8),
               ],
@@ -79,7 +87,6 @@ class PillButton extends StatelessWidget {
         ),
       ),
     );
-    final multiply = multiplyColor;
     if (multiply == null) return button;
     // Expanded, so the button keeps the full width (and its label stays
     // centered) instead of shrinking to its label inside the stack.

@@ -4,7 +4,6 @@ import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
-import '../theme/app_theme.dart';
 import '../theme/glass_surface.dart';
 
 const _itemHeight = 58.0;
@@ -34,7 +33,7 @@ class FloatingBottomNavigation<T> extends StatelessWidget {
           shape: const StadiumBorder(),
           shadows: [
             BoxShadow(
-              color: AppColors.islandShadow,
+              color: AppColors.navpanelShadow,
               blurRadius: 18,
               offset: const Offset(0, 6),
             ),
@@ -45,7 +44,8 @@ class FloatingBottomNavigation<T> extends StatelessWidget {
         child: CustomPaint(
           foregroundPainter: GlassEdgePainter(
             const StadiumBorder(),
-            outline: AppColors.lineStrong,
+            outline: AppColors.navpanelOuterBorder,
+            innerBorder: AppColors.navpanelInnerBorder,
             fadeOutlineEnds: true,
           ),
           child: ClipPath(
@@ -53,7 +53,7 @@ class FloatingBottomNavigation<T> extends StatelessWidget {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
               child: ColoredBox(
-                color: AppColors.glass.withValues(alpha: 0.5),
+                color: AppColors.navpanelBackground,
                 child: Padding(
                   padding: const EdgeInsets.all(6),
                   child: LayoutBuilder(
@@ -77,7 +77,16 @@ class FloatingBottomNavigation<T> extends StatelessWidget {
                                 duration: _motion,
                                 curve: _curve,
                                 opacity: index < 0 ? 0 : 1,
-                                child: const GlassSurface(
+                                child: GlassSurface(
+                                  backgroundTop:
+                                      AppColors.navpanelHighlightBackgroundTop,
+                                  backgroundBottom: AppColors
+                                      .navpanelHighlightBackgroundBottom,
+                                  innerBorder:
+                                      AppColors.navpanelHighlightInnerBorder,
+                                  outerBorder:
+                                      AppColors.navpanelHighlightOuterBorder,
+                                  shadow: AppColors.navpanelHighlightShadow,
                                   child: SizedBox.expand(),
                                 ),
                               ),
@@ -159,7 +168,7 @@ class _NavigationItem<T> extends StatelessWidget {
             !selected &&
                 (states.contains(WidgetState.hovered) ||
                     states.contains(WidgetState.focused))
-            ? AppTheme.controlOverlayColor.resolve({WidgetState.hovered})
+            ? AppColors.navpanelItemHover
             : Colors.transparent,
       ),
       child: Semantics(
@@ -178,10 +187,14 @@ class _NavigationItem<T> extends StatelessWidget {
                 Icon(
                   destination.icon,
                   size: 22,
-                  color: Color.lerp(AppColors.muted500, AppColors.accent, on),
+                  color: Color.lerp(
+                    AppColors.navpanelIcon,
+                    AppColors.navpanelIconSelected,
+                    on,
+                  ),
                   shadows: [
                     Shadow(
-                      color: AppColors.accent.withValues(alpha: 0.55 * on),
+                      color: AppColors.faded(AppColors.navpanelIconGlow, on),
                       blurRadius: 10,
                     ),
                   ],
@@ -196,8 +209,8 @@ class _NavigationItem<T> extends StatelessWidget {
                       maxLines: 1,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: Color.lerp(
-                          AppColors.muted500,
-                          AppColors.ink,
+                          AppColors.navpanelLabel,
+                          AppColors.navpanelLabelSelected,
                           on,
                         ),
                       ),

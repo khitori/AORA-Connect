@@ -252,5 +252,10 @@
   "coreLogsHelp": "网络核心的最新消息。",
   "automaticUpdatesHelp": "每次启动应用时检查新版本。",
   "checkForUpdates": "检查更新",
-  "retry": "重试"
+  "retry": "重试",
+  "appearance": "外观",
+  "theme": "主题",
+  "themeLight": "浅色",
+  "themeDark": "深色",
+  "themeSaveFailed": "无法保存主题。"
 }

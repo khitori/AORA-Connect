@@ -102,7 +102,8 @@ class AppDialog extends StatelessWidget {
                 foregroundPainter: GlassEdgePainter(
                   _shape,
                   cornerWidth: AppTheme.sectionRadius,
-                  outline: AppColors.lineStrong,
+                  outline: AppColors.dialogOuterBorder,
+                  innerBorder: AppColors.dialogInnerBorder,
                   opacity: t,
                 ),
                 child: ClipPath(
@@ -116,7 +117,7 @@ class AppDialog extends StatelessWidget {
             );
           },
           child: ColoredBox(
-            color: AppColors.glass.withValues(alpha: 0.5),
+            color: AppColors.dialogBackground,
             child: Padding(
               padding: const EdgeInsets.all(_padding),
               child: Column(
@@ -135,7 +136,7 @@ class AppDialog extends StatelessWidget {
                               ?.copyWith(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.black,
+                                color: AppColors.dialogTitle,
                               ),
                         ),
                         if (subtitle != null) ...[
@@ -146,7 +147,7 @@ class AppDialog extends StatelessWidget {
                                 ?.copyWith(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w400,
-                                  color: Colors.black,
+                                  color: AppColors.dialogSubtitle,
                                 ),
                           ),
                         ],

@@ -24,10 +24,7 @@ class WarningNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) => DecoratedBox(
     decoration: BoxDecoration(
-      color: Color.alphaBlend(
-        AppColors.accent.withValues(alpha: 0.08),
-        AppColors.card,
-      ),
+      color: AppColors.warningBackground,
       borderRadius: BorderRadius.circular(AppTheme.sectionRowRadius),
     ),
     child: Padding(
@@ -44,14 +41,14 @@ class WarningNotice extends StatelessWidget {
             Icon(
               Icons.warning_amber_rounded,
               size: 20,
-              color: AppColors.accentDark,
+              color: AppColors.warningIcon,
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 message,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.accentDark,
+                  color: AppColors.warningText,
                   fontWeight: FontWeight.w500,
                 ),
               ),

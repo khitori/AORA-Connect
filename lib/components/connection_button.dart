@@ -34,8 +34,10 @@ class ConnectionButton extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Surface: soft off-white glass when idle, red when connected.
+          // Surface: soft off-white glass when idle, red when connected. The
+          // key makes a theme switch instant instead of fading.
           AnimatedContainer(
+            key: ValueKey(AppColors.isDark),
             duration: _transition,
             curve: Curves.easeOutCubic,
             decoration: BoxDecoration(
@@ -44,16 +46,22 @@ class ConnectionButton extends StatelessWidget {
                 center: const Alignment(-0.35, -0.4),
                 radius: 1.25,
                 colors: running
-                    ? [AppColors.accent, AppColors.accentDark]
-                    : [_glass, _glass],
+                    ? [
+                        AppColors.connectbuttonBackgroundOnCenter,
+                        AppColors.connectbuttonBackgroundOnEdge,
+                      ]
+                    : [
+                        AppColors.connectbuttonBackground,
+                        AppColors.connectbuttonBackground,
+                      ],
               ),
               // Connected: an even red glow all around, like the glowing
               // icons. Faded in and out by AnimatedContainer.
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.accent.withValues(
-                    alpha: running ? 0.45 : 0,
-                  ),
+                  color: running
+                      ? AppColors.connectbuttonGlowOn
+                      : AppColors.connectbuttonGlowOn.withValues(alpha: 0),
                   blurRadius: 32,
                   spreadRadius: 2,
                 ),
@@ -75,7 +83,10 @@ class ConnectionButton extends StatelessWidget {
             style: FilledButton.styleFrom(
               shape: const CircleBorder(),
               padding: const EdgeInsets.all(24),
-              foregroundColor: running ? AppColors.card : AppColors.muted500,
+              foregroundColor: running
+                  ? AppColors.connectbuttonIconOn
+                  : AppColors.connectbuttonIcon,
+              disabledForegroundColor: AppColors.connectbuttonTextBusy,
               backgroundColor: Colors.transparent,
               disabledBackgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,
@@ -91,12 +102,18 @@ class ConnectionButton extends StatelessWidget {
                   height: 56,
                   child: Center(
                     child: busy
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 36,
                             height: 36,
-                            child: CircularProgressIndicator(strokeWidth: 3),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 3,
+                              color: AppColors.connectbuttonSpinner,
+                            ),
                           )
-                        : const Icon(Icons.power_settings_new_rounded, size: 44),
+                        : const Icon(
+                            Icons.power_settings_new_rounded,
+                            size: 44,
+                          ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -116,12 +133,15 @@ class ConnectionButton extends StatelessWidget {
           // line can appear between them on the curved edge.
           IgnorePointer(
             child: AnimatedContainer(
+              key: ValueKey(AppColors.isDark),
               duration: _transition,
               curve: Curves.easeOutCubic,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: running ? AppColors.accentDark : AppColors.lineStrong,
+                  color: running
+                      ? AppColors.connectbuttonBorderOn
+                      : AppColors.connectbuttonBorder,
                 ),
               ),
             ),
@@ -130,9 +150,6 @@ class ConnectionButton extends StatelessWidget {
       ),
     );
   }
-
-  /// A little lighter than the page, so the button reads as glass over it.
-  static Color get _glass => Color.lerp(AppColors.paper, AppColors.card, 0.15)!;
 }
 
 /// Soft inner shadows: shade along the left edge and light along the
@@ -163,8 +180,8 @@ class _GlassPainter extends CustomPainter {
 
     inner(
       Color.lerp(
-        AppColors.ink.withValues(alpha: 0.12),
-        AppColors.ink.withValues(alpha: 0.28),
+        AppColors.connectbuttonInnerShade,
+        AppColors.connectbuttonInnerShadeOn,
         connected,
       )!,
       const Offset(8, 3),
@@ -172,8 +189,8 @@ class _GlassPainter extends CustomPainter {
     );
     inner(
       Color.lerp(
-        Colors.white,
-        Colors.white.withValues(alpha: 0.38),
+        AppColors.connectbuttonInnerLight,
+        AppColors.connectbuttonInnerLightOn,
         connected,
       )!,
       const Offset(-7, -8),

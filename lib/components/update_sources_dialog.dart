@@ -71,7 +71,7 @@ class _UpdateSourcesDialogState extends State<UpdateSourcesDialog> {
         children: [
           DecoratedBox(
             decoration: BoxDecoration(
-              color: AppColors.glassControl,
+              color: AppColors.dialogInputBackground,
               borderRadius: BorderRadius.circular(AppTheme.sectionRowRadius),
             ),
             child: Padding(
@@ -95,7 +95,7 @@ class _UpdateSourcesDialogState extends State<UpdateSourcesDialog> {
                       hintText: context.l10n.metadataUrlPerLine,
                     ).copyWith(
                       hintStyle: Theme.of(context).textTheme.bodyMedium
-                          ?.copyWith(color: AppColors.muted300),
+                          ?.copyWith(color: AppColors.dialogInputHint),
                     ),
               ),
             ),
@@ -116,8 +116,8 @@ class _UpdateSourcesDialogState extends State<UpdateSourcesDialog> {
       actions: [
         PillButton(
           label: _saving ? context.l10n.saving : context.l10n.save,
-          multiplyColor: AppColors.confirm,
-          textColor: AppColors.card,
+          multiplyColor: AppColors.dialogConfirmButton,
+          textColor: AppColors.dialogConfirmButtonText,
           onPressed: _saving ? null : _save,
         ),
         PillButton(

@@ -80,7 +80,10 @@ class _ApplicationPickerDialogState<T>
         customBorder: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppTheme.sectionRowRadius),
         ),
-        overlayColor: AppTheme.controlOverlayColor,
+        overlayColor: AppTheme.overlay(
+          AppColors.apppickerRowHover,
+          AppColors.apppickerRowPressed,
+        ),
         onTap: () => Navigator.pop(context, widget.result(app)),
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 48),
@@ -95,7 +98,7 @@ class _ApplicationPickerDialogState<T>
                   dimension: 28,
                   child:
                       widget.icon?.call(app) ??
-                      Icon(Icons.apps_rounded, color: AppColors.muted500),
+                      Icon(Icons.apps_rounded, color: AppColors.apppickerIcon),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -116,7 +119,7 @@ class _ApplicationPickerDialogState<T>
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppColors.muted400,
+                            color: AppColors.apppickerDetail,
                           ),
                         ),
                     ],
@@ -142,7 +145,11 @@ class _ApplicationPickerDialogState<T>
         PillFieldBox(
           child: Row(
             children: [
-              Icon(Icons.search_rounded, size: 20, color: AppColors.muted500),
+              Icon(
+                Icons.search_rounded,
+                size: 20,
+                color: AppColors.apppickerSearchIcon,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: TextField(
