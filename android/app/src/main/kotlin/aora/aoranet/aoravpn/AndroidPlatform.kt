@@ -105,12 +105,16 @@ internal class AndroidPlatform(private val context: Context, private val service
         }
     }
 
-    override fun useProcFS() = Build.VERSION.SDK_INT < 29
     override fun findConnectionOwner(protocol: Int, source: String, sourcePort: Int,
         destination: String, destinationPort: Int): ConnectionOwner {
-        check(Build.VERSION.SDK_INT >= 29) { "Application routing requires Android 10 or later." }
-        val uid = connectivity.getConnectionOwnerUid(protocol,
-            InetSocketAddress(source, sourcePort), InetSocketAddress(destination, destinationPort))
+        // Android 9 and older have no system lookup; sing-box searches
+        // /proc for the socket instead (it did this itself before 1.14.4).
+        val uid = if (Build.VERSION.SDK_INT >= 29) {
+            connectivity.getConnectionOwnerUid(protocol,
+                InetSocketAddress(source, sourcePort), InetSocketAddress(destination, destinationPort))
+        } else {
+            Libbox.findConnectionOwner(protocol, source, sourcePort, destination, destinationPort).userId
+        }
         check(uid >= 0) { "Could not identify the application's network connection." }
         return ConnectionOwner().apply {
             userId = uid

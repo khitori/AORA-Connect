@@ -61,7 +61,7 @@ try {
     if (!$created) { throw 'Close AORA Connect (including its tray icon) and any other installer/development preparation, then rebuild.' }
   }
   foreach ($path in @($root,$app,(Join-Path $app 'aoravpn.exe'),(Join-Path $root 'cores'),(Join-Path $root 'cores/windows'))) { Assert-Protected $path }
-  foreach ($core in @('sing-box-1.14.2-windows-amd64/sing-box.exe','xray-v26.9.30-windows-64/xray.exe')) {
+  foreach ($core in @('sing-box-1.14.4-windows-amd64/sing-box.exe','xray-v26.11.9-windows-64/xray.exe')) {
     $path = Join-Path $root ('cores/windows/' + $core)
     Assert-Protected (Split-Path $path -Parent)
     Assert-Protected $path

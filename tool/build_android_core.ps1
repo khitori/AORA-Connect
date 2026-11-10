@@ -6,8 +6,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $project = Split-Path $PSScriptRoot -Parent
 $work = Join-Path $project 'build/android-core'
-$version = '1.14.2'
-$commit = 'af6e64c3b69e6132ebaee0e1a3d24e93903f6709'
+$version = '1.14.4'
+$commit = 'c005f35300ce76427dc285481ec5695f5b179cd2'
 $goVersion = 'go1.27.2'
 $goHash = '1314008898bd40df77af4b014f777f08873dbdfbcd3d92308728ee03304fe04f'
 $ndk = Join-Path $SdkRoot 'ndk/28.2.13676358'
@@ -28,13 +28,13 @@ if (!(Test-Path -LiteralPath "$source/go.mod")) {
   if ($LASTEXITCODE -ne 0) { throw 'Core source download failed.' }
 }
 $actualCommit = & git -C $source rev-parse HEAD
-if ($actualCommit -ne $commit) { throw 'Unexpected core revision; expected the pinned v1.14.2 commit.' }
+if ($actualCommit -ne $commit) { throw 'Unexpected core revision; expected the pinned v1.14.4 commit.' }
 $xray = Join-Path $work 'xray'
 if (!(Test-Path -LiteralPath "$xray/go.mod")) {
-  & git clone --depth 1 --branch v26.9.30 https://github.com/XTLS/Xray-core.git $xray
+  & git clone --depth 1 --branch v26.11.9 https://github.com/XTLS/Xray-core.git $xray
   if ($LASTEXITCODE -ne 0) { throw 'Xray source download failed.' }
 }
-if ((& git -C $xray rev-parse HEAD) -ne 'b26a91de4f3294e26a0ad0a970b81a386a41f789') { throw 'Unexpected Xray revision.' }
+if ((& git -C $xray rev-parse HEAD) -ne '676eaf66f8f05d4d558ee7a74b4736623d3feeb9') { throw 'Unexpected Xray revision.' }
 $patch = Join-Path $project 'native/android/patches/xray-grpc-lifecycle.patch'
 $patchCheckPreference = $ErrorActionPreference
 $ErrorActionPreference = 'Continue'

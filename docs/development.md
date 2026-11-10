@@ -26,10 +26,10 @@ The current configured versions are:
 
 | Core | Upstream release | Expected development folder |
 | --- | --- | --- |
-| sing-box | [1.14.2](https://github.com/SagerNet/sing-box/releases/tag/v1.14.2) | `cores/windows/sing-box-1.14.2-windows-amd64/` |
-| Xray | [26.9.30](https://github.com/XTLS/Xray-core/releases/tag/v26.9.30) | `cores/windows/xray-v26.9.30-windows-64/` |
+| sing-box | [1.14.4](https://github.com/SagerNet/sing-box/releases/tag/v1.14.4) | `cores/windows/sing-box-1.14.4-windows-amd64/` |
+| Xray | [26.11.9](https://github.com/XTLS/Xray-core/releases/tag/v26.11.9) | `cores/windows/xray-v26.11.9-windows-64/` |
 
-Download the Windows amd64/x64 archives from the linked upstream releases and extract their contents into those folders. Keep companion DLLs, data files, and license notices beside each executable. Xray 26.9.30 is marked as an upstream prerelease; review upstream release and security information before publishing packages.
+Download the Windows amd64/x64 archives from the linked upstream releases and extract their contents into those folders. Keep companion DLLs, data files, and license notices beside each executable. Xray 26.11.9 is marked as an upstream prerelease; review upstream release and security information before publishing packages.
 
 The `cores/` and `build/` directories are ignored by Git. Do not commit downloaded core binaries, real subscription URLs, credentials, or runtime configurations.
 

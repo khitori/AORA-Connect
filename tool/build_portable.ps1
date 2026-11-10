@@ -42,7 +42,7 @@ Copy-Item -LiteralPath (Join-Path $rustProject 'LICENSE-FlutterWindowsRunner.txt
 foreach ($helper in @('aoravpn_core_host','aoravpn_core_console','aoravpn_server_ping','aoravpn_kill_switch','aoravpn_update','aoravpn_migrate','aoravpn_service')) {
   Copy-Item -LiteralPath (Join-Path $helperBuild "x86_64-pc-windows-msvc/release/$helper.exe") -Destination $app -Force
 }
-foreach ($folder in @('sing-box-1.14.2-windows-amd64','xray-v26.9.30-windows-64')) {
+foreach ($folder in @('sing-box-1.14.4-windows-amd64','xray-v26.11.9-windows-64')) {
   $source = Join-Path $project "cores/windows/$folder"
   if (!(Test-Path -LiteralPath $source)) { throw "Missing core: $folder" }
   Copy-Item -LiteralPath $source -Destination $cores -Recurse

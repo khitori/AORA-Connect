@@ -96,7 +96,7 @@ class AoraVpnService : VpnService(), CommandServerHandler {
                 stage = "Android VPN network readiness"
                 VpnNetworkReady.await(this)
                 check(!VpnRuntime.cancelled) { "Connection cancelled." }
-                VpnRuntime.log(if (xray) "Xray 26.9.30 started." else "sing-box ${Libbox.version()} started.")
+                VpnRuntime.log(if (xray) "Xray 26.11.9 started." else "sing-box ${Libbox.version()} started.")
                 if (intent?.getBooleanExtra("verify", false) == true) {
                     stage = "HTTPS connection verification"
                     QuickSettingsProbe.verify(this)

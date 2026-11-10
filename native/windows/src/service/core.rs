@@ -41,8 +41,8 @@ pub enum Core {
 impl Core {
     pub(super) fn path(self, root: &Path) -> PathBuf {
         let (folder, file) = match self {
-            Self::SingBox => ("sing-box-1.14.2-windows-amd64", "sing-box.exe"),
-            Self::Xray => ("xray-v26.9.30-windows-64", "xray.exe"),
+            Self::SingBox => ("sing-box-1.14.4-windows-amd64", "sing-box.exe"),
+            Self::Xray => ("xray-v26.11.9-windows-64", "xray.exe"),
         };
         root.join("cores").join("windows").join(folder).join(file)
     }

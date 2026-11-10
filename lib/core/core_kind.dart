@@ -8,8 +8,8 @@ extension CoreKindLabel on CoreKind {
   };
 
   String get configuredVersion => switch (this) {
-    CoreKind.singBox => '1.14.2',
-    CoreKind.xray => '26.9.30',
+    CoreKind.singBox => '1.14.4',
+    CoreKind.xray => '26.11.9',
   };
 
   String get displayName => '$label $configuredVersion';

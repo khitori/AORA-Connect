@@ -493,8 +493,8 @@ void main() {
     );
     await tester.tap(find.byType(AppSelect<CoreKind>));
     await tester.pumpAndSettle();
-    expect(find.text('sing-box 1.14.2'), findsWidgets);
-    await tester.tap(find.text('Xray 26.9.30').last);
+    expect(find.text('sing-box 1.14.4'), findsWidgets);
+    await tester.tap(find.text('Xray 26.11.9').last);
     await tester.pumpAndSettle();
     expect(
       tester
@@ -577,11 +577,11 @@ void main() {
     final engine = FakeEngine();
     await tester.pumpWidget(MyApp(engine: engine, configPath: 'test.json'));
     expect(tester.takeException(), isNull);
-    expect(find.text('sing-box 1.14.2: disconnected'), findsOneWidget);
+    expect(find.text('sing-box 1.14.4: disconnected'), findsOneWidget);
     expect(find.text('VPN (TUN)'), findsOneWidget);
     await tester.tap(find.text('Connect'));
     await tester.pumpAndSettle();
-    expect(find.text('sing-box 1.14.2: connected'), findsOneWidget);
+    expect(find.text('sing-box 1.14.4: connected'), findsOneWidget);
     await _openSettings(tester);
     await tester.scrollUntilVisible(
       find.text('Diagnostics'),
@@ -643,11 +643,11 @@ void main() {
     expect(engine.state, TunnelState.running);
     await tester.tap(find.byKey(const ValueKey('bottom-nav-connection')));
     await tester.pumpAndSettle();
-    expect(find.text('sing-box 1.14.2: connected'), findsOneWidget);
+    expect(find.text('sing-box 1.14.4: connected'), findsOneWidget);
     await tester.ensureVisible(find.text('Disconnect'));
     await tester.tap(find.text('Disconnect'));
     await tester.pumpAndSettle();
-    expect(find.text('sing-box 1.14.2: disconnected'), findsOneWidget);
+    expect(find.text('sing-box 1.14.4: disconnected'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     await engine.changes.close();
     await engine.messages.close();

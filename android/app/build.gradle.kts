@@ -67,7 +67,7 @@ flutter {
     source = "../.."
 }
 
-val libbox = rootProject.file("../cores/android/sing-box-1.14.2/libbox.aar")
+val libbox = rootProject.file("../cores/android/sing-box-1.14.4/libbox.aar")
 check(libbox.isFile) { "Build the Android core first: tool/build_android_core.ps1" }
 dependencies {
     implementation(files(libbox))

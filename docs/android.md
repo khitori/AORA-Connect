@@ -2,7 +2,7 @@
 
 [← Back to AORA Connect](../README.md) · [Release signing and updates](updates.md#android-signing-and-updates)
 
-The ARM64 Android app includes sing-box 1.14.2 and Xray 26.9.30 through a shared
+The ARM64 Android app includes sing-box 1.14.4 and Xray 26.11.9 through a shared
 native library and Android's `VpnService`. Android ARM64 is a beta target with
 signed APK packaging. It uses the shared subscription interface and
 DNS/routing settings. One-time server checks and optional live ICMP statistics
@@ -51,11 +51,11 @@ flutter run -d <device-id>
 The core build script downloads a checksum-verified portable Go toolchain into
 `build/android-core/`, uses Go 1.27.2, gomobile `v0.1.12` and pinned source:
 
-- sing-box: `af6e64c3b69e6132ebaee0e1a3d24e93903f6709`.
-- Xray: `b26a91de4f3294e26a0ad0a970b81a386a41f789`.
+- sing-box: `c005f35300ce76427dc285481ec5695f5b179cd2`.
+- Xray: `676eaf66f8f05d4d558ee7a74b4736623d3feeb9`.
 
 Both cores and the app-owned Go bridge are linked into one Go runtime in
-`cores/android/sing-box-1.14.2/libbox.aar`. The script applies the checked-in
+`cores/android/sing-box-1.14.4/libbox.aar`. The script applies the checked-in
 Xray gRPC lifecycle patch and copies its extension from `native/android/xray/`.
 The extension tracks gRPC connections by outbound tag so scans release only
 their own connections; stopping Xray releases the remaining pool. This does
@@ -187,7 +187,7 @@ saved subscriptions. To reproduce with the Windows development sing-box core:
 2. In another terminal, start the loopback-only gateway:
 
    ```powershell
-   .\cores\windows\sing-box-1.14.2-windows-amd64\sing-box.exe run -c .\build\android-vpn-smoke\gateway.json
+   .\cores\windows\sing-box-1.14.4-windows-amd64\sing-box.exe run -c .\build\android-vpn-smoke\gateway.json
    adb -s <device-id> reverse tcp:17991 tcp:17991
    adb -s <device-id> reverse tcp:17992 tcp:17992
    flutter run -d <device-id> -t test_driver/android_vpn_smoke.dart --dart-define-from-file=build/android-vpn-smoke/defines.json

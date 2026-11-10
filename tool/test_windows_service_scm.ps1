@@ -53,7 +53,7 @@ if (!$PreparedFixture) {
     $source = Join-Path $target ('debug/' + $name)
     $assets.Add(@{ Relative='app/' + $name; Source=$source; Hash=(Get-FileHash -LiteralPath $source).Hash.ToLowerInvariant() })
   }
-  foreach ($folder in @('sing-box-1.14.2-windows-amd64','xray-v26.9.30-windows-64')) {
+  foreach ($folder in @('sing-box-1.14.4-windows-amd64','xray-v26.11.9-windows-64')) {
     foreach ($file in Get-ChildItem -LiteralPath (Join-Path $project ('cores/windows/' + $folder)) -File | Where-Object { $_.Extension -in @('.exe','.dll','.dat') }) {
       $assets.Add(@{ Relative='cores/windows/' + $folder + '/' + $file.Name; Source=$file.FullName; Hash=(Get-FileHash -LiteralPath $file.FullName).Hash.ToLowerInvariant() })
     }
