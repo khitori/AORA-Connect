@@ -53,20 +53,20 @@ abstract final class AppColors {
     buttonInnerBorder: hsl(0, 0, 100, alpha: 0.75),
 
     // Connect button
-    connectbuttonBackground: hsl(0, 0, 94.05),
+    connectbuttonBackground: hsl(0, 0, 100),
     connectbuttonBackgroundOnCenter: hsl(2.7, 78.5, 49.2),
     connectbuttonBackgroundOnEdge: hsl(2.6, 80.4, 40),
     connectbuttonIcon: hsl(240, 3.7, 37.5),
     connectbuttonIconOn: hsl(0, 0, 100),
     connectbuttonTextBusy: hsl(240, 2.5, 61.4),
     connectbuttonSpinner: hsl(2.7, 78.5, 49.2),
-    connectbuttonBorder: hsl(60, 5.4, 85.5),
+    connectbuttonBorder: hsl(60, 5.4, 85),
     connectbuttonBorderOn: hsl(2.6, 80.4, 40),
     connectbuttonGlowOn: hsl(2.7, 78.5, 49.2, alpha: 0.45),
-    connectbuttonInnerShade: hsl(240, 8, 9.8, alpha: 0.12),
-    connectbuttonInnerShadeOn: hsl(240, 8, 9.8, alpha: 0.28),
-    connectbuttonInnerLight: hsl(0, 0, 100),
-    connectbuttonInnerLightOn: hsl(0, 0, 100, alpha: 0.38),
+    connectbuttonInnerShade: hsl(240, 0, 50, alpha: 0),
+    connectbuttonInnerShadeOn: hsl(240, 8, 9.8, alpha: 0.1),
+    connectbuttonInnerLight: hsl(0, 0, 100, alpha: 0),
+    connectbuttonInnerLightOn: hsl(0, 0, 100, alpha: 0.1),
 
     // Bottom navigation panel
     navpanelBackground: hsl(0, 0, 100, alpha: 0.5),
@@ -176,10 +176,14 @@ abstract final class AppColors {
     notificationCloseHover: hsl(240, 8, 9.8, alpha: 0.06),
     notificationClosePressed: hsl(240, 8, 9.8, alpha: 0.12),
 
-    // Small popover bubble (routing rule settings)
-    popoverBackground: hsl(0, 0, 93, alpha: 0.8),
-    popoverOuterBorder: hsl(60, 5.4, 85.5),
-    popoverInnerBorder: hsl(0, 0, 100, alpha: 0.75),
+    // Routing rule actions menu (opens from the settings button on a rule)
+    routingactionsmenuBackground: hsl(0, 0, 93, alpha: 0.8),
+    routingactionsmenuOuterBorder: hsl(60, 5.4, 85.5),
+    routingactionsmenuInnerBorder: hsl(0, 0, 100, alpha: 0.75),
+    routingactionsmenuIcon: hsl(240, 3.7, 37.5),
+    routingactionsmenuIconDisabled: hsl(60, 5.4, 85.5),
+    routingactionsmenuIconHover: hsl(240, 3.7, 37.5, alpha: 0.08),
+    routingactionsmenuIconPressed: hsl(240, 3.7, 37.5, alpha: 0.1),
 
     // Warning notices
     warningBackground: hsl(2.7, 76, 95.9),
@@ -203,6 +207,8 @@ abstract final class AppColors {
     protocolUnknown: hsl(240, 3.7, 37.5),
 
     // Subscriptions page
+    addsubscriptionbuttonBackground: hsl(0, 0, 100),
+    addsubscriptionbuttonText: hsl(240, 8, 9.8),
     subscriptionrowBackground: hsl(0, 0, 100),
     subscriptionrowCheck: hsl(2.7, 78.5, 49.2),
     subscriptiondescriptionBackground: hsl(0, 0, 100),
@@ -225,8 +231,6 @@ abstract final class AppColors {
     routingruleTitle: hsl(240, 8, 9.8),
     routingruleTitleDisabled: hsl(240, 3.7, 37.5),
     routingruleSubtitle: hsl(240, 3.7, 37.5),
-    routingruleActionIcon: hsl(240, 3.7, 37.5),
-    routingruleActionIconDisabled: hsl(60, 5.4, 85.5),
 
     // Application picker dialog
     apppickerIcon: hsl(240, 3.7, 37.5),
@@ -380,8 +384,8 @@ abstract final class AppColors {
     selectdropdownInnerBorder: hsl(0, 0, 25, alpha: 0.2),
     selectdropdownSeparator: hsl(0, 0, 15),
     selectdropdownItemText: hsl(0, 0, 80),
-    selectdropdownItemSelected: hsl(0, 0, 96, alpha: 0.04),
-    selectdropdownItemHover: hsl(0, 0, 96, alpha: 0.06),
+    selectdropdownItemSelected: hsl(0, 0, 96, alpha: 0.03),
+    selectdropdownItemHover: hsl(0, 0, 96, alpha: 0.03),
     selectdropdownItemPressed: hsl(0, 0, 96, alpha: 0.12),
 
     // Dialogs
@@ -409,10 +413,14 @@ abstract final class AppColors {
     notificationCloseHover: hsl(0, 0, 96, alpha: 0.06),
     notificationClosePressed: hsl(0, 0, 96, alpha: 0.12),
 
-    // Small popover bubble (routing rule settings)
-    popoverBackground: hsl(0, 0, 5, alpha: 0.8),
-    popoverOuterBorder: hsl(25, 0, 0, alpha: 0),
-    popoverInnerBorder: hsl(0, 0, 25, alpha: 0.2),
+    // Routing rule actions menu (opens from the settings button on a rule)
+    routingactionsmenuBackground: hsl(0, 0, 10, alpha: 0.4),
+    routingactionsmenuOuterBorder: hsl(25, 0, 0, alpha: 0.15),
+    routingactionsmenuInnerBorder: hsl(0, 0, 25, alpha: 0.2),
+    routingactionsmenuIcon: hsl(0, 0, 68),
+    routingactionsmenuIconDisabled: hsl(0, 0, 22),
+    routingactionsmenuIconHover: hsl(0, 0, 68, alpha: 0.04),
+    routingactionsmenuIconPressed: hsl(0, 0, 68, alpha: 0.1),
 
     // Warning notices
     warningBackground: hsl(38, 23.7, 13.7),
@@ -436,6 +444,8 @@ abstract final class AppColors {
     protocolUnknown: hsl(0, 0, 68),
 
     // Subscriptions page
+    addsubscriptionbuttonBackground: hsl(0, 0, 10),
+    addsubscriptionbuttonText: hsl(0, 0, 80),
     subscriptionrowBackground: hsl(0, 0, 10),
     subscriptionrowCheck: hsl(38, 92, 56),
     subscriptiondescriptionBackground: hsl(0, 0, 10),
@@ -458,8 +468,6 @@ abstract final class AppColors {
     routingruleTitle: hsl(0, 0, 80),
     routingruleTitleDisabled: hsl(0, 0, 68),
     routingruleSubtitle: hsl(0, 0, 68),
-    routingruleActionIcon: hsl(0, 0, 68),
-    routingruleActionIconDisabled: hsl(0, 0, 22),
 
     // Application picker dialog
     apppickerIcon: hsl(0, 0, 68),
@@ -652,9 +660,12 @@ abstract final class AppColors {
   static Color get notificationCloseIcon => current.notificationCloseIcon;
   static Color get notificationCloseHover => current.notificationCloseHover;
   static Color get notificationClosePressed => current.notificationClosePressed;
-  static Color get popoverBackground => current.popoverBackground;
-  static Color get popoverOuterBorder => current.popoverOuterBorder;
-  static Color get popoverInnerBorder => current.popoverInnerBorder;
+  static Color get routingactionsmenuBackground =>
+      current.routingactionsmenuBackground;
+  static Color get routingactionsmenuOuterBorder =>
+      current.routingactionsmenuOuterBorder;
+  static Color get routingactionsmenuInnerBorder =>
+      current.routingactionsmenuInnerBorder;
   static Color get warningBackground => current.warningBackground;
   static Color get warningIcon => current.warningIcon;
   static Color get warningText => current.warningText;
@@ -672,6 +683,10 @@ abstract final class AppColors {
   static Color get protocolUnknown => current.protocolUnknown;
   static Color get subscriptionrowBackground =>
       current.subscriptionrowBackground;
+  static Color get addsubscriptionbuttonBackground =>
+      current.addsubscriptionbuttonBackground;
+  static Color get addsubscriptionbuttonText =>
+      current.addsubscriptionbuttonText;
   static Color get subscriptionrowCheck => current.subscriptionrowCheck;
   static Color get subscriptiondescriptionBackground =>
       current.subscriptiondescriptionBackground;
@@ -699,9 +714,13 @@ abstract final class AppColors {
   static Color get routingruleTitle => current.routingruleTitle;
   static Color get routingruleTitleDisabled => current.routingruleTitleDisabled;
   static Color get routingruleSubtitle => current.routingruleSubtitle;
-  static Color get routingruleActionIcon => current.routingruleActionIcon;
-  static Color get routingruleActionIconDisabled =>
-      current.routingruleActionIconDisabled;
+  static Color get routingactionsmenuIcon => current.routingactionsmenuIcon;
+  static Color get routingactionsmenuIconDisabled =>
+      current.routingactionsmenuIconDisabled;
+  static Color get routingactionsmenuIconHover =>
+      current.routingactionsmenuIconHover;
+  static Color get routingactionsmenuIconPressed =>
+      current.routingactionsmenuIconPressed;
   static Color get apppickerIcon => current.apppickerIcon;
   static Color get apppickerDetail => current.apppickerDetail;
   static Color get apppickerSearchIcon => current.apppickerSearchIcon;
@@ -858,9 +877,9 @@ class AppPalette {
     required this.notificationCloseIcon,
     required this.notificationCloseHover,
     required this.notificationClosePressed,
-    required this.popoverBackground,
-    required this.popoverOuterBorder,
-    required this.popoverInnerBorder,
+    required this.routingactionsmenuBackground,
+    required this.routingactionsmenuOuterBorder,
+    required this.routingactionsmenuInnerBorder,
     required this.warningBackground,
     required this.warningIcon,
     required this.warningText,
@@ -877,6 +896,8 @@ class AppPalette {
     required this.protocolVmess,
     required this.protocolUnknown,
     required this.subscriptionrowBackground,
+    required this.addsubscriptionbuttonBackground,
+    required this.addsubscriptionbuttonText,
     required this.subscriptionrowCheck,
     required this.subscriptiondescriptionBackground,
     required this.subscriptiondescriptionIcon,
@@ -896,8 +917,10 @@ class AppPalette {
     required this.routingruleTitle,
     required this.routingruleTitleDisabled,
     required this.routingruleSubtitle,
-    required this.routingruleActionIcon,
-    required this.routingruleActionIconDisabled,
+    required this.routingactionsmenuIcon,
+    required this.routingactionsmenuIconDisabled,
+    required this.routingactionsmenuIconHover,
+    required this.routingactionsmenuIconPressed,
     required this.apppickerIcon,
     required this.apppickerDetail,
     required this.apppickerSearchIcon,
@@ -1049,9 +1072,9 @@ class AppPalette {
   final Color notificationCloseIcon;
   final Color notificationCloseHover;
   final Color notificationClosePressed;
-  final Color popoverBackground;
-  final Color popoverOuterBorder;
-  final Color popoverInnerBorder;
+  final Color routingactionsmenuBackground;
+  final Color routingactionsmenuOuterBorder;
+  final Color routingactionsmenuInnerBorder;
   final Color warningBackground;
   final Color warningIcon;
   final Color warningText;
@@ -1068,6 +1091,8 @@ class AppPalette {
   final Color protocolVmess;
   final Color protocolUnknown;
   final Color subscriptionrowBackground;
+  final Color addsubscriptionbuttonBackground;
+  final Color addsubscriptionbuttonText;
   final Color subscriptionrowCheck;
   final Color subscriptiondescriptionBackground;
   final Color subscriptiondescriptionIcon;
@@ -1087,8 +1112,10 @@ class AppPalette {
   final Color routingruleTitle;
   final Color routingruleTitleDisabled;
   final Color routingruleSubtitle;
-  final Color routingruleActionIcon;
-  final Color routingruleActionIconDisabled;
+  final Color routingactionsmenuIcon;
+  final Color routingactionsmenuIconDisabled;
+  final Color routingactionsmenuIconHover;
+  final Color routingactionsmenuIconPressed;
   final Color apppickerIcon;
   final Color apppickerDetail;
   final Color apppickerSearchIcon;

@@ -159,37 +159,29 @@ class _SubscriptionsPageState extends State<SubscriptionsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  context.l10n.newSubscription,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: AppTheme.sectionLabelGap),
-                // The same plain white 48 px pill as the subscription select.
-                SizedBox(
-                  height: 48,
-                  child: OutlinedButton(
-                    key: const ValueKey('add-subscription-toggle'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppTheme.sectionPadding,
+                // Without subscriptions, a full-width button below that new
+                // users can't miss; after that, a small "+" in this row, like
+                // the refresh and delete buttons under the select.
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        context.l10n.newSubscription,
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
-                      shape: const StadiumBorder(),
                     ),
-                    onPressed: _openAddDialog,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(context.l10n.addSubscription, maxLines: 1),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  context.l10n.savedSubscriptions,
-                  style: Theme.of(context).textTheme.titleMedium,
+                    if (subscriptions.isNotEmpty)
+                      CompactOutlineIconButton(
+                        key: const ValueKey('add-subscription-toggle'),
+                        tooltip: context.l10n.addSubscription,
+                        icon: Icons.add_rounded,
+                        onPressed: _openAddDialog,
+                      ),
+                  ],
                 ),
                 const SizedBox(height: AppTheme.sectionLabelGap),
                 if (subscriptions.isEmpty)
-                  Text(context.l10n.noSubscriptions)
+                  _AddSubscriptionButton(onPressed: _openAddDialog)
                 else
                   _SavedSubscriptionSelector(connection: connection),
                 if (profiles.isNotEmpty) ...[
@@ -372,10 +364,12 @@ class _SavedSubscriptionSelector extends StatelessWidget {
                 summary,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
+                // Styled like the "Subscription" heading; red when servers
+                // were skipped.
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: skipped > 0
                       ? Theme.of(context).colorScheme.error
-                      : Theme.of(context).textTheme.bodySmall?.color,
+                      : null,
                 ),
               ),
             ),
@@ -508,5 +502,34 @@ class _SubscriptionLinkButton extends StatelessWidget {
               }
             }
           },
+  );
+}
+
+/// The full-width 48 px "Add subscription" pill shown before any subscription
+/// is added; it opens the Add subscription dialog.
+class _AddSubscriptionButton extends StatelessWidget {
+  const _AddSubscriptionButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: 48,
+    child: OutlinedButton(
+      key: const ValueKey('add-subscription-toggle'),
+      style: OutlinedButton.styleFrom(
+        backgroundColor: AppColors.addsubscriptionbuttonBackground,
+        foregroundColor: AppColors.addsubscriptionbuttonText,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppTheme.sectionPadding,
+        ),
+        shape: const StadiumBorder(),
+      ),
+      onPressed: onPressed,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(context.l10n.addSubscription, maxLines: 1),
+      ),
+    ),
   );
 }

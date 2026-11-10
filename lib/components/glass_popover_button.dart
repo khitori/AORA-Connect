@@ -115,8 +115,8 @@ class _GlassPopoverButtonState extends State<GlassPopoverButton>
               child: CustomPaint(
                 foregroundPainter: GlassEdgePainter(
                   const StadiumBorder(),
-                  outline: AppColors.popoverOuterBorder,
-                  innerBorder: AppColors.popoverInnerBorder,
+                  outline: AppColors.routingactionsmenuOuterBorder,
+                  innerBorder: AppColors.routingactionsmenuInnerBorder,
                   opacity: t,
                 ),
                 // The fade sits inside the blur: a blur inside a fading
@@ -135,7 +135,7 @@ class _GlassPopoverButtonState extends State<GlassPopoverButton>
         child: ColoredBox(
           // A light gray glass, so the white edge stands out even where the
           // bubble overlaps a white card.
-          color: AppColors.popoverBackground,
+          color: AppColors.routingactionsmenuBackground,
           child: Padding(
             padding: const EdgeInsets.all(4),
             child: Material(

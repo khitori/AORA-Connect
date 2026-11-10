@@ -73,15 +73,21 @@ class RoutingRuleCard extends StatelessWidget {
             }
           : null,
       icon: Icon(icon, size: 20),
-      style: IconButton.styleFrom(
-        foregroundColor: AppColors.routingruleActionIcon,
-        disabledForegroundColor: AppColors.routingruleActionIconDisabled,
-        minimumSize: const Size(36, 36),
-        maximumSize: const Size(36, 36),
-        padding: EdgeInsets.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        shape: const CircleBorder(),
-      ),
+      style:
+          IconButton.styleFrom(
+            foregroundColor: AppColors.routingactionsmenuIcon,
+            disabledForegroundColor: AppColors.routingactionsmenuIconDisabled,
+            minimumSize: const Size(36, 36),
+            maximumSize: const Size(36, 36),
+            padding: EdgeInsets.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            shape: const CircleBorder(),
+          ).copyWith(
+            overlayColor: AppTheme.overlay(
+              AppColors.routingactionsmenuIconHover,
+              AppColors.routingactionsmenuIconPressed,
+            ),
+          ),
     ),
     available: onPressed != null,
   );
@@ -92,11 +98,11 @@ class RoutingRuleCard extends StatelessWidget {
     final subtitle = application != null
         ? rule.target
         : rule.match.localizedLabel(context.l10n);
-    // No border, and the Subscriptions page rows' rounding.
+    // No border, and the same rounding as section cards, like its padding.
     return Material(
       color: AppColors.routingruleBackground,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTheme.sectionRowRadius),
+        borderRadius: BorderRadius.circular(AppTheme.sectionRadius),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
