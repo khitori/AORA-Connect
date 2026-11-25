@@ -28,6 +28,7 @@
   "connecting": "Verbindung wird hergestellt…",
   "stopping": "Verbindung wird getrennt…",
   "localProxy": "Lokaler Proxy",
+  "modeProxyShort": "Proxy",
   "vpnTun": "VPN (TUN)",
   "cancel": "Abbrechen",
   "save": "Speichern",

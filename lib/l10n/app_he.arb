@@ -28,6 +28,7 @@
   "connecting": "מתחבר…",
   "stopping": "מתנתק…",
   "localProxy": "פרוקסי מקומי",
+  "modeProxyShort": "פרוקסי",
   "vpnTun": "VPN (TUN)",
   "cancel": "ביטול",
   "save": "שמירה",

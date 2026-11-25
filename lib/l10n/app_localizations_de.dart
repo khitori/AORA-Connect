@@ -100,6 +100,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get localProxy => 'Lokaler Proxy';
 
   @override
+  String get modeProxyShort => 'Proxy';
+
+  @override
   String get vpnTun => 'VPN (TUN)';
 
   @override

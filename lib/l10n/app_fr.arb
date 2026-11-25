@@ -28,6 +28,7 @@
   "connecting": "Connexion…",
   "stopping": "Déconnexion…",
   "localProxy": "Proxy local",
+  "modeProxyShort": "Proxy",
   "vpnTun": "VPN (TUN)",
   "cancel": "Annuler",
   "save": "Enregistrer",

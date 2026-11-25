@@ -6,6 +6,9 @@ import '../l10n/l10n.dart';
 import '../theme/app_colors.dart';
 
 const _size = 184.0;
+
+/// How far the surface and its shading stop inside the 1 px outline.
+const _fillInset = 0.5;
 const _transition = Duration(milliseconds: 320);
 
 class ConnectionButton extends StatelessWidget {
@@ -35,9 +38,12 @@ class ConnectionButton extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           // Surface: soft off-white glass when idle, red when connected. The
-          // key makes a theme switch instant instead of fading.
+          // key makes a theme switch instant instead of fading. It ends half
+          // a pixel inside the outer border, so where that border shows it
+          // fully covers the soft edge instead of letting a light ring show.
           AnimatedContainer(
             key: ValueKey(AppColors.isDark),
+            margin: const EdgeInsets.all(_fillInset),
             duration: _transition,
             curve: Curves.easeOutCubic,
             decoration: BoxDecoration(
@@ -63,20 +69,25 @@ class ConnectionButton extends StatelessWidget {
                       ? AppColors.connectbuttonGlowOn
                       : AppColors.connectbuttonGlowOn.withValues(alpha: 0),
                   blurRadius: 32,
-                  spreadRadius: 2,
+                  spreadRadius: 2 + _fillInset,
                 ),
               ],
             ),
           ),
           // Inner shade and light that give the surface its glass depth,
           // tuned for the off-white idle surface and the red connected one.
+          // Inset like the surface, so its dark shade can't leak past the
+          // outline either.
           IgnorePointer(
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(end: running ? 1 : 0),
-              duration: _transition,
-              curve: Curves.easeOutCubic,
-              builder: (context, connected, _) =>
-                  CustomPaint(painter: _GlassPainter(connected)),
+            child: Padding(
+              padding: const EdgeInsets.all(_fillInset),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(end: running ? 1 : 0),
+                duration: _transition,
+                curve: Curves.easeOutCubic,
+                builder: (context, connected, _) =>
+                    CustomPaint(painter: _GlassPainter(connected)),
+              ),
             ),
           ),
           FilledButton(
@@ -129,19 +140,25 @@ class ConnectionButton extends StatelessWidget {
               ],
             ),
           ),
-          // The outline is drawn last, over the glass and hover, so no light
-          // line can appear between them on the curved edge.
+          // The two borders are drawn last, over the glass and hover, so no
+          // light line can appear between them on the curved edge.
           IgnorePointer(
-            child: AnimatedContainer(
-              key: ValueKey(AppColors.isDark),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(end: running ? 1 : 0),
               duration: _transition,
               curve: Curves.easeOutCubic,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: running
-                      ? AppColors.connectbuttonBorderOn
-                      : AppColors.connectbuttonBorder,
+              builder: (context, connected, _) => CustomPaint(
+                painter: _BorderPainter(
+                  outer: Color.lerp(
+                    AppColors.connectbuttonOuterBorder,
+                    AppColors.connectbuttonOuterBorderOn,
+                    connected,
+                  )!,
+                  inner: Color.lerp(
+                    AppColors.connectbuttonInnerBorder,
+                    AppColors.connectbuttonInnerBorderOn,
+                    connected,
+                  )!,
                 ),
               ),
             ),
@@ -150,6 +167,46 @@ class ConnectionButton extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The button's two borders: [outer] all the way around the very edge, and
+/// [inner] just inside it, strongest at the top and bottom and fading out
+/// toward the left and right, so the sides have no inner border.
+class _BorderPainter extends CustomPainter {
+  const _BorderPainter({required this.outer, required this.inner});
+
+  final Color outer, inner;
+  static const _outerWidth = 1.0;
+  static const _innerWidth = 1.5;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bounds = Offset.zero & size;
+    void ring(Color color, double inset, double width, {bool fade = false}) {
+      final area = bounds.deflate(inset);
+      final paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = width
+        ..color = color;
+      if (fade) {
+        paint.shader = LinearGradient(
+          colors: [
+            color.withValues(alpha: 0),
+            color,
+            color.withValues(alpha: 0),
+          ],
+        ).createShader(area);
+      }
+      canvas.drawOval(area.deflate(width / 2), paint);
+    }
+
+    ring(outer, 0, _outerWidth);
+    ring(inner, _outerWidth, _innerWidth, fade: true);
+  }
+
+  @override
+  bool shouldRepaint(_BorderPainter oldDelegate) =>
+      oldDelegate.outer != outer || oldDelegate.inner != inner;
 }
 
 /// Soft inner shadows: shade along the left edge and light along the

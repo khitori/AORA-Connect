@@ -280,6 +280,12 @@ abstract class AppLocalizations {
   /// **'Local proxy'**
   String get localProxy;
 
+  /// No description provided for @modeProxyShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Proxy'**
+  String get modeProxyShort;
+
   /// No description provided for @vpnTun.
   ///
   /// In en, this message translates to:

@@ -94,6 +94,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get localProxy => '本地代理';
 
   @override
+  String get modeProxyShort => '代理';
+
+  @override
   String get vpnTun => 'VPN (TUN)';
 
   @override

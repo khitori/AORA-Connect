@@ -28,6 +28,7 @@
   "connecting": "جارٍ الاتصال…",
   "stopping": "جارٍ قطع الاتصال…",
   "localProxy": "وكيل محلي",
+  "modeProxyShort": "وكيل",
   "vpnTun": "VPN (TUN)",
   "cancel": "إلغاء",
   "save": "حفظ",

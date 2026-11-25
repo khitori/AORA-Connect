@@ -28,6 +28,7 @@
   "connecting": "در حال اتصال…",
   "stopping": "در حال قطع اتصال…",
   "localProxy": "پروکسی محلی",
+  "modeProxyShort": "پروکسی",
   "vpnTun": "VPN (TUN)",
   "cancel": "لغو",
   "save": "ذخیره",

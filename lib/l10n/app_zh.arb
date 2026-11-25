@@ -28,6 +28,7 @@
   "connecting": "正在连接…",
   "stopping": "正在断开连接…",
   "localProxy": "本地代理",
+  "modeProxyShort": "代理",
   "vpnTun": "VPN (TUN)",
   "cancel": "取消",
   "save": "保存",

@@ -98,6 +98,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get localProxy => 'وكيل محلي';
 
   @override
+  String get modeProxyShort => 'وكيل';
+
+  @override
   String get vpnTun => 'VPN (TUN)';
 
   @override

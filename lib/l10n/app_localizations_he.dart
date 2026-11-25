@@ -98,6 +98,9 @@ class AppLocalizationsHe extends AppLocalizations {
   String get localProxy => 'פרוקסי מקומי';
 
   @override
+  String get modeProxyShort => 'פרוקסי';
+
+  @override
   String get vpnTun => 'VPN (TUN)';
 
   @override

@@ -60,13 +60,23 @@ abstract final class AppColors {
     connectbuttonIconOn: hsl(0, 0, 100),
     connectbuttonTextBusy: hsl(240, 2.5, 61.4),
     connectbuttonSpinner: hsl(2.7, 78.5, 49.2),
-    connectbuttonBorder: hsl(60, 5.4, 85),
-    connectbuttonBorderOn: hsl(2.6, 80.4, 40),
+    connectbuttonOuterBorder: hsl(0, 0, 90, alpha: 1),
+    connectbuttonOuterBorderOn: hsl(2.6, 80.4, 40),
+    connectbuttonInnerBorder: hsl(0, 0, 100, alpha: 1),
+    connectbuttonInnerBorderOn: hsl(0, 0, 100, alpha: 0.50),
     connectbuttonGlowOn: hsl(2.7, 78.5, 49.2, alpha: 0.45),
-    connectbuttonInnerShade: hsl(240, 0, 50, alpha: 0),
-    connectbuttonInnerShadeOn: hsl(240, 8, 9.8, alpha: 0.1),
-    connectbuttonInnerLight: hsl(0, 0, 100, alpha: 0),
+    connectbuttonInnerShade: hsl(0, 0, 70, alpha: 0.1),
+    connectbuttonInnerShadeOn: hsl(0, 0, 100, alpha: 0.1),
+    connectbuttonInnerLight: hsl(0, 0, 70, alpha: 0.1),
     connectbuttonInnerLightOn: hsl(0, 0, 100, alpha: 0.1),
+
+    // Connection status under the Connect button
+    connectionstatusBackground: hsl(0, 0, 100),
+    connectionstatusText: hsl(240, 3.7, 37.5),
+    connectionstatusSeparator: hsl(60, 5.1, 88.4),
+    connectionstatusCheckText: hsl(240, 3.7, 37.5),
+    connectionstatusDisconnected: hsl(2.7, 78.5, 49.2),
+    connectionstatusConnected: hsl(135, 59, 36),
 
     // Bottom navigation panel
     navpanelBackground: hsl(0, 0, 100, alpha: 0.5),
@@ -297,13 +307,23 @@ abstract final class AppColors {
     connectbuttonIconOn: hsl(0, 0, 10),
     connectbuttonTextBusy: hsl(0, 0, 44),
     connectbuttonSpinner: hsl(38, 92, 56),
-    connectbuttonBorder: hsl(0, 0, 12),
-    connectbuttonBorderOn: hsl(32, 50, 50),
-    connectbuttonGlowOn: hsl(38, 100, 56, alpha: 0.4),
+    connectbuttonOuterBorder: hsl(0, 0, 10),
+    connectbuttonOuterBorderOn: hsl(32, 50, 40, alpha: 0.2),
+    connectbuttonInnerBorder: hsl(0, 0, 100, alpha: 0.25),
+    connectbuttonInnerBorderOn: hsl(0, 0, 100, alpha: 0.50),
+    connectbuttonGlowOn: hsl(38, 100, 56, alpha: 0.2),
     connectbuttonInnerShade: hsl(0, 0, 9, alpha: 0.35),
     connectbuttonInnerShadeOn: hsl(0, 0, 0, alpha: 0.0),
     connectbuttonInnerLight: hsl(0, 0, 9, alpha: 0.35),
     connectbuttonInnerLightOn: hsl(0, 0, 100, alpha: 0.0),
+
+    // Connection status under the Connect button
+    connectionstatusBackground: hsl(0, 0, 10),
+    connectionstatusText: hsl(0, 0, 68),
+    connectionstatusSeparator: hsl(0, 0, 22),
+    connectionstatusCheckText: hsl(0, 0, 68),
+    connectionstatusDisconnected: hsl(2.7, 78.5, 62),
+    connectionstatusConnected: hsl(135, 59, 55),
 
     // Bottom navigation panel
     navpanelBackground: hsl(0, 0, 11, alpha: 0.75),
@@ -542,8 +562,23 @@ abstract final class AppColors {
   static Color get connectbuttonIconOn => current.connectbuttonIconOn;
   static Color get connectbuttonTextBusy => current.connectbuttonTextBusy;
   static Color get connectbuttonSpinner => current.connectbuttonSpinner;
-  static Color get connectbuttonBorder => current.connectbuttonBorder;
-  static Color get connectbuttonBorderOn => current.connectbuttonBorderOn;
+  static Color get connectbuttonOuterBorder => current.connectbuttonOuterBorder;
+  static Color get connectbuttonOuterBorderOn =>
+      current.connectbuttonOuterBorderOn;
+  static Color get connectbuttonInnerBorder => current.connectbuttonInnerBorder;
+  static Color get connectbuttonInnerBorderOn =>
+      current.connectbuttonInnerBorderOn;
+  static Color get connectionstatusBackground =>
+      current.connectionstatusBackground;
+  static Color get connectionstatusText => current.connectionstatusText;
+  static Color get connectionstatusSeparator =>
+      current.connectionstatusSeparator;
+  static Color get connectionstatusCheckText =>
+      current.connectionstatusCheckText;
+  static Color get connectionstatusDisconnected =>
+      current.connectionstatusDisconnected;
+  static Color get connectionstatusConnected =>
+      current.connectionstatusConnected;
   static Color get connectbuttonGlowOn => current.connectbuttonGlowOn;
   static Color get connectbuttonInnerShade => current.connectbuttonInnerShade;
   static Color get connectbuttonInnerShadeOn =>
@@ -778,8 +813,16 @@ class AppPalette {
     required this.connectbuttonIconOn,
     required this.connectbuttonTextBusy,
     required this.connectbuttonSpinner,
-    required this.connectbuttonBorder,
-    required this.connectbuttonBorderOn,
+    required this.connectbuttonOuterBorder,
+    required this.connectbuttonOuterBorderOn,
+    required this.connectbuttonInnerBorder,
+    required this.connectbuttonInnerBorderOn,
+    required this.connectionstatusBackground,
+    required this.connectionstatusText,
+    required this.connectionstatusSeparator,
+    required this.connectionstatusCheckText,
+    required this.connectionstatusDisconnected,
+    required this.connectionstatusConnected,
     required this.connectbuttonGlowOn,
     required this.connectbuttonInnerShade,
     required this.connectbuttonInnerShadeOn,
@@ -973,8 +1016,16 @@ class AppPalette {
   final Color connectbuttonIconOn;
   final Color connectbuttonTextBusy;
   final Color connectbuttonSpinner;
-  final Color connectbuttonBorder;
-  final Color connectbuttonBorderOn;
+  final Color connectbuttonOuterBorder;
+  final Color connectbuttonOuterBorderOn;
+  final Color connectbuttonInnerBorder;
+  final Color connectbuttonInnerBorderOn;
+  final Color connectionstatusBackground;
+  final Color connectionstatusText;
+  final Color connectionstatusSeparator;
+  final Color connectionstatusCheckText;
+  final Color connectionstatusDisconnected;
+  final Color connectionstatusConnected;
   final Color connectbuttonGlowOn;
   final Color connectbuttonInnerShade;
   final Color connectbuttonInnerShadeOn;

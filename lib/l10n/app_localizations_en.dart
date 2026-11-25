@@ -98,6 +98,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get localProxy => 'Local proxy';
 
   @override
+  String get modeProxyShort => 'Proxy';
+
+  @override
   String get vpnTun => 'VPN (TUN)';
 
   @override

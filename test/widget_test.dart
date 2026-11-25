@@ -514,7 +514,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('bottom-nav-connection')));
     await tester.pumpAndSettle();
-    expect(find.text('Local proxy'), findsOneWidget);
+    expect(_status('Proxy'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('bottom-nav-subscriptions')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('add-subscription-toggle')));
@@ -577,11 +577,11 @@ void main() {
     final engine = FakeEngine();
     await tester.pumpWidget(MyApp(engine: engine, configPath: 'test.json'));
     expect(tester.takeException(), isNull);
-    expect(find.text('sing-box 1.14.4: disconnected'), findsOneWidget);
-    expect(find.text('VPN (TUN)'), findsOneWidget);
+    expect(_status('Disconnected'), findsOneWidget);
+    expect(_status('TUN'), findsOneWidget);
     await tester.tap(find.text('Connect'));
     await tester.pumpAndSettle();
-    expect(find.text('sing-box 1.14.4: connected'), findsOneWidget);
+    expect(_status('Connected'), findsOneWidget);
     await _openSettings(tester);
     await tester.scrollUntilVisible(
       find.text('Diagnostics'),
@@ -643,13 +643,19 @@ void main() {
     expect(engine.state, TunnelState.running);
     await tester.tap(find.byKey(const ValueKey('bottom-nav-connection')));
     await tester.pumpAndSettle();
-    expect(find.text('sing-box 1.14.4: connected'), findsOneWidget);
+    expect(_status('Connected'), findsOneWidget);
     await tester.ensureVisible(find.text('Disconnect'));
     await tester.tap(find.text('Disconnect'));
     await tester.pumpAndSettle();
-    expect(find.text('sing-box 1.14.4: disconnected'), findsOneWidget);
+    expect(_status('Disconnected'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     await engine.changes.close();
     await engine.messages.close();
   });
 }
+
+/// A part of the status pill under the Connect button.
+Finder _status(String text) => find.descendant(
+  of: find.byKey(const ValueKey('connection-status')),
+  matching: find.text(text),
+);

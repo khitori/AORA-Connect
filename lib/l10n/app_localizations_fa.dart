@@ -99,6 +99,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get localProxy => 'پروکسی محلی';
 
   @override
+  String get modeProxyShort => 'پروکسی';
+
+  @override
   String get vpnTun => 'VPN (TUN)';
 
   @override

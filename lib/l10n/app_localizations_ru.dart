@@ -99,6 +99,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get localProxy => 'Локальный прокси';
 
   @override
+  String get modeProxyShort => 'Прокси';
+
+  @override
   String get vpnTun => 'VPN (TUN)';
 
   @override

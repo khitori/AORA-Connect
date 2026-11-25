@@ -28,6 +28,7 @@
   "connecting": "Подключение…",
   "stopping": "Отключение…",
   "localProxy": "Локальный прокси",
+  "modeProxyShort": "Прокси",
   "vpnTun": "VPN (TUN)",
   "cancel": "Отмена",
   "save": "Сохранить",
